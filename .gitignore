@@ -1,0 +1,9 @@
+# Common
+node_modules
+
+# WebStorm ignorefiles
+.idea
+tmp
+
+# Windows image file caches
+Thumbs.db
