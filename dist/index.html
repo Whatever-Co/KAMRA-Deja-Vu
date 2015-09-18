@@ -10,8 +10,45 @@
   </head>
   <body>
     <div id="container">
-      <h1></h1>
+      <h1>TEST</h1>
+      <div id="videos">
+        <video id="videoel" width="400" height="300" preload="auto" loop></video>
+        <canvas id="overlay" width="400" height="300"></canvas>
+        <canvas id="webgl" width="400" height="300"></canvas>
+      </div>
+      <div id="controls">
+        <select id="deform" name="deformation">
+          <option value="unwell">Unwell</option>
+          <option value="inca">Inca</option></option>
+          <option value="cheery">Cheery</option></option>
+          <option value="dopey">Dopey</option></option>
+          <option value="longface">Longface</option></option>
+          <option value="lucky">Lucky</option></option>
+          <option value="overcute">Overcute</option></option>
+          <option value="aloof">Aloof</option></option>
+          <option value="evil">Evil</option></option>
+          <option value="artificial">Artificial</option></option>
+          <option value="none">None</option></option>
+        </select>
+        <p class="sublabel">Facedeform preset</p>
+        <input id="startbutton" type="button" value="wait, loading video &amp; images" disabled="disabled" class="btn">
+      </div>
+      <audio id="songAudio" src="sounds/dejavu.mp3" controls></audio>
+      <div id="keyboards"></div>
     </div>
+    <script src="./js/dat.gui.min.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/clmtrackr.js"></script>
+    <script src="./models/model_pca_20_svm.js"></script>
+    <script src="./js/Stats.js"></script>
+    <script src="./js/face_deformer.js"></script>
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/poisson_new.js"></script>
+    <script src="./js/jasmid/midifile.js"></script>
+    <script src="./js/jasmid/replayer.js"></script>
+    <script src="./js/jasmid/stream.js"></script>
+    <script src="./js/shim/Base64binary.js"></script>
+    <script src="./js/MIDI.min.js"></script>
     <script src="bundle.js" type="text/javascript"></script>
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

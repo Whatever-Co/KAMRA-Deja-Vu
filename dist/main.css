@@ -15,3 +15,11 @@ a {
   display: block;
   text-decoration: none;
 }
+#videos {
+  position: relative;
+}
+canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
