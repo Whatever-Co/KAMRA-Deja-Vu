@@ -9,15 +9,15 @@ var imagesReady = false;
 
 function enablestart() {
   if (videoReady && imagesReady) {
-    var startbutton = document.getElementById('startbutton');
-    startbutton.value = "start";
-    startbutton.disabled = null;
+    //var startbutton = document.getElementById('startbutton');
+    //startbutton.value = "start";
+    //startbutton.disabled = null;
   }
 }
 
 $(window).load(function() {
   imagesReady = true;
-  enablestart();
+  //enablestart();
 });
 
 var insertAltVideo = function(video) {
@@ -99,7 +99,7 @@ function startVideo() {
   // start drawing face grid
   drawGridLoop();
 }
-$("#startbutton").click(startVideo);
+// $("#startbutton").click(startVideo);deform
 
 var fd = new faceDeformer();
 fd.init(document.getElementById('webgl'));
@@ -309,14 +309,13 @@ for (var i = 0;i < pnums;i++) {
 
 /********** defaults code **********/
 
-function switchDeformedFace(e) {
-  //var split = ph.presets.split(",");
-  for (var i = 0;i < pnums;i++) {
-    ph['component '+(i+3)] = presets[e.target.value][i];
-  }
-}
-
-document.getElementById('deform').addEventListener('change', switchDeformedFace, false);
+//function switchDeformedFace(e) {
+//  //var split = ph.presets.split(",");
+//  for (var i = 0;i < pnums;i++) {
+//    ph['component '+(i+3)] = presets[e.target.value][i];
+//  }
+//}
+//document.getElementById('deform').addEventListener('change', switchDeformedFace, false);
 
 for (var i = 0;i < pnums;i++) {
   ph['component '+(i+3)] = presets['none'][i];

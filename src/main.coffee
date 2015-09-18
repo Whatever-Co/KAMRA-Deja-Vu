@@ -21,6 +21,7 @@ MIDI.loadPlugin {
       console.log error
     audio = document.getElementById("songAudio")
     audio.addEventListener "play", ()->
+      window.CONTROL.startVideo()
       midiPlayer.start()
     audio.addEventListener "pause", ()->
       midiPlayer.pause()
@@ -70,26 +71,45 @@ keyboards.attr({
 
 
 param = window.CONTROL.param
+remap = (value, inputMin, inputMax, outputMin, outputMax) ->
+  return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin)
 
 # mapping
 midiPlayer.addListener (data)->
   # console.log "midi : ", data.now
 
-
   # on
   if data.message == 144
     keyStr = MIDI.noteToKey[data.note]
-    # console.log keyStr
+
     if data.channel == 0
+      # Main melody
       switch keyStr
-        when 'Gb3'
-          param['component 10'] = 20
         when 'F3'
           param['component 10'] = -20
+        when 'Gb3'
+          param['component 10'] = 20
+    else if data.channel == 1
+      # Bass
+      console.log "Bass #{data.note}"
+      param['component 4'] = remap(data.note, 40, 70, -20, 20)
+    else if data.channel == 2
+      # Constant loop
+      param['component 9'] = 40
+    else if data.channel == 3
+      # Solo
+      console.log "Solo #{data.note}"
+      param['component 4'] = remap(data.note, 72, 85, 40, -90)
+     else if data.channel == 4
+      # Beat
+      switch keyStr
+        when 'Db5'
+          param['component 16'] = -20
+      # console.log "Beat #{data.note}"
+
 
   # note map
   for note in notes
-    #ph['component 9'] =
     if note.channel == data.channel && note.note == data.note
       note.velocity = data.velocity
       break
