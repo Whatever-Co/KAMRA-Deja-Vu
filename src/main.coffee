@@ -3,33 +3,40 @@ require("./face_deform.js")
 d3 = require("d3")
 
 # midi setup
-
 midiPlayer = MIDI.Player
-midiPlayer.BPM = 110
-# MIDI.setVolume(0,0)
-midiPlayer.loadFile "sounds/dejavu1.mid"
-  ,()->
-    console.log "midi loaded"
-  ,()->
-    console.log "loading"
-  ,(error)->
-    console.log "error"
+MIDI.loadPlugin {
+  soundfontUrl: "./soundfont/"
+  instrument: "dummy" # load dummy sound font
+  onsuccess: ()->
+    midiPlayer = MIDI.Player
+    midiPlayer.BPM = 110
+    # MIDI.setVolume(0,0)
+    midiPlayer.loadFile "sounds/dejavu1.mid"
+    ,()->
+      console.log "midi loaded"
+    ,()->
+      console.log "loading"
+    ,(error)->
+      console.log "error"
+      console.log error
+    audio = document.getElementById("songAudio")
+    audio.addEventListener "play", ()->
+      midiPlayer.start()
+    audio.addEventListener "pause", ()->
+      midiPlayer.pause()
+    audio.addEventListener "timeupdate", (e)->
+    # console.log "audio : ", @currentTime * 1000
+      midiPlayer.currentTime = @currentTime * 1000
+  onerror: (error)->
     console.log error
-audio = document.getElementById("songAudio")
-audio.addEventListener "play", ()->
-  midiPlayer.start()
-audio.addEventListener "pause", ()->
-  midiPlayer.pause()
-audio.addEventListener "timeupdate", (e)->
-  # console.log "audio : ", @currentTime * 1000
-  midiPlayer.currentTime = @currentTime * 1000
+}
 
 # define graph
 
 notes = do ()->
   data = []
-  for channel in [0..5]
-    for note in [0..127]
+  for channel in [0...5]
+    for note in [0...127]
       data.push({
         channel:channel
         note:note
@@ -61,10 +68,28 @@ keyboards.attr({
     return "rgb(0,0,#{d.velocity*2})"
 })
 
+
+param = window.CONTROL.param
+
 # mapping
 midiPlayer.addListener (data)->
   # console.log "midi : ", data.now
+
+
+  # on
+  if data.message == 144
+    keyStr = MIDI.noteToKey[data.note]
+    # console.log keyStr
+    if data.channel == 0
+      switch keyStr
+        when 'Gb3'
+          param['component 10'] = 20
+        when 'F3'
+          param['component 10'] = -20
+
+  # note map
   for note in notes
+    #ph['component 9'] =
     if note.channel == data.channel && note.note == data.note
       note.velocity = data.velocity
       break

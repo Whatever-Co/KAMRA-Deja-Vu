@@ -211,7 +211,13 @@ function drawGridLoop() {
 function drawMaskLoop() {
   videocanvas.getContext('2d').drawImage(vid,0,0,videocanvas.width,videocanvas.height);
 
+  updateParameters();
+
   var pos = ctrack.getCurrentPosition(vid);
+  if (!pos) {
+    animationRequest = requestAnimFrame(drawMaskLoop);
+    return;
+  }
   // create additional points around face
   var tempPos;
   var addPos = [];
@@ -313,5 +319,16 @@ function switchDeformedFace(e) {
 document.getElementById('deform').addEventListener('change', switchDeformedFace, false);
 
 for (var i = 0;i < pnums;i++) {
-  ph['component '+(i+3)] = presets['unwell'][i];
+  ph['component '+(i+3)] = presets['none'][i];
+}
+
+window.CONTROL = {};
+window.CONTROL.param = ph;
+window.CONTROL.startVideo = startVideo;
+
+function updateParameters() {
+  // Smoothing
+  for(key in ph){
+     ph[key] = ph[key] * 0.95;
+  }
 }
