@@ -9,15 +9,16 @@ process.env.NODE_ENV = 'development'
 gulp.task 'webpack', ->
   webpack = require 'webpack'
   config =
-    entry:'./src/main.coffee'
+    entry:'./src/main.js'
     output:
       filename:'./dist/bundle.js'
     resolve:
-      extensions: ['', '.js', '.json', '.coffee']
+#      extensions: ['', '.js', '.json', '.coffee']
+      extensions: ['', '.js', '.json']
     module:
       loaders: [
-        {test: /\.js$/, loader: "babel-loader"}
-        {test: /\.coffee$/, exclude: /node_modules/, loader: "coffee-loader"}
+        {test: /\.js$/, exclude: /node_modules/, loader: "babel-loader"}
+#        {test: /\.coffee$/, exclude: /node_modules/, loader: "coffee-loader"}
         {test: /\.json$/, loader: "json-loader"}
       ]
     plugins:[
@@ -87,7 +88,7 @@ gulp.task 'zip', ['build'], ->
 
 #====================
 gulp.task 'watch', ->
-  gulp.watch ['src/**/*.coffee', 'src/**/*.json'], ['webpack']
+  gulp.watch ['src/**/*.js', 'src/**/*.json'], ['webpack']
   gulp.watch ['src/**/*.jade', 'src/index_data.json', 'src/**/*.svg'], ['jade']
   gulp.watch 'src/**/*.styl', ['stylus', 'webpack'] # update javascript for skrollr.
 

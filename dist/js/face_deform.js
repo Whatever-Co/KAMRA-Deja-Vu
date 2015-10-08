@@ -11,19 +11,6 @@ $(window).load(function() {
   imagesReady = true;
 });
 
-var insertAltVideo = function(video) {
-  if (supports_video()) {
-    if (supports_ogg_theora_video()) {
-      video.src = "../media/cap13_edit2.ogv";
-    } else if (supports_h264_baseline_video()) {
-      video.src = "../media/cap13_edit2.mp4";
-    } else {
-      return false;
-    }
-    return true;
-  } else return false;
-}
-
 // check whether browser supports webGL
 var webGLContext;
 var webGLTestCanvas = document.createElement('canvas');
@@ -61,11 +48,11 @@ if (navigator.getUserMedia) {
     }
     vid.play();
   }, function() {
-    insertAltVideo(vid);
+    // insertAltVideo(vid);
     alert("There was some problem trying to fetch video from your webcam, using a fallback video instead.");
   });
 } else {
-  insertAltVideo(vid);
+  // insertAltVideo(vid);
   alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
 }
 
@@ -298,14 +285,6 @@ for (var i = 0;i < pnums;i++) {
 }
 
 /********** defaults code **********/
-
-//function switchDeformedFace(e) {
-//  //var split = ph.presets.split(",");
-//  for (var i = 0;i < pnums;i++) {
-//    ph['component '+(i+3)] = presets[e.target.value][i];
-//  }
-//}
-//document.getElementById('deform').addEventListener('change', switchDeformedFace, false);
 
 for (var i = 0;i < pnums;i++) {
   ph['component '+(i+3)] = presets['none'][i];
