@@ -1,4 +1,5 @@
 // Requires
+const Stats = require("stats.js");
 const d3 = require("d3");
 const aspectFit = require("./scripts/layout.js").aspectFit;
 const deform = require("./scripts/deform/index.js");
@@ -145,3 +146,15 @@ midiPlayer.addListener(onMidiData);
 for(let targetID of ['videoel','overlay','webgl']) {
   aspectFit(targetID, 4/3);
 }
+
+
+/*********** Code for stats **********/
+
+let stats = new Stats();
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.top = '0px';
+document.getElementById('container').appendChild( stats.domElement );
+
+document.addEventListener("clmtrackrIteration", function(event) {
+  stats.update();
+}, false);

@@ -1,5 +1,4 @@
 // Require
-const Stats = require("stats.js");
 const checks = require("./checks.js");
 const FaceDeformer = require("./FaceDeformer.js");
 
@@ -178,16 +177,6 @@ function drawMaskLoop() {
   animationRequest = requestAnimFrame(drawMaskLoop);
 }
 
-/*********** Code for stats **********/
-
-let stats = new Stats();
-stats.domElement.style.position = 'absolute';
-stats.domElement.style.top = '0px';
-document.getElementById('container').appendChild( stats.domElement );
-
-document.addEventListener("clmtrackrIteration", function(event) {
-  stats.update();
-}, false);
 
 /********** parameter code *********/
 
