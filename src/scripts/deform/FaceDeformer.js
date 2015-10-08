@@ -50,7 +50,7 @@ export default class FaceDeformer {
     minx = Math.floor(minx);
     maxx = Math.ceil(maxx);
     miny = Math.floor(miny);
-    this.maxy = Math.ceil(maxy);
+    maxy = Math.ceil(maxy);
     let width = this.width = maxx-minx;
     let height = this.height = maxy-miny;
     let cc;
@@ -103,8 +103,8 @@ export default class FaceDeformer {
       this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
 
       this.texCoordBuffer = gl.createBuffer();
-      this.first = false;
       this.verticeMap = verticeMap;
+      this.first = false;
     }
 
     // load program for drawing grid

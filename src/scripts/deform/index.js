@@ -3,7 +3,8 @@ const Stats = require("stats.js");
 const checks = require("./checks.js");
 const FaceDeformer = require("./FaceDeformer.js");
 
-// Content
+// Deform/index.js
+
 let vid = document.getElementById('videoel');
 let overlay = document.getElementById('overlay');
 let overlayCC = overlay.getContext('2d');
@@ -25,14 +26,6 @@ let animationRequest;
 const ctrack = new clm.tracker();
 ctrack.init(pModel);
 
-export function startVideo() {
-  // start video
-  vid.play();
-  // start tracking
-  ctrack.start(vid);
-  // start drawing face grid
-  drawGridLoop();
-}
 
 // const fd = new faceDeformer();
 const fd = new FaceDeformer(document.getElementById('webgl'));
@@ -230,19 +223,25 @@ for (let i=0; i<pnums; ++i) {
   control['c'+(i+3)] = gui.add(ph, 'component '+(i+3), -5*eig, 5*eig).listen();
 }
 
-/********** defaults code **********/
-
-for (let i = 0; i<pnums; ++i) {
-  ph['component '+(i+3)] = presets['none'][i];
-}
-
-window.CONTROL = {};
-window.CONTROL.param = ph;
-window.CONTROL.startVideo = startVideo;
-
 function updateParameters() {
   // Smoothing
   for(let key in ph) {
     ph[key] = ph[key] * 0.95;
   }
 }
+
+for (let i = 0; i<pnums; ++i) {
+  ph['component '+(i+3)] = presets['none'][i];
+}
+
+/********** EXPORT **********/
+
+export function startVideo() {
+  // start video
+  vid.play();
+  // start tracking
+  ctrack.start(vid);
+  // start drawing face grid
+  drawGridLoop();
+}
+export const param = ph;

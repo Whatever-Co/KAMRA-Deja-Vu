@@ -25,7 +25,7 @@ MIDI.loadPlugin({
     );
     const audio = document.getElementById("songAudio");
     audio.addEventListener("play",()=>{
-      window.CONTROL.startVideo();
+      deform.startVideo();
       midiPlayer.start();
     });
     audio.addEventListener("pause", ()=>{
@@ -86,7 +86,7 @@ keyboards.attr({
   }
 });
 
-const param = window.CONTROL.param;
+const param = deform.param;
 function remap(value, inputMin, inputMax, outputMin, outputMax) {
   return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
 }
