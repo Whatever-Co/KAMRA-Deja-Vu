@@ -18,6 +18,7 @@ gulp.task 'webpack', ->
       loaders: [
         {test: /\.js$/, exclude: /node_modules/, loader: "babel-loader"}
         {test: /\.json$/, loader: "json-loader"}
+        {test: /\.glsl$/, loader: "raw-loader"}
       ]
     plugins:[
       new webpack.DefinePlugin

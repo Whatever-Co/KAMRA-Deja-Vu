@@ -1,5 +1,7 @@
-// WebPack require
+// Requires
 const d3 = require("d3");
+const aspectFit = require("./scripts/layout.js").aspectFit;
+const deform = require("./scripts/deform/index.js");
 
 // main.js
 const midiPlayer = MIDI.Player;
@@ -139,33 +141,7 @@ function onMidiData(data) {
 }
 midiPlayer.addListener(onMidiData);
 
-
-
 // aspect fit
-function aspectFit(id) {
-  const dom = document.getElementById(id);
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const target = 4/3;
-
-  let width,height,left,top;
-  if(w/h > target) {
-    width = h * target;
-    height = h;
-    left = (w - width) / 2;
-    top = 0;
-  } else {
-    width = w;
-    height = w / target;
-    left = 0;
-    top = (h - height) / 2;
-  }
-  dom.style.width = width + 'px';
-  dom.style.height = height + 'px';
-  dom.style.left = left + 'px';
-  dom.style.top = top + 'px';
-}
-
 for(let targetID of ['videoel','overlay','webgl']) {
-  aspectFit(targetID);
+  aspectFit(targetID, 4/3);
 }
