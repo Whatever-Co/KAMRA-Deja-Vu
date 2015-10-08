@@ -16,7 +16,8 @@ gulp.task 'webpack', ->
       extensions: ['', '.js', '.json', '.coffee']
     module:
       loaders: [
-        {test: /\.coffee$/, loader: "coffee-loader"}
+        {test: /\.js$/, loader: "babel-loader"}
+        {test: /\.coffee$/, exclude: /node_modules/, loader: "coffee-loader"}
         {test: /\.json$/, loader: "json-loader"}
       ]
     plugins:[

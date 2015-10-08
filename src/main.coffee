@@ -1,5 +1,5 @@
 # includes
-require("./face_deform.js")
+# require("./face_deform.js")
 d3 = require("d3")
 
 # midi setup
@@ -80,6 +80,7 @@ midiPlayer.addListener (data)->
 
   # on
   if data.message == 144
+    console.log "ch:#{data.channel}  note:#{data.message}"
     keyStr = MIDI.noteToKey[data.note]
 
     if data.channel == 0

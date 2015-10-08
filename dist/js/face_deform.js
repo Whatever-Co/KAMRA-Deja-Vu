@@ -264,7 +264,7 @@ function drawMaskLoop() {
 
 /*********** Code for stats **********/
 
-stats = new Stats();
+stats = new window.Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0px';
 document.getElementById('container').appendChild( stats.domElement );
