@@ -28,13 +28,11 @@ ctrack.init(pModel);
 
 // const fd = new faceDeformer();
 const fd = new FaceDeformer(document.getElementById('webgl'));
-let wc1 = document.getElementById('webgl').getContext('webgl') || document.getElementById('webgl').getContext('experimental-webgl');
-wc1.clearColor(0,0,0,0);
+{
+  const wc1 = document.getElementById('webgl').getContext('webgl') || document.getElementById('webgl').getContext('experimental-webgl');
+  wc1.clearColor(0,0,0,0);
+}
 
-// canvas for copying the warped face to
-const newcanvas = document.createElement('canvas');
-newcanvas.width = vid.width;
-newcanvas.height = vid.height;
 // canvas for copying videoframes to
 const videocanvas = document.createElement('canvas');
 videocanvas.width = vid.width;
@@ -191,20 +189,6 @@ const parameterHolder = function() {
 const ph = new parameterHolder();
 const gui = new dat.GUI();
 
-const presets = {
-  "unwell" : [0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  "inca" : [0, 0, -9, 0, -11, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0],
-  "cheery" : [0, 0, -9, 9, -11, 0, 0, 0, 0, 0, 0, 0, -9, 0, 0, 0, 0, 0],
-  "dopey" : [0, 0, 0, 0, 0, 0, 0, -11, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0],
-  "longface" : [0, 0, 0, 0, -15, 0, 0, -12, 0, 0, 0, 0, 0, 0, -7, 0, 0, 5],
-  "lucky" : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -4, 0, -6, 12, 0, 0],
-  "overcute" : [0, 0, 0, 0, 16, 0, -14, 0, 0, 0, 0, 0, -7, 0, 0, 0, 0, 0],
-  "aloof" : [0, 0, 0, 0, 0, 0, 0, -8, 0, 0, 0, 0, 0, 0, -2, 0, 0, 10],
-  "evil" : [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, -8],
-  "artificial" : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, -16, 0, 0, 0, 0, 0],
-  "none" : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-};
-
 let control = {};
 let eig = 0;
 for (let i=0; i<pnums; ++i) {
@@ -220,7 +204,7 @@ function updateParameters() {
 }
 
 for (let i = 0; i<pnums; ++i) {
-  ph['component '+(i+3)] = presets['none'][i];
+  ph['component '+(i+3)] = 0;
 }
 
 /********** EXPORT **********/
