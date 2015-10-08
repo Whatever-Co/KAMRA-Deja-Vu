@@ -9,29 +9,14 @@ html
     title #{title}
     link(href='main.css' rel='stylesheet' type='text/css' data-skrollr-stylesheet)
   body
+
+    #videos
+      video#videoel(preload="auto", width="400", height="300", loop)
+      canvas#overlay(width="400", height="300")
+      canvas#webgl(width="400", height="300")
     #container
-      h1 #{title}
-      #videos
-        video#videoel(width="400", height="300", preload="auto", loop)
-        canvas#overlay(width="400", height="300")
-        canvas#webgl(width="400", height="300")
-      //#controls
-        //select#deform(name="deformation")
-        //  option(value="unwell") Unwell
-        //  option(value="inca") Inca</option>
-        //  option(value="cheery") Cheery</option>
-        //  option(value="dopey") Dopey</option>
-        //  option(value="longface") Longface</option>
-        //  option(value="lucky") Lucky</option>
-        //  option(value="overcute") Overcute</option>
-        //  option(value="aloof") Aloof</option>
-        //  option(value="evil") Evil</option>
-        //  option(value="artificial") Artificial</option>
-        //  option(value="none") None</option>
-        //p.sublabel Facedeform preset
-        //input#startbutton(class="btn" type="button" value="wait, loading video & images" disabled="disabled")
+    #debug_controls
       audio#songAudio(src="sounds/dejavu.mp3" controls)
-      h3 MIDI
       #keyboards
 
     //- script
