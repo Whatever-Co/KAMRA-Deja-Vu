@@ -118,3 +118,35 @@ midiPlayer.addListener (data)->
     'fill':(d)->
       return "rgb(0,0,#{d.velocity*2})"
   })
+
+
+# resize aspect fit
+
+aspectFit = (id)->
+  dom = document.getElementById(id)
+  w = window.innerWidth
+  h = window.innerHeight
+  target = 4/3
+
+
+
+  if w/h > target
+    width = h * target
+    height = h
+    left = (w - width) / 2
+    top = 0
+  else
+    width = w
+    height = w / target
+    left = 0
+    top = (h - height) / 2
+
+
+  dom.style.width = width + 'px'
+  dom.style.height = height + 'px'
+  dom.style.left = left + 'px'
+  dom.style.top = top + 'px'
+
+
+for targetID in ['videoel','overlay','webgl']
+  aspectFit(targetID)
