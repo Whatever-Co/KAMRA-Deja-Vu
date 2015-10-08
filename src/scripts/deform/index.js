@@ -36,8 +36,6 @@ export function startVideo() {
 
 // const fd = new faceDeformer();
 const fd = new FaceDeformer(document.getElementById('webgl'));
-//fd.init(document.getElementById('webgl'));
-
 let wc1 = document.getElementById('webgl').getContext('webgl') || document.getElementById('webgl').getContext('experimental-webgl');
 wc1.clearColor(0,0,0,0);
 

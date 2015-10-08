@@ -28,12 +28,13 @@ export default class FaceDeformer {
   load(element, points, pModel, vertices) {
     let gl = this.gl;
     this.pdmModel = pModel;
+    let verticeMap;
     if (vertices) {
-      this.verticeMap = vertices;
+      verticeMap = vertices;
     } else {
-      this.verticeMap = pdmModel.path.vertices;
+      verticeMap = pdmModel.path.vertices;
     }
-    this.numTriangles = this.verticeMap.length;
+    this.numTriangles = verticeMap.length;
 
     // get cropping
     let maxx = 0;
@@ -46,9 +47,9 @@ export default class FaceDeformer {
       if (points[i][1] > maxy) maxy = points[i][1];
       if (points[i][1] < miny) miny = points[i][1];
     }
-    this.minx = Math.floor(minx);
-    this.maxx = Math.ceil(maxx);
-    this.miny = Math.floor(miny);
+    minx = Math.floor(minx);
+    maxx = Math.ceil(maxx);
+    miny = Math.floor(miny);
     this.maxy = Math.ceil(maxy);
     let width = this.width = maxx-minx;
     let height = this.height = maxy-miny;
@@ -73,7 +74,6 @@ export default class FaceDeformer {
     }
 
     // create vertices based on points
-    let verticeMap = this.verticeMap;
     let textureVertices = [];
     for (let i = 0;i < verticeMap.length;i++) {
       textureVertices.push(nupoints[verticeMap[i][0]][0]/width);
@@ -104,6 +104,7 @@ export default class FaceDeformer {
 
       this.texCoordBuffer = gl.createBuffer();
       this.first = false;
+      this.verticeMap = verticeMap;
     }
 
     // load program for drawing grid
