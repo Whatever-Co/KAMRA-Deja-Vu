@@ -1,14 +1,18 @@
-var vid = document.getElementById('videoel');
-var overlay = document.getElementById('overlay');
-var overlayCC = overlay.getContext('2d');
+// Require
+const Stats = require("stats.js");
 
-/*********** Setup of video/webcam and checking for webGL support *********/
+// Content
 
-var videoReady = false;
-var imagesReady = false;
+let vid = document.getElementById('videoel');
+let overlay = document.getElementById('overlay');
+let overlayCC = overlay.getContext('2d');
 
-$(window).load(function() {
+let videoReady = false;
+let imagesReady = false;
+
+$(window).load(()=>{
   imagesReady = true;
+  console.log("face deformmmm");
 });
 
 // check whether browser supports webGL
@@ -38,7 +42,7 @@ if (navigator.getUserMedia) {
     if (chromeVersion < 20) {
       videoSelector = "video";
     }
-  };
+  }
 
   navigator.getUserMedia(videoSelector, function( stream ) {
     if (vid.mozCaptureStream) {
@@ -76,7 +80,6 @@ function startVideo() {
   // start drawing face grid
   drawGridLoop();
 }
-// $("#startbutton").click(startVideo);deform
 
 var fd = new faceDeformer();
 fd.init(document.getElementById('webgl'));
@@ -178,7 +181,6 @@ function drawGridLoop() {
   // check whether mask has converged
   var pn = ctrack.getConvergence();
   if (pn < 0.4) {
-    //switchMasks(positions);
     drawMaskLoop();
   } else {
     requestAnimFrame(drawGridLoop);
@@ -214,20 +216,11 @@ function drawMaskLoop() {
   fd.load(videocanvas, newPos, pModel, newVertices);
 
   // get position of face
-  //positions = ctrack.getCurrentPosition();
-
   var parameters = ctrack.getCurrentParameters();
   for (var i = 6;i < parameters.length;i++) {
     parameters[i] += ph['component '+(i-3)];
-    /*if (i == 23) {
-     parameters[i] += 20;
-     }*/
   }
   positions = ctrack.calculatePositions(parameters);
-
-  /*for (var i = 0;i < positions.length;i++) {
-   positions[i][1] += 1;
-   }*/
 
   overlayCC.clearRect(0, 0, 400, 300);
   if (positions) {
@@ -241,7 +234,7 @@ function drawMaskLoop() {
 
 /*********** Code for stats **********/
 
-stats = new window.Stats();
+let stats = new Stats();
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.top = '0px';
 document.getElementById('container').appendChild( stats.domElement );
@@ -260,10 +253,10 @@ var parameterHolder = function() {
   this.presets = 0;
 };
 
-var ph = new parameterHolder();
-var gui = new dat.GUI();
+const ph = new parameterHolder();
+const gui = new dat.GUI();
 
-var presets = {
+const presets = {
   "unwell" : [0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   "inca" : [0, 0, -9, 0, -11, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0],
   "cheery" : [0, 0, -9, 9, -11, 0, 0, 0, 0, 0, 0, 0, -9, 0, 0, 0, 0, 0],
@@ -286,7 +279,7 @@ for (var i = 0;i < pnums;i++) {
 
 /********** defaults code **********/
 
-for (var i = 0;i < pnums;i++) {
+for (var i = 0;i < pnums; ++i) {
   ph['component '+(i+3)] = presets['none'][i];
 }
 
@@ -296,7 +289,8 @@ window.CONTROL.startVideo = startVideo;
 
 function updateParameters() {
   // Smoothing
-  for(key in ph){
-     ph[key] = ph[key] * 0.95;
+  for(let key in ph) {
+    console.log(key);
+    ph[key] = ph[key] * 0.95;
   }
 }
