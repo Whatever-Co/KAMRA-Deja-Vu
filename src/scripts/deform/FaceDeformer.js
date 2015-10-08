@@ -1,3 +1,8 @@
+const GRID_VERT_SHADER = require("./shaders/grid_vert.glsl");
+const GRID_FRAG_SHADER = require("./shaders/grid_frag.glsl");
+const FACE_VERT_SHADER = require("./shaders/face_vert.glsl");
+const FACE_FRAG_SHADER = require("./shaders/face_frag.glsl");
+
 /**
  * FaceDeformer
  */
@@ -81,27 +86,9 @@ export default class FaceDeformer {
 
     if(this.first) {
       // create program for drawing grid
-      let gridVertexShaderProg = [
-        "attribute vec2 a_position;",
-        "",
-        "uniform vec2 u_resolution;",
-        "",
-        "void main() {",
-        "  vec2 zeroToOne = a_position / u_resolution;",
-        "  vec2 zeroToTwo = zeroToOne * 2.0;",
-        "  vec2 clipSpace = zeroToTwo - 1.0;",
-        "  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);",
-        "}"
-      ].join('\n');
 
-      let gridFragmentShaderProg = [
-        "void main() {",
-        "  gl_FragColor = vec4(0.2, 0.2, 0.2, 1.0);",
-        "}"
-      ].join('\n');
-
-      var gridVertexShader = loadShader(gl, gridVertexShaderProg, gl.VERTEX_SHADER);
-      var gridFragmentShader = loadShader(gl, gridFragmentShaderProg, gl.FRAGMENT_SHADER);
+      var gridVertexShader = loadShader(gl, GRID_VERT_SHADER, gl.VERTEX_SHADER);
+      var gridFragmentShader = loadShader(gl, GRID_FRAG_SHADER, gl.FRAGMENT_SHADER);
       try {
         this.gridProgram = createProgram(gl, [gridVertexShader, gridFragmentShader]);
       } catch(err) {
@@ -110,39 +97,9 @@ export default class FaceDeformer {
 
       this.gridCoordbuffer = gl.createBuffer();
 
-      // create program for drawing deformed face
-      var vertexShaderProg = [
-        "attribute vec2 a_texCoord;",
-        "attribute vec2 a_position;",
-        "",
-        "varying vec2 v_texCoord;",
-        "",
-        "uniform vec2 u_resolution;",
-        "",
-        "void main() {",
-        "  vec2 zeroToOne = a_position / u_resolution;",
-        "  vec2 zeroToTwo = zeroToOne * 2.0;",
-        "  vec2 clipSpace = zeroToTwo - 1.0;",
-        "  gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);",
-        "  ",
-        "  v_texCoord = a_texCoord;",
-        "}"
-      ].join('\n');
 
-      var fragmentShaderProg = [
-        "precision mediump float;",
-        "",
-        "uniform sampler2D u_image;",
-        "",
-        "varying vec2 v_texCoord;",
-        "",
-        "void main() {",
-        "  gl_FragColor = texture2D(u_image, v_texCoord);",
-        "}"
-      ].join('\n');
-
-      const vertexShader = loadShader(gl, vertexShaderProg, gl.VERTEX_SHADER);
-      const fragmentShader = loadShader(gl, fragmentShaderProg, gl.FRAGMENT_SHADER);
+      const vertexShader = loadShader(gl, FACE_VERT_SHADER, gl.VERTEX_SHADER);
+      const fragmentShader = loadShader(gl, FACE_FRAG_SHADER, gl.FRAGMENT_SHADER);
       this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
 
       this.texCoordBuffer = gl.createBuffer();
@@ -187,7 +144,7 @@ export default class FaceDeformer {
   }
 
   /**
-   *
+   * Draw
    * @param points
    */
   draw(points) {
@@ -230,7 +187,7 @@ export default class FaceDeformer {
   }
 
   /**
-   *
+   * Draw grid
    * @param points
    */
   drawGrid(points) {
@@ -245,7 +202,7 @@ export default class FaceDeformer {
     const verticeMap = this.verticeMap;
     let vertices = [];
     // create new texturegrid
-    for (var i = 0;i < verticeMap.length;i++) {
+    for (let i = 0;i < verticeMap.length;i++) {
       vertices.push(points[verticeMap[i][0]][0]);
       vertices.push(points[verticeMap[i][0]][1]);
       vertices.push(points[verticeMap[i][1]][0]);
@@ -274,10 +231,19 @@ export default class FaceDeformer {
     gl.drawArrays(gl.LINES, 0, this.numTriangles*6);
   }
 
+  /**
+   * Clear
+   */
   clear() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
+  /**
+   *
+   * @param parameters
+   * @param useTransforms
+   * @returns {Array}
+   */
   calculatePositions(parameters, useTransforms) {
     let x, y, a, b;
     const numParameters = parameters.length;
