@@ -7,17 +7,8 @@ var overlayCC = overlay.getContext('2d');
 var videoReady = false;
 var imagesReady = false;
 
-function enablestart() {
-  if (videoReady && imagesReady) {
-    //var startbutton = document.getElementById('startbutton');
-    //startbutton.value = "start";
-    //startbutton.disabled = null;
-  }
-}
-
 $(window).load(function() {
   imagesReady = true;
-  //enablestart();
 });
 
 var insertAltVideo = function(video) {
@@ -29,7 +20,6 @@ var insertAltVideo = function(video) {
     } else {
       return false;
     }
-    //video.play();
     return true;
   } else return false;
 }
@@ -79,7 +69,7 @@ if (navigator.getUserMedia) {
   alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
 }
 
-vid.addEventListener('canplay', function() {videoReady = true;enablestart();}, false);
+vid.addEventListener('canplay', function() {videoReady = true;}, false);
 
 /*********** Code for face substitution *********/
 
