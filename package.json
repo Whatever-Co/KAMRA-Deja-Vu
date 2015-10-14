@@ -17,6 +17,7 @@
     "gulp-zip": "^3.0.2",
     "json-loader": "^0.5.2",
     "stats.js": "0.0.14-master",
+    "three.js": "^0.72.0",
     "webpack": "^1.12.1"
   },
   "browserify": {}

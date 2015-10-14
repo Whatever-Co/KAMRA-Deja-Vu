@@ -1,10 +1,15 @@
+// Shim
+navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
+
 // Require
 const checks = require("./checks.js");
 const FaceDeformer = require("./FaceDeformer.js");
 
+//-------------------------------
 // Deform/index.js
 
-let vid = document.getElementById('videoel');
+let video = document.getElementById('videoel');
 let overlay = document.getElementById('overlay');
 let overlayCC = overlay.getContext('2d');
 
@@ -16,7 +21,7 @@ if (!checks.checkWebGL()) {
 if (!navigator.getUserMedia) {
   alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
 }
-checks.requestWebcam(vid);
+checks.requestWebcam(video);
 
 /*********** Code for face substitution *********/
 
@@ -25,8 +30,6 @@ let animationRequest;
 const ctrack = new clm.tracker();
 ctrack.init(pModel);
 
-
-// const fd = new faceDeformer();
 const fd = new FaceDeformer(document.getElementById('webgl'));
 {
   const wc1 = document.getElementById('webgl').getContext('webgl') || document.getElementById('webgl').getContext('experimental-webgl');
@@ -35,8 +38,8 @@ const fd = new FaceDeformer(document.getElementById('webgl'));
 
 // canvas for copying videoframes to
 const videocanvas = document.createElement('canvas');
-videocanvas.width = vid.width;
-videocanvas.height = vid.height;
+videocanvas.width = video.width;
+videocanvas.height = video.height;
 
 const mouth_vertices = [
   [44,45,61,44],
@@ -60,7 +63,7 @@ const mouth_vertices = [
   [56,57,60,56],
   [57,59,60,57],
   [57,58,59,57],
-  [50,58,59,50],
+  [50,58,59,50]
 ];
 
 const extendVertices = [
@@ -114,7 +117,7 @@ const extendVertices = [
 
 function drawGridLoop() {
   // get position of face
-  let positions = ctrack.getCurrentPosition(vid);
+  let positions = ctrack.getCurrentPosition(video);
 
   overlayCC.clearRect(0, 0, 500, 375);
   if (positions) {
@@ -131,11 +134,11 @@ function drawGridLoop() {
 }
 
 function drawMaskLoop() {
-  videocanvas.getContext('2d').drawImage(vid,0,0,videocanvas.width,videocanvas.height);
+  videocanvas.getContext('2d').drawImage(video,0,0,videocanvas.width,videocanvas.height);
 
   updateParameters();
 
-  let pos = ctrack.getCurrentPosition(vid);
+  let pos = ctrack.getCurrentPosition(video);
   if (!pos) {
     animationRequest = requestAnimFrame(drawMaskLoop);
     return;
@@ -211,9 +214,9 @@ for (let i = 0; i<pnums; ++i) {
 
 export function startVideo() {
   // start video
-  vid.play();
+  video.play();
   // start tracking
-  ctrack.start(vid);
+  ctrack.start(video);
   // start drawing face grid
   drawGridLoop();
 }

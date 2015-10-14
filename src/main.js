@@ -3,43 +3,9 @@ const Stats = require("stats.js");
 const d3 = require("d3");
 const aspectFit = require("./scripts/layout.js").aspectFit;
 const deform = require("./scripts/deform/index.js");
+const MidiDispatcher = require("./scripts/MidiDispatcher.js");
 
 // main.js
-const midiPlayer = MIDI.Player;
-MIDI.loadPlugin({
-  soundfontUrl: "./soundfont/",
-  instrument: "dummy", // load dummy sound font
-  onsuccess: ()=>{
-    console.log("success");
-    midiPlayer.BPM = 110;
-    midiPlayer.loadFile(
-      "sounds/dejavu1.mid",
-      ()=>{
-        console.log("midi loaded");
-      },
-      ()=>{
-        console.log("loading");
-      },
-      (error)=>{
-        console.error(error);
-      }
-    );
-    const audio = document.getElementById("songAudio");
-    audio.addEventListener("play",()=>{
-      deform.startVideo();
-      midiPlayer.start();
-    });
-    audio.addEventListener("pause", ()=>{
-      midiPlayer.pause();
-    });
-    audio.addEventListener("timeupdate", (e)=>{
-      midiPlayer.currentTime = audio.currentTime * 1000;
-    });
-  },
-  onerror: (error)=> {
-    console.log(error);
-  }
-});
 
 // Make d3.js model
 const notes = (()=>{
@@ -140,7 +106,12 @@ function onMidiData(data) {
     }
   });
 }
-midiPlayer.addListener(onMidiData);
+
+// setup MIDI
+const audio = document.getElementById("songAudio");
+const midiDispatcher = new MidiDispatcher(audio, "sounds/dejavu1.mid", 110);
+midiDispatcher.addListener("play", () => deform.startVideo());
+midiDispatcher.addListener("midi", onMidiData);
 
 // aspect fit
 for(let targetID of ['videoel','overlay','webgl']) {
