@@ -10,7 +10,7 @@ let ctrack;
 /*********** Code for face substitution *********/
 
 
-const fd = new FaceDeformer(document.getElementById('webgl'));
+const app = new FaceDeformer(document.getElementById('webgl'));
 {
   const wc1 = document.getElementById('webgl').getContext('webgl');
   wc1.clearColor(0,0,0,0);
@@ -126,7 +126,7 @@ function drawMaskLoop() {
                 .concat(mouth_vertices)
                 .concat(extendVertices);
 
-  fd.load(videocanvas, newPos, pModel, newVertices);
+  app.load(videocanvas, newPos, pModel, newVertices);
 
   // get position of face
   let parameters = ctrack.getCurrentParameters();
@@ -138,9 +138,9 @@ function drawMaskLoop() {
     // add positions from extended boundary, unmodified
     newPos = positions.concat(addPos);
     // draw mask on top of face
-    fd.draw(newPos);
+    app.draw(newPos);
     if (ph.debug) {
-      fd.drawGrid(newPos);
+      app.drawGrid(newPos);
       video.style.opacity = 0.8;
     }
     else {
