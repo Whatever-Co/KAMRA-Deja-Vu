@@ -19,8 +19,6 @@ let overlayCC = overlay.getContext('2d');
 let ctrack;
 let callback;
 
-checks.requestWebcam(video);
-
 function drawGridLoop() {
   // check whether something tracking.
   let positions = ctrack.getCurrentPosition(video);

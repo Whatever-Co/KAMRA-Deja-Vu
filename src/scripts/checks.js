@@ -20,7 +20,7 @@ export function checkWebGL() {
  * Setup webcamera
  * @param the video dom
  */
-export function requestWebcam(video) {
+export function requestWebcam(video, callback) {
   navigator.getUserMedia(
     {video : true},
     // Success
@@ -31,11 +31,13 @@ export function requestWebcam(video) {
         video.src = (window.URL && window.URL.createObjectURL(stream)) || stream;
       }
       video.play();
+      callback(true);
     },
     // Failue
     ()=>{
       // insertAltVideo(vid);
       alert("There was some problem trying to fetch video from your webcam, using a fallback video instead.");
+      callback(false);
     }
   );
 }
