@@ -9,7 +9,7 @@ const verticleData = require("./../vertice_data.js");
 /**
  * FaceDeformer
  */
-export default class FaceDeformer {
+export default class Fukuwarai {
 
   /**
    * Init with weggl canvas

@@ -1,5 +1,5 @@
 // Require
-const FaceDeformer = require("./FaceDeformer.js");
+const Fukuwarai = require("./Fukuwarai.js");
 
 //-------------------------------
 // Deform/index.js
@@ -9,7 +9,7 @@ let ctrack;
 
 /*********** Code for face substitution *********/
 
-const fd = new FaceDeformer(document.getElementById('webgl'));
+const app = new Fukuwarai(document.getElementById('webgl'));
 {
   const wc1 = document.getElementById('webgl').getContext('webgl');
   wc1.clearColor(0,0,0,0);
@@ -45,13 +45,13 @@ function drawMaskLoop() {
   const newPos = pos.concat(addPos);
 
   // merge with newVertices
-  fd.load(videocanvas, newPos);
+  app.load(videocanvas, newPos);
 
   // get position of face
-  fd.draw(newPos);
+  app.draw(newPos);
   if (ph.debug) {
-    fd.drawGrid(newPos);
-    video.style.opacity = 0.8;
+    app.drawGrid(newPos);
+    video.style.opacity = 0.4;
   }
   else {
     video.style.opacity = 1.0;
@@ -70,7 +70,7 @@ const ph = new parameterHolder();
 const gui = new dat.GUI();
 gui.add(ph, 'debug');
 gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
-  fd.setMode(mode);
+  app.setMode(mode);
 });
 
 /********** EXPORT **********/
