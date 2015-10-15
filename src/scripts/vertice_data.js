@@ -223,3 +223,11 @@ export function getAll() {
   });
   return vert;
 }
+
+export function getMouth() {
+  return ALL.mouth.concat(ALL.mouthInner);
+}
+
+export function getEyes() {
+  return ALL.rightEye.concat(ALL.leftEye);
+}

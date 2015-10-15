@@ -4,6 +4,8 @@ const GRID_FRAG_SHADER = require("../shaders/grid_frag.glsl");
 const FACE_VERT_SHADER = require("../shaders/face_vert.glsl");
 const FACE_FRAG_SHADER = require("../shaders/face_frag.glsl");
 
+const verticleData = require("./../vertice_data.js");
+
 /**
  * FaceDeformer
  */
@@ -13,10 +15,12 @@ export default class FaceDeformer {
    * Init with weggl canvas
    * @param canvas
    */
-  constructor(canvas, verticeMap) {
+  constructor(canvas) {
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
-    this.verticeMap = verticeMap;
+    //this.verticeMap = verticleData.getAll();
+    this.verticeMap = verticleData.getEyes();
+    this._mode = 0;
 
     // load shaders
     const gl = this.gl;
@@ -28,6 +32,20 @@ export default class FaceDeformer {
     this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
     this.gridCoordbuffer = gl.createBuffer();
     this.texCoordBuffer = gl.createBuffer();
+  }
+
+  setMode(mode) {
+    if(this._mode == mode) {
+      return;
+    }
+    if(mode == 0) {
+      this.verticeMap = verticleData.getEyes();
+    } else if(mode == 1) {
+      this.verticeMap = verticleData.getMouth();
+    } else {
+      console.error(`No mode : ${mode}`);
+    }
+    this._mode = mode;
   }
 
   /**
@@ -138,13 +156,21 @@ export default class FaceDeformer {
 
     // create drawvertices based on points
     let vertices = [];
+    //for (var i = 0;i < this.verticeMap.length;i++) {
+    //  vertices.push(points[verticeMap[i][0]][0]);
+    //  vertices.push(points[verticeMap[i][0]][1]);
+    //  vertices.push(points[verticeMap[i][1]][0]);
+    //  vertices.push(points[verticeMap[i][1]][1]);
+    //  vertices.push(points[verticeMap[i][2]][0]);
+    //  vertices.push(points[verticeMap[i][2]][1]);
+    //}
     for (var i = 0;i < this.verticeMap.length;i++) {
       vertices.push(points[verticeMap[i][0]][0]);
-      vertices.push(points[verticeMap[i][0]][1]);
+      vertices.push(points[verticeMap[i][0]][1] - 10.1);
       vertices.push(points[verticeMap[i][1]][0]);
-      vertices.push(points[verticeMap[i][1]][1]);
+      vertices.push(points[verticeMap[i][1]][1] - 10.1);
       vertices.push(points[verticeMap[i][2]][0]);
-      vertices.push(points[verticeMap[i][2]][1]);
+      vertices.push(points[verticeMap[i][2]][1] - 10.1);
     }
 
     const positionLocation = gl.getAttribLocation(this.drawProgram, "a_position");

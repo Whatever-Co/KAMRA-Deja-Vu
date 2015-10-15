@@ -1,6 +1,5 @@
 // Require
 const FaceDeformer = require("./FaceDeformer.js");
-const verticleData = require("./verticle_data.js");
 
 //-------------------------------
 // Deform/index.js
@@ -10,10 +9,7 @@ let ctrack;
 
 /*********** Code for face substitution *********/
 
-const fd = new FaceDeformer(
-  document.getElementById('webgl'),
-  verticleData.getAll()
-);
+const fd = new FaceDeformer(document.getElementById('webgl'));
 {
   const wc1 = document.getElementById('webgl').getContext('webgl');
   wc1.clearColor(0,0,0,0);
@@ -68,10 +64,14 @@ function drawMaskLoop() {
 
 const parameterHolder = function() {
   this.debug = true;
+  this.mode = 0;
 };
 const ph = new parameterHolder();
 const gui = new dat.GUI();
 gui.add(ph, 'debug');
+gui.add(ph, 'mode', {FOUR_EYE:0,EYE_MOUTH:1}).onChange(mode=>{
+  fd.setMode(mode);
+});
 
 /********** EXPORT **********/
 
