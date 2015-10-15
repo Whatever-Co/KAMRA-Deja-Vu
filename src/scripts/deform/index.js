@@ -1,45 +1,23 @@
-// Shim
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
-
 // Require
-const checks = require("./checks.js");
 const FaceDeformer = require("./FaceDeformer.js");
 
 //-------------------------------
 // Deform/index.js
 
-let video = document.getElementById('videoel');
-let overlay = document.getElementById('overlay');
-let overlayCC = overlay.getContext('2d');
-
-// check whether browser supports webGL
-if (!checks.checkWebGL()) {
-  alert("Your browser does not seem to support WebGL. Unfortunately this face mask example depends on WebGL, so you'll have to try it in another browser. :(");
-}
-// setup webcam
-if (!navigator.getUserMedia) {
-  alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
-}
-checks.requestWebcam(video);
+let video;
+let ctrack;
 
 /*********** Code for face substitution *********/
 
-let animationRequest;
-
-const ctrack = new clm.tracker();
-ctrack.init(pModel);
 
 const fd = new FaceDeformer(document.getElementById('webgl'));
 {
-  const wc1 = document.getElementById('webgl').getContext('webgl') || document.getElementById('webgl').getContext('experimental-webgl');
+  const wc1 = document.getElementById('webgl').getContext('webgl');
   wc1.clearColor(0,0,0,0);
 }
 
 // canvas for copying videoframes to
 const videocanvas = document.createElement('canvas');
-videocanvas.width = video.width;
-videocanvas.height = video.height;
 
 const mouth_vertices = [
   [44,45,61,44],
@@ -115,34 +93,22 @@ const extendVertices = [
   [19,71,0,19]
 ];
 
-function drawGridLoop() {
-  // get position of face
-  let positions = ctrack.getCurrentPosition(video);
-
-  overlayCC.clearRect(0, 0, 500, 375);
-  if (positions) {
-    // draw current grid
-    ctrack.draw(overlay);
-  }
-  // check whether mask has converged
-  let pn = ctrack.getConvergence();
-  if (pn < 0.4) {
-    drawMaskLoop();
-  } else {
-    requestAnimFrame(drawGridLoop);
-  }
-}
-
+/**
+ * Show deformd face
+ */
 function drawMaskLoop() {
+  // copy video texture
   videocanvas.getContext('2d').drawImage(video,0,0,videocanvas.width,videocanvas.height);
 
   updateParameters();
 
   let pos = ctrack.getCurrentPosition(video);
   if (!pos) {
-    animationRequest = requestAnimFrame(drawMaskLoop);
+    // no tracking object
+    requestAnimFrame(drawMaskLoop);
     return;
   }
+
   // create additional points around face
   let tempPos;
   let addPos = [];
@@ -155,9 +121,10 @@ function drawMaskLoop() {
   // merge with pos
   let newPos = pos.concat(addPos);
 
-  let newVertices = pModel.path.vertices.concat(mouth_vertices);
   // merge with newVertices
-  newVertices = newVertices.concat(extendVertices);
+  let newVertices = pModel.path.vertices
+                .concat(mouth_vertices)
+                .concat(extendVertices);
 
   fd.load(videocanvas, newPos, pModel, newVertices);
 
@@ -167,15 +134,20 @@ function drawMaskLoop() {
     parameters[i] += ph['component '+(i-3)];
   }
   let positions = ctrack.calculatePositions(parameters);
-
-  overlayCC.clearRect(0, 0, 400, 300);
   if (positions) {
     // add positions from extended boundary, unmodified
     newPos = positions.concat(addPos);
     // draw mask on top of face
     fd.draw(newPos);
+    if (ph.debug) {
+      fd.drawGrid(newPos);
+      video.style.opacity = 0.8;
+    }
+    else {
+      video.style.opacity = 1.0;
+    }
   }
-  animationRequest = requestAnimFrame(drawMaskLoop);
+  requestAnimFrame(drawMaskLoop);
 }
 
 
@@ -186,7 +158,7 @@ const parameterHolder = function() {
   for (let i = 0;i<pnums; i++) {
     this['component '+(i+3)] = 0;
   }
-  this.presets = 0;
+  this.debug = false;
 };
 
 const ph = new parameterHolder();
@@ -198,6 +170,8 @@ for (let i=0; i<pnums; ++i) {
   eig = Math.sqrt(pModel.shapeModel.eigenValues[i+2])*3
   control['c'+(i+3)] = gui.add(ph, 'component '+(i+3), -5*eig, 5*eig).listen();
 }
+gui.add(ph, 'debug');
+
 
 function updateParameters() {
   // Smoothing
@@ -210,14 +184,52 @@ for (let i = 0; i<pnums; ++i) {
   ph['component '+(i+3)] = 0;
 }
 
+function remap(value, inputMin, inputMax, outputMin, outputMax) {
+  return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
+}
+
 /********** EXPORT **********/
 
-export function startVideo() {
-  // start video
-  video.play();
-  // start tracking
-  ctrack.start(video);
-  // start drawing face grid
-  drawGridLoop();
+export function start(video_, ctrack_) {
+  video = video_;
+  ctrack = ctrack_;
+
+  videocanvas.width = video.width;
+  videocanvas.height = video.height;
+
+  drawMaskLoop();
 }
-export const param = ph;
+
+export function onMidi(data) {
+  // on
+  if(data.message == 144) {
+    let keyStr = MIDI.noteToKey[data.note];
+    if (data.channel == 0) {
+      // Main melody
+      switch (keyStr) {
+        case 'F3':
+          ph['component 10'] = -20;
+          break;
+        case 'Gb3':
+          ph['component 10'] = 20;
+          break;
+      }
+    } else if (data.channel == 1) {
+      // Bass
+      ph['component 4'] = remap(data.note, 40, 70, -20, 20);
+    } else if (data.channel == 2) {
+      // Constant loop
+      ph['component 9'] = 40;
+    } else if (data.channel == 3) {
+      // Solo
+      ph['component 4'] = remap(data.note, 72, 85, 40, -90);
+    } else if (data.channel == 4) {
+      // Beat
+      switch (keyStr) {
+        case 'Db5':
+          ph['component 16'] = -20;
+          break;
+      }
+    }
+  }
+}

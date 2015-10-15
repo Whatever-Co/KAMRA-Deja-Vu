@@ -1,131 +1,56 @@
 // Requires
+require("babel/polyfill");
 const Stats = require("stats.js");
-const d3 = require("d3");
 const aspectFit = require("./scripts/layout.js").aspectFit;
-const deform = require("./scripts/deform/index.js");
 const MidiDispatcher = require("./scripts/MidiDispatcher.js");
+const MidiNoteView = require("./scripts/MidiNoteView.js");
+const checks = require("./scripts/checks.js");
+const findFace = require("./scripts/find_face.js");
 
-// main.js
+//const deform = require("./scripts/deform/index.js"); // 顔をひずめる
+const deform = require("./scripts/fukuwarai/index.js"); // 顔のパーツを移動する
 
-// Make d3.js model
-const notes = (()=>{
-  const data = [];
-  for(let channel=0; channel<=5; ++channel) {
-    for(let note=0; note<=127; ++note) {
-      data.push({
-        channel:channel,
-        note:note,
-        velocity:0
-      });
-    }
-  }
-  return data;
-})();
-
-const svg = d3.select("#keyboards").append('svg').attr({
-  width:128*10,
-  height:10*10
-});
-svg.selectAll('rect').data(notes).enter().append('rect');
-
-const keyboards = svg.selectAll('rect');
-keyboards.attr({
-  'x':(d)=> {
-    return d.note * 10;
-  },
-  'y':(d)=> {
-    return d.channel * 10;
-  },
-  'width':()=> {
-    return 10;
-  },
-  'height':()=> {
-    return 10;
-  },
-  'strokeWidth':()=>{
-    return 1;
-  },
-  'stroke':()=>{
-    return "rgb(0,0,0)";
-  },
-  'fill':(d)=>{
-    return `rgb(0,0,${d.velocity*2})`;
-  }
-});
-
-const param = deform.param;
-function remap(value, inputMin, inputMax, outputMin, outputMax) {
-  return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
-}
-
-function onMidiData(data) {
-  // on
-  if(data.message == 144) {
-    let keyStr = MIDI.noteToKey[data.note];
-    if (data.channel == 0) {
-      // Main melody
-      switch (keyStr) {
-        case 'F3':
-          param['component 10'] = -20;
-          break;
-        case 'Gb3':
-          param['component 10'] = 20;
-          break;
-      }
-    } else if (data.channel == 1) {
-      // Bass
-      //console.log(`Bass ${data.note}`);
-      param['component 4'] = remap(data.note, 40, 70, -20, 20);
-    } else if (data.channel == 2) {
-      // Constant loop
-      param['component 9'] = 40;
-    } else if (data.channel == 3) {
-      // Solo
-      //console.log(`Solo ${data.note}`);
-      param['component 4'] = remap(data.note, 72, 85, 40, -90);
-    } else if (data.channel == 4) {
-      // Beat
-      switch (keyStr) {
-        case 'Db5':
-          param['component 16'] = -20;
-          break;
-      }
-    }
-  }
-  // note map
-  for(let note of notes) {
-    if(note.channel == data.channel && note.note == data.note) {
-      note.velocity = data.velocity;
-      break;
-    }
-  }
-  // update view
-  keyboards.attr({
-    'fill':(d)=>{
-      return `rgb(0,0,${d.velocity*2})`;
-    }
-  });
-}
 
 // setup MIDI
 const audio = document.getElementById("songAudio");
 const midiDispatcher = new MidiDispatcher(audio, "sounds/dejavu1.mid", 110);
-midiDispatcher.addListener("play", () => deform.startVideo());
-midiDispatcher.addListener("midi", onMidiData);
+const midiNoteView = new MidiNoteView("keyboards");
 
-// aspect fit
-for(let targetID of ['videoel','overlay','webgl']) {
-  aspectFit(targetID, 4/3);
+// setup Video
+const video = document.getElementById('videoel');
+const ctrack = new clm.tracker();
+ctrack.init(pModel);
+
+checks.requestWebcam(video, success=>{
+  findFace.start(video, ctrack, onFaceFound);
+});
+
+midiDispatcher.addListener("midi", (data) => {
+  deform.onMidi(data);
+  midiNoteView.onMidi(data);
+});
+
+function onFaceFound() {
+  deform.start(video, ctrack);
 }
 
 
-/*********** Code for stats **********/
+// Aspect fit
+{
+  for(let targetID of ['videoel','overlay','webgl']) {
+    aspectFit(targetID, 4/3);
+  }
+}
 
-let stats = new Stats();
-stats.domElement.style.position = 'absolute';
-stats.domElement.style.top = '0px';
-document.getElementById('container').appendChild( stats.domElement );
+// Stats
+{
+  let stats = new Stats();
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.top = '0px';
+  document.getElementById('container').appendChild( stats.domElement );
 
-document.addEventListener("clmtrackrIteration", function(event) {
-  stats.update();
-}, false);
+  document.addEventListener("clmtrackrIteration", function(event) {
+    stats.update();
+  }, false);
+}
+
