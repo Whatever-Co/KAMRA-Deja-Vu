@@ -82,13 +82,11 @@ export function start(video_, ctrack_) {
   videocanvas.width = video.width;
   videocanvas.height = video.height;
 
-
-
   drawMaskLoop();
 }
 
 export function onMidi(data) {
-  // on
+  // note on
   if(data.message == 144) {
     // nothing
   }

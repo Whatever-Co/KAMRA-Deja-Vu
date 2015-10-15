@@ -166,7 +166,7 @@ export const ALL = {
     [50,58,59,50]
   ],
   // extended outline
-  faceExtended:[
+  extendedJawline:[
     [0,71,72,0],
     [0,72,1,0],
     [1,72,73,1],
@@ -196,6 +196,10 @@ export const ALL = {
     [13,84,85,13],
     [13,85,14,13],
     [14,85,86,14],
+
+    [0,90,71,0]
+  ],
+  extendedForehead:[
     [14,86,15,14],
     [15,86,87,15],
     [15,87,16,15],
@@ -211,14 +215,28 @@ export const ALL = {
     [92,91,20,92],
     [20,91,19,20],
     [91,90,19,91],
-    [19,90,71,19],
-    [19,71,0,19]
+
+    [19,90,0,19]
   ]
 };
+
+
 
 export function getAll() {
   let vert = [];
   Object.keys(ALL).forEach(key => {
+    vert = vert.concat(ALL[key]);
+  });
+  return vert;
+}
+
+export function getDefault() {
+  let vert = [];
+  const keys = [
+    'jawline', 'rightEyebrow', 'belowEyes', 'leftEyebrow', 'belowNose',
+    'noseRegion', 'mouth', 'leftEye', 'rightEye', 'mouthInner','extendedForehead'
+  ];
+  keys.forEach(key => {
     vert = vert.concat(ALL[key]);
   });
   return vert;

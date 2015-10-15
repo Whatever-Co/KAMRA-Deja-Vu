@@ -18,8 +18,8 @@ export default class Fukuwarai {
   constructor(canvas) {
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
-    this.verticeMap = verticleData.getAll();
-    //this.verticeMap = verticleData.getEyes();
+    this.verticeMap = verticleData.getDefault();
+    //this.verticeMap = verticleData.getAll();
     this._mode = 0;
 
     // load shaders
