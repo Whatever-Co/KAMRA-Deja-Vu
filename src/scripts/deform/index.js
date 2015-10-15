@@ -25,8 +25,6 @@ checks.requestWebcam(video);
 
 /*********** Code for face substitution *********/
 
-let animationRequest;
-
 const ctrack = new clm.tracker();
 ctrack.init(pModel);
 
@@ -134,15 +132,18 @@ function drawGridLoop() {
 }
 
 function drawMaskLoop() {
+  // copy video texture
   videocanvas.getContext('2d').drawImage(video,0,0,videocanvas.width,videocanvas.height);
 
   updateParameters();
 
   let pos = ctrack.getCurrentPosition(video);
   if (!pos) {
-    animationRequest = requestAnimFrame(drawMaskLoop);
+    // no tracking object
+    requestAnimFrame(drawMaskLoop);
     return;
   }
+
   // create additional points around face
   let tempPos;
   let addPos = [];
@@ -175,7 +176,7 @@ function drawMaskLoop() {
     // draw mask on top of face
     fd.draw(newPos);
   }
-  animationRequest = requestAnimFrame(drawMaskLoop);
+  requestAnimFrame(drawMaskLoop);
 }
 
 
@@ -210,6 +211,10 @@ for (let i = 0; i<pnums; ++i) {
   ph['component '+(i+3)] = 0;
 }
 
+function remap(value, inputMin, inputMax, outputMin, outputMax) {
+  return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
+}
+
 /********** EXPORT **********/
 
 export function startVideo() {
@@ -220,4 +225,42 @@ export function startVideo() {
   // start drawing face grid
   drawGridLoop();
 }
+
+export function onMidi(data) {
+  // on
+  if(data.message == 144) {
+    let keyStr = MIDI.noteToKey[data.note];
+    if (data.channel == 0) {
+      // Main melody
+      switch (keyStr) {
+        case 'F3':
+          ph['component 10'] = -20;
+          break;
+        case 'Gb3':
+          ph['component 10'] = 20;
+          break;
+      }
+    } else if (data.channel == 1) {
+      // Bass
+      //console.log(`Bass ${data.note}`);
+      ph['component 4'] = remap(data.note, 40, 70, -20, 20);
+    } else if (data.channel == 2) {
+      // Constant loop
+      ph['component 9'] = 40;
+    } else if (data.channel == 3) {
+      // Solo
+      //console.log(`Solo ${data.note}`);
+      ph['component 4'] = remap(data.note, 72, 85, 40, -90);
+    } else if (data.channel == 4) {
+      // Beat
+      switch (keyStr) {
+        case 'Db5':
+          ph['component 16'] = -20;
+          break;
+      }
+    }
+  }
+}
+
 export const param = ph;
+

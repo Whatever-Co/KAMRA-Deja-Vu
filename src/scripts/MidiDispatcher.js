@@ -1,6 +1,11 @@
 const EventEmitter = require('events').EventEmitter;
 const midiPlayer = MIDI.Player;
 
+/**
+ * MidiDispatcher
+ *
+ * Dispatch midi data that be synchronized with audio.
+ */
 export default class MidiDispatcher extends EventEmitter {
   constructor(audio, midifile, bpm=120) {
     super();
@@ -14,14 +19,14 @@ export default class MidiDispatcher extends EventEmitter {
     MIDI.loadPlugin({
       soundfontUrl: "./soundfont/",
       instrument: "dummy", // load dummy sound font
-      onsuccess: self.init.bind(self),
+      onsuccess: self._init.bind(self),
       onerror: (error)=> {
         console.log(error);
       }
     });
   }
-
-  init() {
+  
+  _init() {
     midiPlayer.BPM = this.bpm;
     midiPlayer.loadFile(this.midifile,
       ()=>console.log("midi loaded"), // on loaded

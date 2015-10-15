@@ -1,3 +1,4 @@
+// import shaders
 const GRID_VERT_SHADER = require("./shaders/grid_vert.glsl");
 const GRID_FRAG_SHADER = require("./shaders/grid_frag.glsl");
 const FACE_VERT_SHADER = require("./shaders/face_vert.glsl");
