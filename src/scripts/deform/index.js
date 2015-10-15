@@ -121,9 +121,10 @@ function drawMaskLoop() {
   // merge with pos
   let newPos = pos.concat(addPos);
 
-  let newVertices = pModel.path.vertices.concat(mouth_vertices);
   // merge with newVertices
-  newVertices = newVertices.concat(extendVertices);
+  let newVertices = pModel.path.vertices
+                .concat(mouth_vertices)
+                .concat(extendVertices);
 
   fd.load(videocanvas, newPos, pModel, newVertices);
 
@@ -133,12 +134,18 @@ function drawMaskLoop() {
     parameters[i] += ph['component '+(i-3)];
   }
   let positions = ctrack.calculatePositions(parameters);
-
   if (positions) {
     // add positions from extended boundary, unmodified
     newPos = positions.concat(addPos);
     // draw mask on top of face
     fd.draw(newPos);
+    if (ph.debug) {
+      fd.drawGrid(newPos);
+      video.style.opacity = 0.8;
+    }
+    else {
+      video.style.opacity = 1.0;
+    }
   }
   requestAnimFrame(drawMaskLoop);
 }
@@ -151,7 +158,7 @@ const parameterHolder = function() {
   for (let i = 0;i<pnums; i++) {
     this['component '+(i+3)] = 0;
   }
-  this.presets = 0;
+  this.debug = false;
 };
 
 const ph = new parameterHolder();
@@ -163,6 +170,8 @@ for (let i=0; i<pnums; ++i) {
   eig = Math.sqrt(pModel.shapeModel.eigenValues[i+2])*3
   control['c'+(i+3)] = gui.add(ph, 'component '+(i+3), -5*eig, 5*eig).listen();
 }
+gui.add(ph, 'debug');
+
 
 function updateParameters() {
   // Smoothing

@@ -6,7 +6,7 @@ const MidiDispatcher = require("./scripts/MidiDispatcher.js");
 const MidiNoteView = require("./scripts/MidiNoteView.js");
 const findFace = require("./scripts/find_face.js");
 
-// const deform = require("./scripts/deform/index.js"); // 顔をひずめる
+//const deform = require("./scripts/deform/index.js"); // 顔をひずめる
 const deform = require("./scripts/fukuwarai/index.js"); // 顔のパーツを移動する
 
 

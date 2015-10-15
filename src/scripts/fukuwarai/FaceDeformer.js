@@ -15,8 +15,18 @@ export default class FaceDeformer {
    */
   constructor(canvas) {
     this.gl = getWebGLContext(canvas);
-    this.first = true;
     this.usegrid = false;
+
+    // load shaders
+    const gl = this.gl;
+    const gridVertexShader = loadShader(gl, GRID_VERT_SHADER, gl.VERTEX_SHADER);
+    const gridFragmentShader = loadShader(gl, GRID_FRAG_SHADER, gl.FRAGMENT_SHADER);
+    this.gridProgram = createProgram(gl, [gridVertexShader, gridFragmentShader]);
+    const vertexShader = loadShader(gl, FACE_VERT_SHADER, gl.VERTEX_SHADER);
+    const fragmentShader = loadShader(gl, FACE_FRAG_SHADER, gl.FRAGMENT_SHADER);
+    this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
+    this.gridCoordbuffer = gl.createBuffer();
+    this.texCoordBuffer = gl.createBuffer();
   }
 
   /**
@@ -35,6 +45,7 @@ export default class FaceDeformer {
     } else {
       verticeMap = pdmModel.path.vertices;
     }
+    this.verticeMap = verticeMap;
     this.numTriangles = verticeMap.length;
 
     // get cropping
@@ -83,29 +94,6 @@ export default class FaceDeformer {
       textureVertices.push(nupoints[verticeMap[i][1]][1]/height);
       textureVertices.push(nupoints[verticeMap[i][2]][0]/width);
       textureVertices.push(nupoints[verticeMap[i][2]][1]/height);
-    }
-
-    if(this.first) {
-      // create program for drawing grid
-
-      var gridVertexShader = loadShader(gl, GRID_VERT_SHADER, gl.VERTEX_SHADER);
-      var gridFragmentShader = loadShader(gl, GRID_FRAG_SHADER, gl.FRAGMENT_SHADER);
-      try {
-        this.gridProgram = createProgram(gl, [gridVertexShader, gridFragmentShader]);
-      } catch(err) {
-        alert("There was a problem setting up the webGL programs. Maybe you should try it in another browser. :(");
-      }
-
-      this.gridCoordbuffer = gl.createBuffer();
-
-
-      const vertexShader = loadShader(gl, FACE_VERT_SHADER, gl.VERTEX_SHADER);
-      const fragmentShader = loadShader(gl, FACE_FRAG_SHADER, gl.FRAGMENT_SHADER);
-      this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
-
-      this.texCoordBuffer = gl.createBuffer();
-      this.verticeMap = verticeMap;
-      this.first = false;
     }
 
     // load program for drawing grid
