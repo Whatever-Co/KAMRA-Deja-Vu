@@ -40,7 +40,7 @@ function drawGridLoop() {
     return;
   }
 
-  // to main loop
+  // found
   overlayCC.clearRect(0, 0, 400, 300);
   callback();
 }
