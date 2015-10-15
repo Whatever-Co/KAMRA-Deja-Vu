@@ -6,11 +6,8 @@ const vec2 center = vec2(0.5, 0.4);
 uniform sampler2D u_image;
 varying vec2 v_texCoord;
 
-
 varying float v_fallbackLength;
 varying float v_fallbackPower;
-//float u_fallbackLength = 0.2;
-//float u_fallbackPower = 15.0;
 
 float egg_mask(vec2 coord){
   vec2 diff = center - coord;

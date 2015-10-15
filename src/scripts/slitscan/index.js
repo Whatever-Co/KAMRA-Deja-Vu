@@ -16,7 +16,12 @@ const app = new SlitScan(document.getElementById('webgl'));
 }
 // canvas for copying videoframes to
 const videocanvas = document.createElement('canvas');
+const scanCanvas = document.createElement('canvas');
+const scanCanvasCtx = scanCanvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const overlayCtx = overlay.getContext('2d');
 
+let scanningIndex = 0;
 
 /**
  * Show deformd face
@@ -56,7 +61,66 @@ function drawMaskLoop() {
   else {
     video.style.opacity = 0;
   }
+
+
+
+  overlayCtx.rect(0,0,app.canvas.width,app.canvas.height);
+  overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.001)';
+  overlayCtx.fill();
+
+  if(ph.mode == 0) {
+    _scanAll();
+  } else if(ph.mode == 1) {
+    _scanHorizontal();
+  } else if(ph.mode == 2) {
+    _scanVertical();
+  }
+
   requestAnimFrame(drawMaskLoop);
+}
+
+function _scanAll() {
+  overlayCtx.drawImage(app.canvas, 0, 0);
+}
+
+function _scanHorizontal() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+
+  if(scanningIndex == 0) {
+    scanningIndex = bounds.xMin;
+  }
+
+  overlayCtx.drawImage(app.canvas,
+    scanningIndex, 0, 2, height,
+    scanningIndex, 0, 2, height
+  );
+
+  scanningIndex += 1;
+  if(scanningIndex >= bounds.xMax) {
+    scanningIndex = 0;
+  }
+}
+
+function _scanVertical() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+
+  if(scanningIndex == 0) {
+    scanningIndex = bounds.yMin;
+  }
+
+  overlayCtx.drawImage(app.canvas,
+    0, scanningIndex, width, 2,
+    0, scanningIndex, width, 2
+  );
+
+  scanningIndex += 1;
+  if(scanningIndex >= bounds.yMax) {
+    scanningIndex = 0;
+  }
 }
 
 
@@ -70,8 +134,12 @@ const parameterHolder = function() {
 const ph = new parameterHolder();
 const gui = new dat.GUI();
 gui.add(ph, 'debug');
-gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
-  app.setMode(mode);
+gui.add(ph, 'mode', {All:0, Horizontal:1, Vertical:2}).onChange(mode=>{
+  scanningIndex = 0;
+
+  overlayCtx.rect(0,0,app.canvas.width,app.canvas.height);
+  overlayCtx.fillStyle="black";
+  overlayCtx.fill();
 });
 gui.add(ph, 'foreheadExtend', 1.2, 2.0);
 gui.add(app, 'fallbackLength', 0.1, 0.5);

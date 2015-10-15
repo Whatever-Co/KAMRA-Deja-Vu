@@ -16,11 +16,17 @@ export default class Fukuwarai {
    * @param canvas
    */
   constructor(canvas) {
+    this.canvas = canvas;
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
     this.verticeMap = verticleData.getDefault();
-    //this.verticeMap = verticleData.getAll();
     this._mode = 0;
+    this.bounds = {
+      xMin:0,
+      yMin:0,
+      xMax:0,
+      yMax:0
+    };
 
     this.fallbackLength = 0.3;
     this.fallbackPower = 15;
@@ -36,20 +42,6 @@ export default class Fukuwarai {
     this.drawProgram = createProgram(gl, [vertexShader, fragmentShader]);
     this.gridCoordbuffer = gl.createBuffer();
     this.texCoordBuffer = gl.createBuffer();
-  }
-
-  setMode(mode) {
-    if(this._mode == mode) {
-      return;
-    }
-    if(mode == 0) {
-      this.verticeMap = verticleData.getEyes();
-    } else if(mode == 1) {
-      this.verticeMap = verticleData.getMouth();
-    } else {
-      console.error(`No mode : ${mode}`);
-    }
-    this._mode = mode;
   }
 
   /**
@@ -80,6 +72,12 @@ export default class Fukuwarai {
     maxy = Math.ceil(maxy);
     const width = this.width = maxx-minx;
     const height = this.height = maxy-miny;
+
+    this.bounds.xMin = minx;
+    this.bounds.yMin = miny;
+    this.bounds.xMax = maxx;
+    this.bounds.yMax = maxy;
+
     const cc = element.getContext('2d');
     const image = cc.getImageData(minx, miny, width, height);
 
@@ -135,9 +133,8 @@ export default class Fukuwarai {
 
     // Upload the image into the texture.
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-    // set the resolution for draw program
     {
+      // update shader props
       let u_resolution = gl.getUniformLocation(this.drawProgram, "u_resolution");
       gl.uniform2f(u_resolution, gl.drawingBufferWidth, gl.drawingBufferHeight);
       let u_fallbackLength = gl.getUniformLocation(this.drawProgram, "u_fallbackLength");
