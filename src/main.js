@@ -7,9 +7,22 @@ const MidiNoteView = require("./scripts/MidiNoteView.js");
 const checks = require("./scripts/checks.js");
 const findFace = require("./scripts/find_face.js");
 
-const effect = require("./scripts/deform/index.js"); // 顔をひずめる
-//const effect = require("./scripts/fukuwarai/index.js"); // 顔のパーツを移動する
-
+// Switch demo
+// http://localhost:8000/?{DEMO_TYPE}
+let scene;
+switch (location.search.substring(1)) {
+  case 'deform': // 顔をひずめる
+    scene = require("./scripts/deform/index.js");
+    break;
+  case 'last': // 顔のパーツを移動する
+    scene = require("./scripts/fukuwarai/index.js");
+    break;
+  case 'scan': // スリットスキャン
+    scene = require("./scripts/slitscan/index.js");
+    break;
+  default:
+    scene = require("./scripts/fukuwarai/index.js");
+}
 
 // setup MIDI
 const audio = document.getElementById("songAudio");
@@ -26,12 +39,12 @@ checks.requestWebcam(video, success=>{
 });
 
 midiDispatcher.addListener("midi", (data) => {
-  effect.onMidi(data);
+  scene.onMidi(data);
   midiNoteView.onMidi(data);
 });
 
 function onFaceFound() {
-  effect.start(video, ctrack);
+  scene.start(video, ctrack);
 }
 
 
