@@ -63,13 +63,13 @@ function drawMaskLoop() {
 /********** parameter code *********/
 
 const parameterHolder = function() {
-  this.debug = true;
+  this.debug = false;
   this.mode = 0;
 };
 const ph = new parameterHolder();
 const gui = new dat.GUI();
 gui.add(ph, 'debug');
-gui.add(ph, 'mode', {FOUR_EYE:0,EYE_MOUTH:1}).onChange(mode=>{
+gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
   fd.setMode(mode);
 });
 

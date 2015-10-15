@@ -166,11 +166,11 @@ export default class FaceDeformer {
     //}
     for (var i = 0;i < this.verticeMap.length;i++) {
       vertices.push(points[verticeMap[i][0]][0]);
-      vertices.push(points[verticeMap[i][0]][1] - 10.1);
+      vertices.push(points[verticeMap[i][0]][1] + 13);
       vertices.push(points[verticeMap[i][1]][0]);
-      vertices.push(points[verticeMap[i][1]][1] - 10.1);
+      vertices.push(points[verticeMap[i][1]][1] + 13);
       vertices.push(points[verticeMap[i][2]][0]);
-      vertices.push(points[verticeMap[i][2]][1] - 10.1);
+      vertices.push(points[verticeMap[i][2]][1] + 13);
     }
 
     const positionLocation = gl.getAttribLocation(this.drawProgram, "a_position");
