@@ -13,9 +13,10 @@ export default class FaceDeformer {
    * Init with weggl canvas
    * @param canvas
    */
-  constructor(canvas) {
+  constructor(canvas, verticeMap) {
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
+    this.verticeMap = verticeMap;
 
     // load shaders
     const gl = this.gl;
@@ -36,17 +37,9 @@ export default class FaceDeformer {
    * @param pModel
    * @param vertices
    */
-  load(element, points, pModel, vertices) {
+  load(element, points) {
     let gl = this.gl;
-    this.pdmModel = pModel;
-    let verticeMap;
-    if (vertices) {
-      verticeMap = vertices;
-    } else {
-      verticeMap = pdmModel.path.vertices;
-    }
-    this.verticeMap = verticeMap;
-    this.numTriangles = verticeMap.length;
+    const verticeMap = this.verticeMap;
 
     // get cropping
     let maxx = 0;
@@ -63,22 +56,13 @@ export default class FaceDeformer {
     maxx = Math.ceil(maxx);
     miny = Math.floor(miny);
     maxy = Math.ceil(maxy);
-    let width = this.width = maxx-minx;
-    let height = this.height = maxy-miny;
-    let cc;
-    if (element.tagName == 'VIDEO' || element.tagName == 'IMG') {
-      let ca = document.createElement('canvas');
-      ca.width = element.width;
-      ca.height = element.height;
-      cc = ca.getContext('2d');
-      cc.drawImage(element, 0, 0, element.width, element.height);
-    } else if (element.tagName == 'CANVAS') {
-      cc = element.getContext('2d');
-    }
-    let image = cc.getImageData(minx, miny, width, height);
+    const width = this.width = maxx-minx;
+    const height = this.height = maxy-miny;
+    const cc = element.getContext('2d');
+    const image = cc.getImageData(minx, miny, width, height);
 
     // correct points
-    let nupoints = [];
+    const nupoints = [];
     for (let i = 0;i < points.length;i++) {
       nupoints[i] = [];
       nupoints[i][0] = points[i][0] - minx;
@@ -86,7 +70,7 @@ export default class FaceDeformer {
     }
 
     // create vertices based on points
-    let textureVertices = [];
+    const textureVertices = [];
     for (let i = 0;i < verticeMap.length;i++) {
       textureVertices.push(nupoints[verticeMap[i][0]][0]/width);
       textureVertices.push(nupoints[verticeMap[i][0]][1]/height);
@@ -139,6 +123,7 @@ export default class FaceDeformer {
    */
   draw(points) {
     const gl = this.gl;
+    const verticeMap = this.verticeMap;
 
     if (this.usegrid) {
       // switch program if needed
@@ -152,7 +137,6 @@ export default class FaceDeformer {
     }
 
     // create drawvertices based on points
-    const verticeMap = this.verticeMap;
     let vertices = [];
     for (var i = 0;i < this.verticeMap.length;i++) {
       vertices.push(points[verticeMap[i][0]][0]);
@@ -166,14 +150,14 @@ export default class FaceDeformer {
     const positionLocation = gl.getAttribLocation(this.drawProgram, "a_position");
 
     // Create a buffer for the position of the vertices.
-    let drawPosBuffer = gl.createBuffer();
+    const drawPosBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, drawPosBuffer);
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
     // Draw the face vertices
-    gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles*3);
+    gl.drawArrays(gl.TRIANGLES, 0, verticeMap.length*3);
   }
 
   /**
@@ -182,6 +166,7 @@ export default class FaceDeformer {
    */
   drawGrid(points) {
     const gl = this.gl;
+    const verticeMap = this.verticeMap;
 
     if (!this.usegrid) {
       gl.useProgram(this.gridProgram);
@@ -189,7 +174,7 @@ export default class FaceDeformer {
     }
 
     // create drawvertices based on points
-    const verticeMap = this.verticeMap;
+
     let vertices = [];
     // create new texturegrid
     for (let i = 0;i < verticeMap.length;i++) {
@@ -218,7 +203,7 @@ export default class FaceDeformer {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
     // Draw the lines
-    gl.drawArrays(gl.LINES, 0, this.numTriangles*6);
+    gl.drawArrays(gl.LINES, 0, verticeMap.length*6);
   }
 
   /**
@@ -226,35 +211,6 @@ export default class FaceDeformer {
    */
   clear() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-  }
-
-  /**
-   *
-   * @param parameters
-   * @param useTransforms
-   * @returns {Array}
-   */
-  calculatePositions(parameters, useTransforms) {
-    let x, y, a, b;
-    const numParameters = parameters.length;
-    let positions = [];
-    for (let i = 0;i < this.pdmModel.patchModel.numPatches;i++) {
-      x = this.pdmModel.shapeModel.meanShape[i][0];
-      y = this.pdmModel.shapeModel.meanShape[i][1];
-      for (var j = 0;j < numParameters-4;j++) {
-        x += this.pdmModel.shapeModel.eigenVectors[(i*2)][j]*parameters[j+4];
-        y += this.pdmModel.shapeModel.eigenVectors[(i*2)+1][j]*parameters[j+4];
-      }
-      if (useTransforms) {
-        a = parameters[0]*x - parameters[1]*y + parameters[2];
-        b = parameters[0]*y + parameters[1]*x + parameters[3];
-        x += a;
-        y += b;
-      }
-      positions[i] = [x,y];
-    }
-
-    return positions;
   }
 }
 
