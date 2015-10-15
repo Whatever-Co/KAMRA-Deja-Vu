@@ -37,8 +37,8 @@ function drawMaskLoop() {
   let addPos = [];
   for (let i=0; i<23; i++) {
     tempPos = [];
-    tempPos[0] = (pos[i][0] - pos[62][0])*1.3 + pos[62][0];
-    tempPos[1] = (pos[i][1] - pos[62][1])*1.3 + pos[62][1];
+    tempPos[0] = (pos[i][0] - pos[62][0])*ph.foreheadExtend + pos[62][0];
+    tempPos[1] = (pos[i][1] - pos[62][1])*ph.foreheadExtend + pos[62][1];
     addPos.push(tempPos);
   }
   // merge with pos
@@ -65,6 +65,7 @@ function drawMaskLoop() {
 const parameterHolder = function() {
   this.debug = false;
   this.mode = 0;
+  this.foreheadExtend = 1.6;
 };
 const ph = new parameterHolder();
 const gui = new dat.GUI();
@@ -72,6 +73,7 @@ gui.add(ph, 'debug');
 gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
   app.setMode(mode);
 });
+gui.add(ph, 'foreheadExtend', 1.2, 2.0);
 gui.add(app, 'fallbackLength', 0.1, 0.5);
 gui.add(app, 'fallbackPower', 5.0, 30.0);
 
