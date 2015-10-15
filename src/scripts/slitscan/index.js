@@ -72,6 +72,9 @@ gui.add(ph, 'debug');
 gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
   app.setMode(mode);
 });
+gui.add(app, 'fallbackLength', 0.1, 0.5);
+gui.add(app, 'fallbackPower', 5.0, 30.0);
+
 
 /********** EXPORT **********/
 

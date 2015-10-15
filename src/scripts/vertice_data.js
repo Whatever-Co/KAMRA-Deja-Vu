@@ -234,7 +234,9 @@ export function getDefault() {
   let vert = [];
   const keys = [
     'jawline', 'rightEyebrow', 'belowEyes', 'leftEyebrow', 'belowNose',
-    'noseRegion', 'mouth', 'leftEye', 'rightEye', 'mouthInner','extendedForehead'
+    'noseRegion', 'mouth', 'leftEye', 'rightEye'
+    , 'mouthInner'
+    , 'extendedForehead'
   ];
   keys.forEach(key => {
     vert = vert.concat(ALL[key]);

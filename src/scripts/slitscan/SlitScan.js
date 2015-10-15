@@ -1,8 +1,8 @@
 // import shaders
 const GRID_VERT_SHADER = require("../shaders/grid_vert.glsl");
 const GRID_FRAG_SHADER = require("../shaders/grid_frag.glsl");
-const FACE_VERT_SHADER = require("../shaders/face_vert.glsl");
-const FACE_FRAG_SHADER = require("../shaders/face_frag.glsl");
+const FACE_VERT_SHADER = require("./shaders/face_vert.glsl");
+const FACE_FRAG_SHADER = require("./shaders/face_frag.glsl"); // custom shader
 
 const verticleData = require("./../vertice_data.js");
 
@@ -21,6 +21,10 @@ export default class Fukuwarai {
     this.verticeMap = verticleData.getDefault();
     //this.verticeMap = verticleData.getAll();
     this._mode = 0;
+
+    this.fallbackLength = 0.3;
+    this.fallbackPower = 15;
+
 
     // load shaders
     const gl = this.gl;
@@ -101,9 +105,11 @@ export default class Fukuwarai {
     // load program for drawing grid
     gl.useProgram(this.gridProgram);
 
-    // set the resolution for grid program
-    let resolutionLocation = gl.getUniformLocation(this.gridProgram, "u_resolution");
-    gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    {
+      // set the resolution for grid program
+      let u_resolution = gl.getUniformLocation(this.gridProgram, "u_resolution");
+      gl.uniform2f(u_resolution, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    }
 
     // load program for drawing deformed face
     gl.useProgram(this.drawProgram);
@@ -131,8 +137,14 @@ export default class Fukuwarai {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
     // set the resolution for draw program
-    resolutionLocation = gl.getUniformLocation(this.drawProgram, "u_resolution");
-    gl.uniform2f(resolutionLocation, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    {
+      let u_resolution = gl.getUniformLocation(this.drawProgram, "u_resolution");
+      gl.uniform2f(u_resolution, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      let u_fallbackLength = gl.getUniformLocation(this.drawProgram, "u_fallbackLength");
+      gl.uniform1f(u_fallbackLength, this.fallbackLength);
+      let u_fallbackPower = gl.getUniformLocation(this.drawProgram, "u_fallbackPower");
+      gl.uniform1f(u_fallbackPower, this.fallbackPower);
+    }
   }
 
   /**

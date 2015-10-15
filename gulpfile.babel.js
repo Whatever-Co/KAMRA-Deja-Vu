@@ -83,7 +83,7 @@ gulp.task('release', ()=>{
 
 //====================
 gulp.task('watch', ()=>{
-  gulp.watch(['src/**/*.js', 'src/**/*.json'], ['webpack']);
+  gulp.watch(['src/**/*.js', 'src/**/*.json', 'src/**/*.glsl'], ['webpack']);
   gulp.watch(['src/**/*.jade', 'src/index_data.json', 'src/**/*.svg'], ['jade']);
   gulp.watch('src/**/*.styl', ['stylus']);
 });
