@@ -23,14 +23,16 @@ const overlayCtx = overlay.getContext('2d');
 
 const param = {
   debug:false,
-  mode:0,
+  mode:5,
   foreheadExtend:1.6,
   scanMethod:[
     _scanAll,
     _scanHorizontal,
     _scanVertical,
     _scanHorizontal2,
-    _scanVertical2
+    _scanVertical2,
+    _scanHorizontal3,
+    _scanVertical3
   ],
   slitWidth:0.3
 };
@@ -126,10 +128,6 @@ function _scanHorizontal2() {
     0, 0, width-scanningIndex, height,
     0, 0, width-scanningIndex, height
   );
-  overlayCtx.drawImage(app.canvas,
-    0, 0, width-scanningIndex, height,
-    0, 0, width-scanningIndex, height
-  );
   scanningIndex += 1;
   if(scanningIndex >= bounds.xMax) {
     scanningIndex = 0;
@@ -173,6 +171,53 @@ function _scanVertical2() {
   }
 }
 
+function _scanHorizontal3() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+
+  let scanX = Math.floor((bounds.xMax - bounds.xMin) / 2) + bounds.xMin;
+  if(scanningIndex == 0) {
+    overlayCtx.drawImage(app.canvas,
+      0, 0, width, height,
+      0, 0, width, height
+    );
+  } else {
+    overlayCtx.drawImage(app.canvas,
+      0, 0, scanX+1, height,
+      0, 0, scanX+1, height
+    );
+    overlayCtx.drawImage(overlay,
+      scanX, 0, width-scanX, height,
+      scanX+1, 0, width-scanX, height
+    );
+  }
+  scanningIndex += 1;
+}
+
+function _scanVertical3() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+
+  let scanY = Math.floor((bounds.yMax - bounds.yMin) / 2) + bounds.yMin;
+  if(scanningIndex == 0) {
+    overlayCtx.drawImage(app.canvas,
+      0, 0, width, height,
+      0, 0, width, height
+    );
+  } else {
+    overlayCtx.drawImage(app.canvas,
+      0, 0, width, scanY+1,
+      0, 0, width, scanY+1
+    );
+    overlayCtx.drawImage(overlay,
+      0, scanY, width, height-scanY,
+      0, scanY+1, width, height-scanY
+    );
+  }
+  scanningIndex += 1;
+}
 
 /********** parameter code *********/
 
@@ -185,7 +230,9 @@ gui.add(param, 'mode',
     Horizontal:1,
     Vertical:2,
     Horizontal2:3,
-    Vertical2:4
+    Vertical2:4,
+    Horizontal3:5,
+    Vertical3:6
   })
   .onChange(mode=>{
   // clear background
@@ -195,7 +242,7 @@ gui.add(param, 'mode',
   overlayCtx.fillStyle="black";
   overlayCtx.fill();
 });
-gui.add(param, 'slitWidth', 0.1, 0.9);
+// gui.add(param, 'slitWidth', 0.1, 0.9);
 gui.add(param, 'foreheadExtend', 1.2, 2.0);
 gui.add(app, 'fallbackLength', 0.1, 0.5);
 gui.add(app, 'fallbackPower', 5.0, 30.0);
