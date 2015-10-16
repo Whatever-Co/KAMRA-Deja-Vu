@@ -47,7 +47,6 @@ function onFaceFound() {
   scene.start(video, ctrack);
 }
 
-
 // Aspect fit
 {
   for(let targetID of ['videoel','overlay','webgl']) {
@@ -66,4 +65,3 @@ function onFaceFound() {
     stats.update();
   }, false);
 }
-

@@ -15,20 +15,24 @@ const app = new Fukuwarai(document.getElementById('webgl'));
   wc1.clearColor(0,0,0,0);
 }
 // canvas for copying videoframes to
-const videocanvas = document.createElement('canvas');
+const videoCanvas = document.createElement('canvas');
 
+const param = {
+  debug:false,
+  mode:0
+};
 
 /**
  * Show deformd face
  */
-function drawMaskLoop() {
+function loop() {
   // copy video texture
-  videocanvas.getContext('2d').drawImage(video,0,0,videocanvas.width,videocanvas.height);
+  videoCanvas.getContext('2d').drawImage(video,0,0,videoCanvas.width,videoCanvas.height);
 
   let pos = ctrack.getCurrentPosition(video);
   if (!pos) {
     // no tracking object
-    requestAnimFrame(drawMaskLoop);
+    requestAnimFrame(loop);
     return;
   }
 
@@ -45,31 +49,26 @@ function drawMaskLoop() {
   const newPos = pos.concat(addPos);
 
   // merge with newVertices
-  app.load(videocanvas, newPos);
+  app.load(videoCanvas, newPos);
 
   // get position of face
   app.draw(newPos);
-  if (ph.debug) {
+  if (param.debug) {
     app.drawGrid(newPos);
     video.style.opacity = 0.4;
   }
   else {
     video.style.opacity = 1.0;
   }
-  requestAnimFrame(drawMaskLoop);
+  requestAnimFrame(loop);
 }
 
 
 /********** parameter code *********/
 
-const parameterHolder = function() {
-  this.debug = false;
-  this.mode = 0;
-};
-const ph = new parameterHolder();
 const gui = new dat.GUI();
-gui.add(ph, 'debug');
-gui.add(ph, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
+gui.add(param, 'debug');
+gui.add(param, 'mode', {FOUR_EYE:0,DOUBLE_MOUTH:1}).onChange(mode=>{
   app.setMode(mode);
 });
 
@@ -79,10 +78,10 @@ export function start(video_, ctrack_) {
   video = video_;
   ctrack = ctrack_;
 
-  videocanvas.width = video.width;
-  videocanvas.height = video.height;
+  videoCanvas.width = video.width;
+  videoCanvas.height = video.height;
 
-  drawMaskLoop();
+  loop();
 }
 
 export function onMidi(data) {
