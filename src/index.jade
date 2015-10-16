@@ -9,29 +9,14 @@ html
     title #{title}
     link(href='main.css' rel='stylesheet' type='text/css' data-skrollr-stylesheet)
   body
+
+    #videos
+      video#videoel(preload="auto", width="400", height="300", loop)
+      canvas#webgl(width="400", height="300")
+      canvas#overlay(width="400", height="300")
     #container
-      h1 #{title}
-      #videos
-        video#videoel(width="400", height="300", preload="auto", loop)
-        canvas#overlay(width="400", height="300")
-        canvas#webgl(width="400", height="300")
-      //#controls
-        //select#deform(name="deformation")
-        //  option(value="unwell") Unwell
-        //  option(value="inca") Inca</option>
-        //  option(value="cheery") Cheery</option>
-        //  option(value="dopey") Dopey</option>
-        //  option(value="longface") Longface</option>
-        //  option(value="lucky") Lucky</option>
-        //  option(value="overcute") Overcute</option>
-        //  option(value="aloof") Aloof</option>
-        //  option(value="evil") Evil</option>
-        //  option(value="artificial") Artificial</option>
-        //  option(value="none") None</option>
-        //p.sublabel Facedeform preset
-        //input#startbutton(class="btn" type="button" value="wait, loading video & images" disabled="disabled")
+    #debug_controls
       audio#songAudio(src="sounds/dejavu.mp3" controls)
-      h3 MIDI
       #keyboards
 
     //- script
@@ -40,17 +25,14 @@ html
     script(src="./js/utils.js")
     script(src="./js/clmtrackr.js")
     script(src="./models/model_pca_20_svm.js")
-    script(src="./js/Stats.js")
-    script(src="./js/face_deformer.js")
     script(src="./js/jquery.min.js")
-    script(src="./js/poisson_new.js")
 
     //- For Midi file
     script(src="./js/jasmid/midifile.js")
     script(src="./js/jasmid/replayer.js")
     script(src="./js/jasmid/stream.js")
     script(src="./js/shim/Base64binary.js")
-    script(src="./js/MIDI.min.js")
+    script(src="./js/MIDI.js")
 
     script(src='bundle.js', type='text/javascript')
     script.
