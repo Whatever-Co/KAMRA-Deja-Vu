@@ -167,7 +167,7 @@ const gui = new dat.GUI();
 let control = {};
 let eig = 0;
 for (let i=0; i<pnums; ++i) {
-  eig = Math.sqrt(pModel.shapeModel.eigenValues[i+2])*3
+  eig = Math.sqrt(pModel.shapeModel.eigenValues[i+2])*3;
   control['c'+(i+3)] = gui.add(ph, 'component '+(i+3), -5*eig, 5*eig).listen();
 }
 gui.add(ph, 'debug');
