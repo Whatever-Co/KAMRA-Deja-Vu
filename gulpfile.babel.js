@@ -76,6 +76,14 @@ gulp.task('serve', ()=>{
 });
 
 //====================
+gulp.task('lint', ()=>{
+  gulp.src('src/**/*.js')
+    .pipe($.eslint({useEslintrc: true}))
+    .pipe($.eslint.format())
+    .pipe($.eslint.failAfterError());
+});
+
+//====================
 gulp.task('release', ()=>{
   release = true;
   process.env.NODE_ENV = 'production';
