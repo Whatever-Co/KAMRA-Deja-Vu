@@ -4,7 +4,7 @@ const GRID_FRAG_SHADER = require("../shaders/grid_frag.glsl");
 const FACE_VERT_SHADER = require("./shaders/face_vert.glsl");
 const FACE_FRAG_SHADER = require("./shaders/face_frag.glsl"); // custom shader
 
-const verticleData = require("./../vertice_data.js");
+const verticeData = require("./../vertice_data.js");
 
 /**
  * FaceDeformer
@@ -19,7 +19,7 @@ export default class Fukuwarai {
     this.canvas = canvas;
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
-    this.verticeMap = verticleData.getDefault();
+    this.verticeMap = verticeData.getDefault();
     this._mode = 0;
     this.bounds = {
       xMin:0,

@@ -4,7 +4,7 @@ const GRID_FRAG_SHADER = require("../shaders/grid_frag.glsl");
 const FACE_VERT_SHADER = require("../shaders/face_vert.glsl");
 const FACE_FRAG_SHADER = require("../shaders/face_frag.glsl");
 
-const verticleData = require("./../vertice_data.js");
+const verticeData = require("./../vertice_data.js");
 
 /**
  * FaceDeformer
@@ -18,8 +18,8 @@ export default class Fukuwarai {
   constructor(canvas) {
     this.gl = getWebGLContext(canvas);
     this.usegrid = false;
-    //this.verticeMap = verticleData.getAll();
-    this.verticeMap = verticleData.getEyes();
+    //this.verticeMap = verticeData.getAll();
+    this.verticeMap = verticeData.getEyes();
     this._mode = 0;
 
     // load shaders
@@ -39,9 +39,9 @@ export default class Fukuwarai {
       return;
     }
     if(mode == 0) {
-      this.verticeMap = verticleData.getEyes();
+      this.verticeMap = verticeData.getEyes();
     } else if(mode == 1) {
-      this.verticeMap = verticleData.getMouth();
+      this.verticeMap = verticeData.getMouth();
     } else {
       console.error(`No mode : ${mode}`);
     }
