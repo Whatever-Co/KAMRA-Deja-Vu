@@ -24,7 +24,15 @@ const overlayCtx = overlay.getContext('2d');
 const param = {
   debug:false,
   mode:0,
-  foreheadExtend:1.6
+  foreheadExtend:1.6,
+  scanMethod:[
+    _scanAll,
+    _scanHorizontal,
+    _scanVertical,
+    _scanHorizontal2,
+    _scanVertical2
+  ],
+  slitWidth:0.3
 };
 
 let scanningIndex = 0;
@@ -74,13 +82,8 @@ function loop() {
   overlayCtx.fillStyle = 'rgba(0, 0, 0, 0.001)';
   overlayCtx.fill();
 
-  if(param.mode == 0) {
-    _scanAll();
-  } else if(param.mode == 1) {
-    _scanHorizontal();
-  } else if(param.mode == 2) {
-    _scanVertical();
-  }
+  // Do slit scan
+  param.scanMethod[param.mode]();
 
   requestAnimFrame(loop);
 }
@@ -108,6 +111,31 @@ function _scanHorizontal() {
   }
 }
 
+function _scanHorizontal2() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+  const bWidth = bounds.xMax - bounds.xMin;
+  const bHeight = bounds.yMax - bounds.yMin;
+
+  // loop in the face bounding box
+  if(scanningIndex == 0) {
+    scanningIndex = bounds.xMin;
+  }
+  overlayCtx.drawImage(app.canvas,
+    0, 0, width-scanningIndex, height,
+    0, 0, width-scanningIndex, height
+  );
+  overlayCtx.drawImage(app.canvas,
+    0, 0, width-scanningIndex, height,
+    0, 0, width-scanningIndex, height
+  );
+  scanningIndex += 1;
+  if(scanningIndex >= bounds.xMax) {
+    scanningIndex = 0;
+  }
+}
+
 function _scanVertical() {
   const width = app.canvas.width;
   const bounds = app.bounds;
@@ -126,19 +154,48 @@ function _scanVertical() {
   }
 }
 
+function _scanVertical2() {
+  const width = app.canvas.width;
+  const height = app.canvas.height;
+  const bounds = app.bounds;
+
+  // loop in the face bounding box
+  if(scanningIndex == 0) {
+    scanningIndex = bounds.yMin;
+  }
+  overlayCtx.drawImage(app.canvas,
+    0, 0, width, height-scanningIndex,
+    0, 0, width, height-scanningIndex
+  );
+  scanningIndex += 1;
+  if(scanningIndex >= bounds.yMax) {
+    scanningIndex = 0;
+  }
+}
+
 
 /********** parameter code *********/
 
 
 const gui = new dat.GUI();
 gui.add(param, 'debug');
-gui.add(param, 'mode', {All:0, Horizontal:1, Vertical:2}).onChange(mode=>{
+gui.add(param, 'mode',
+  {
+    All:0,
+    Horizontal:1,
+    Vertical:2,
+    Horizontal2:3,
+    Vertical2:4
+  })
+  .onChange(mode=>{
+  // clear background
+  // when mode changed
   scanningIndex = 0;
-
   overlayCtx.rect(0,0,app.canvas.width,app.canvas.height);
   overlayCtx.fillStyle="black";
   overlayCtx.fill();
 });
+gui.add(param, 'slitWidth', 0.1, 0.9);
 gui.add(param, 'foreheadExtend', 1.2, 2.0);
 gui.add(app, 'fallbackLength', 0.1, 0.5);
 gui.add(app, 'fallbackPower', 5.0, 30.0);
