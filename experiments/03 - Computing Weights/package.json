@@ -1,0 +1,57 @@
+{
+  "devDependencies": {
+    "autoprefixer-loader": "^3.1.0",
+    "babel-core": "^5.8.25",
+    "babel-loader": "^5.3.2",
+    "browser-sync": "^2.9.11",
+    "browser-sync-webpack-plugin": "^1.0.0",
+    "css-loader": "^0.20.2",
+    "eslint": "^1.7.2",
+    "eslint-friendly-formatter": "^1.2.2",
+    "eslint-loader": "^1.1.0",
+    "jade": "^1.11.0",
+    "jade-loader": "^0.7.1",
+    "jquery": "^2.1.4",
+    "node-sass": "^3.3.3",
+    "sass-loader": "^3.0.0",
+    "style-loader": "^0.13.0",
+    "three": "^0.72.0",
+    "webpack": "^1.12.2"
+  },
+  "scripts": {
+    "dev": "webpack -d --devtool inline-source-map --progress --colors --watch",
+    "release": "webpack -p --progress --colors"
+  },
+  "eslintConfig": {
+    "rules": {
+      "indent": [
+        2,
+        2
+      ],
+      "quotes": [
+        2,
+        "single"
+      ],
+      "linebreak-style": [
+        2,
+        "unix"
+      ],
+      "semi": [
+        2,
+        "always"
+      ],
+      "no-console": 1,
+      "no-unused-vars": 1,
+      "no-empty": 1
+    },
+    "env": {
+      "es6": true,
+      "browser": true,
+      "amd": true
+    },
+    "extends": "eslint:recommended",
+    "ecmaFeatures": {
+      "modules": true
+    }
+  }
+}
