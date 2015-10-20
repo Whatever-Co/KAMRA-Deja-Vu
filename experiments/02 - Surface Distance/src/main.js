@@ -145,24 +145,14 @@ class App {
 
   animate() {
     requestAnimationFrame(this.animate.bind(this));
-<<<<<<< HEAD
-    if (this.mesh) {
-      this.mesh.rotation.y += 0.002;
-    }
-=======
     // if (this.mesh) {
     //   this.mesh.rotation.y += 0.002;
     // }
->>>>>>> Add experiments/02
     this.renderer.render(this.scene, this.camera);
   }
 
 
   onClick(e) {
-<<<<<<< HEAD
-=======
-    console.log(e);
->>>>>>> Add experiments/02
     let mouse = new THREE.Vector2();
     mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -173,16 +163,12 @@ class App {
     console.log(intersects);
     if (intersects.length) {
       // intersects[0].object.visible = false;
-<<<<<<< HEAD
-      this.start(intersects[0].object.index);
-=======
       if (e.shiftKey) {
         this.start(intersects[0].object.index);
       } else {
         let node = this.nodes[intersects[0].object.index];
         console.log(node);
       } 
->>>>>>> Add experiments/02
     }
   }
 
