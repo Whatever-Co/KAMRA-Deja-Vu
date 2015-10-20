@@ -93,14 +93,26 @@ class App {
     // this.buildNodes(new THREE.SphereGeometry(130, 40, 20, 0, Math.PI * 1.5, Math.PI * 0.2, Math.PI * 0.6));
     // this.buildNodes(new THREE.BoxGeometry(200, 200, 200, 20, 20, 20));
 
-    this.featurePoints = [129, 119, 323, 351];
+    // this.featurePoints = [129, 119, 323, 351];
+    // this.featurePoints = [0, 20, 420, 440, 220];
+    this.featurePoints = [];
+    // for (let i = 0; i < 4; i++) {
+    //   this.featurePoints.push(Math.floor(Math.random() * this.nodes.length));
+    // }
+    // this.featurePoints = [271, 311, 159, 118];
+    for (let y = 0; y < 3; y++) {
+      for (let x = 0; x < 3; x++) {
+        this.featurePoints.push(y * 21 * 10 + x * 10);
+      }
+    }
+    console.log(this.featurePoints);
     this.featurePoints.forEach(i => {
       this.nodes[i].isFeaturePoint = true;
       this.nodes[i].focus();
+      console.log(i, this.nodes[i].vertex);
     });
 
-    let colors = [0, 1, 2, 3].map(i => new THREE.Color(`hsl(${i / 4}, 70%, 50%)`));
-    console.log(colors);
+    this.featureColors = this.featurePoints.map((v, i) => new THREE.Color(`hsl(${i / 9}, 70%, 50%)`));
 
     for (let i = 0; i < this.featurePoints.length; i++) {
       this.nodes.forEach(node => node.score[i] = Number.MAX_VALUE);
@@ -122,82 +134,91 @@ class App {
       }
     }
 
-    this.nodes.forEach((target) => {
-    // for (let k = 0; k < 3; k++) {
-    // let target = this.nodes[this.featurePoints[0]];
-      // node.setHSLColor((node.score[3] % 200) / 200, 0.7, 0.5);
-      console.log('target', target);
+    // this.nodes.forEach(node => {
+    //   node.setHSLColor(node.score[4] / 200, 0.7, 0.5);
+    // });
 
-    // let target = this.nodes[180];
-      // target.focus();
-      // console.log(target.score);
-      let nearest = target.nearestFeaturePointIndex();
-      console.log('nearest', nearest);
-      let fp1 = this.nodes[this.featurePoints[nearest]];
-      // console.log('fp1', fp1.vertex);
-      let p = target.vertex.clone().sub(fp1.vertex);
-      // console.log('p', p);
-      let angles = this.featurePoints.map((index, i) => {
-        let target = this.nodes[index].vertex.clone().sub(fp1.vertex);
-        let angle = p.angleTo(target);
-        // console.log(i, index, target, angle, THREE.Math.radToDeg(angle));
-        return {index: i, angle: angle};
-      }).filter(a => {
-        return !isNaN(a.angle) && a.angle < Math.PI / 2;
-      }).sort((a, b) => a.angle - b.angle);
-    // console.log(angles);
-      // angles.forEach((a, i) => console.log(i, a));
+    // return;
 
-      let d = 0;
-      switch (angles.length) {
-        case 0:
-          break;
-        case 1:
-          d = fp1.score[angles[0].index] / Math.cos(angles[0].angle);
-          break;
-        default:
-          let d2 = fp1.score[angles[0].index];
-          let d3 = fp1.score[angles[1].index];
-          // console.log('d1', d1, 'd2', d2, 'd3', d3);
-          let cos2 = Math.cos(angles[0].angle);
-          let cos3 = Math.cos(angles[1].angle);
-          // console.log('cos2', cos2, 'cos3', cos3);
-          d = (d2 * cos2 + d3 * cos3) / (cos2 + cos3);
-          break;
-      }
-      // console.log('d', d);
-      if (d == 0) {
-        target.weights = this.featurePoints.map((id, i) => i == nearest ? 1 : 0);
-      } else {
-        const HALF_PI = Math.PI / 2;
-      // target.weights = target.score.map(dist => Math.max(0, Math.sin(HALF_PI * (1.0 - dist / d))));
-        target.weights = [0, 0, 0, 0];
-        target.weights[nearest] = Math.max(0, Math.sin(HALF_PI * (1.0 - target.score[nearest] / d)));
-        for (let i = 0; i < Math.min(2, angles.length); i++) {
-          target.weights[angles[i].index] = Math.max(0, Math.sin(HALF_PI * (1.0 - target.score[angles[i].index] / d)));
+    // this.calcWeight(this.nodes[440]);
+    this.nodes.forEach(this.calcWeight.bind(this));
+
+    // this.update();
+  }
+
+  calcWeight(node) {
+    // console.log('node', node);
+
+    // let node = this.nodes[180];
+    // node.focus();
+    // console.log(node.score);
+    let nearest = node.nearestFeaturePointIndex();
+    // console.log('nearest', nearest);
+    let fp1 = this.nodes[this.featurePoints[nearest]];
+    // console.log('fp1', fp1.vertex);
+    let p = node.vertex.clone().sub(fp1.vertex);
+    // console.log('p', p);
+    let angles = this.featurePoints.map((index, i) => {
+      let node = this.nodes[index].vertex.clone().sub(fp1.vertex);
+      let angle = p.angleTo(node);
+      // console.log(i, index, node, angle, THREE.Math.radToDeg(angle));
+      return {index: i, angle: angle};
+    }).filter(a => {
+      return !isNaN(a.angle) && a.angle < Math.PI / 2;
+    }).sort((a, b) => a.angle - b.angle);
+    // angles.forEach((a, i) => console.log(i, a));
+
+    let d = 0;
+    switch (angles.length) {
+      case 0:
+        break;
+      case 1:
+        d = fp1.score[angles[0].index] / Math.cos(angles[0].angle);
+        break;
+      default:
+        let d2 = fp1.score[angles[0].index];
+        let d3 = fp1.score[angles[1].index];
+        let cos2 = Math.cos(angles[0].angle);
+        let cos3 = Math.cos(angles[1].angle);
+        d = (d2 * cos2 + d3 * cos3) / (cos2 + cos3);
+        break;
+    }
+    // console.log('d', d, node.score[nearest] / d);
+    if (d == 0) {
+      node.weights = this.featurePoints.map((id, i) => i == nearest ? 1 : 0);
+    } else {
+      const HALF_PI = Math.PI / 2;
+      node.weights = this.featurePoints.map(i => 0);
+      node.weights[nearest] = Math.max(0, Math.sin(HALF_PI * (1.0 - node.score[nearest] / d)));
+      // for (let i = 0; i < Math.min(2, angles.length); i++) {
+      angles.forEach((a, i) => {
+        if (node.score[a.index] < d) {
+          node.weights[a.index] = Math.sin(HALF_PI * (1.0 - node.score[a.index] / d));
         }
-      }
-      console.log('weights', target.weights);
-      let wsum = 0;
-      let c = new THREE.Color(0);
-      target.weights.forEach((w, i) => {
-        // console.log(i, w, colors[i].r, colors[i].g, colors[i].b);
-        c.r += colors[i].r * w;
-        c.g += colors[i].g * w;
-        c.b += colors[i].b * w;
-        wsum += w;
       });
-      // console.log('color', c.r, c.g, c.b, wsum);
+      // for (let i = 0; i < angles.length; i++) {
+      //   node.weights[angles[i].index] = Math.max(0, Math.sin(HALF_PI * (1.0 - node.score[angles[i].index] / d)));
+      // }
+    }
+    // console.log('weights', node.weights);
+    let wsum = 0;
+    let c = new THREE.Color(0);
+    node.weights.forEach((w, i) => {
+      if (isNaN(w)) debugger;
+      c.r += this.featureColors[i].r * w;
+      c.g += this.featureColors[i].g * w;
+      c.b += this.featureColors[i].b * w;
+      wsum += w;
+    });
+    // console.log(wsum);
+    if (wsum > 0) {
       c.r /= wsum;
       c.g /= wsum;
       c.b /= wsum;
-      target.box.material.color.copy(c);
-    // }
-    });
-
-    // let fp = this.nodes[this.featurePoints[0]];
-    // fp.box.position.x += 10;
-    this.update();
+    } else {
+      c.setRGB(1, 0, 1);
+    }
+    node.box.material.color.copy(c);
   }
 
   buildNodes(geometry) {
@@ -213,7 +234,7 @@ class App {
       box.index = i;
       box.position.copy(v);
       this.mesh.add(box);
-      this.nodes.push(new Node(i, v, box));
+      this.nodes.push(new Node(i, v.clone(), box));
     });
 
 
@@ -227,6 +248,9 @@ class App {
       connected[b << 16 | a] = true;
     };
     geometry.faces.forEach((f) => {
+      // if (geometry.vertices[f.a].distanceToSquared(geometry.vertices[f.b]) < 400) connect(f.a, f.b);
+      // if (geometry.vertices[f.b].distanceToSquared(geometry.vertices[f.c]) < 400) connect(f.b, f.c);
+      // if (geometry.vertices[f.c].distanceToSquared(geometry.vertices[f.a]) < 400) connect(f.c, f.a);
       connect(f.a, f.b);
       connect(f.b, f.c);
       connect(f.c, f.a);
@@ -237,7 +261,10 @@ class App {
     // let target = this.nodes[180];
     this.nodes.forEach(target => {
       // let target = this.nodes[this.nodes.length-1];
-      if (target.isFeaturePoint) return;
+      if (target.isFeaturePoint) {
+        this.mesh.geometry.vertices[target.id].copy(target.box.position);
+        return;
+      }
       // console.log(target.weights);
       let a = new THREE.Vector3();
       let b = 0;
@@ -249,9 +276,17 @@ class App {
         a.add(displacement.multiplyScalar(dist));
         b += target.weights[i] * dist;
       });
-      a.multiplyScalar(1 / b);
-      target.box.position.copy(target.vertex).add(a);
+      if (b > 0) {
+        a.multiplyScalar(1 / b);
+        target.box.position.copy(target.vertex).add(a);
+        this.mesh.geometry.vertices[target.id].copy(target.box.position);
+        let p = target.box.position;
+        if (isNaN(p.x) || isNaN(p.y) || isNaN(p.z)) {
+          debugger;
+        }
+      }
     });
+    this.mesh.geometry.verticesNeedUpdate = true;
   }
 
   animate() {
@@ -292,6 +327,9 @@ class App {
       this.prevMouse = mouse;
       window.addEventListener('mousemove', this.onMouseMove);
       window.addEventListener('mouseup', this.onMouseUp);
+      let node = this.nodes[this.dragging.index];
+      console.log(node);
+      console.log(node.weights);
     }
   }
 
