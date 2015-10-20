@@ -26,7 +26,8 @@
     "rules": {
       "indent": [
         2,
-        2
+        2,
+        {"SwitchCase": 1}
       ],
       "quotes": [
         2,
@@ -42,7 +43,8 @@
       ],
       "no-console": 1,
       "no-unused-vars": 1,
-      "no-empty": 1
+      "no-empty": 1,
+      "no-unreachable": 1
     },
     "env": {
       "es6": true,
