@@ -9,6 +9,32 @@ require('OrbitControls');
 
 
 
+class Node {
+
+  constructor(index, position) {
+    this.index = index;
+    this.position = position;
+    this.connection = [];
+    this.distanceToFP = [];
+    this.weights = [];
+  }
+
+  nearestFeaturePointIndex() {
+    let index = 0;
+    let distance = this.distanceToFP[0];
+    this.distanceToFP.forEach((d, i) => {
+      if (d < distance) {
+        distance = d;
+        index = i;
+      }
+    });
+    return index;
+  }
+
+}
+
+
+
 class App {
 
   constructor() {
@@ -56,23 +82,46 @@ class App {
     this.root.add(this.face);
 
     this.featurePointIndices = [];
-    require('json!./fp.json').forEach((pa, i) => {
+    require('json!./fp.json').forEach(pa => {
       let p = new THREE.Vector3(pa[0], pa[1], pa[2]);
       this.featurePointIndices.push(p.length() > 0 ? this.findNearestIndex(geometry.vertices, p) : -1);
     });
 
-    console.log(this.featurePointIndices);
+    // console.log(this.featurePointIndices);
 
-    let cube = new THREE.BoxGeometry(0.05, 0.05, 0.05);
-    this.featurePointIndices.forEach(index => {
-      console.log(index, geometry.vertices[index]);
-      if (index < 0) return;
-      let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.5, depthTest: false});
-      let mesh = new THREE.Mesh(cube, material);
-      mesh.material.color.setHSL(Math.random(), 0.7, 0.5);
-      mesh.position.copy(geometry.vertices[index]);
-      this.face.add(mesh);
+    // this.cubes = [];
+    // let cube = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+    // this.featurePointIndices.forEach(index => {
+    //   console.log(index, geometry.vertices[index]);
+    //   if (index < 0) return;
+    //   let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.5, depthTest: false});
+    //   let mesh = new THREE.Mesh(cube, material);
+    //   mesh.material.color.setHSL(Math.random(), 0.7, 0.5);
+    //   mesh.position.copy(geometry.vertices[index]);
+    //   this.face.add(mesh);
+    //   this.cubes.push(mesh);
+    // });
+
+    this.buildConnectionData(geometry);
+    this.featurePointIndices.forEach((index, i) => {
+      if (index >= 0) {
+        this.calcDistanceToFeaturePoint(i);
+      }
     });
+
+    // show distance from selected feature point
+    // let cube = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+    // this.nodes.forEach(node => {
+    //   let material = new THREE.MeshBasicMaterial({transparent: true, opacity: 0.5, depthTest: false});
+    //   material.color.setHSL(node.distanceToFP[44] / 2, 0.7, 0.5);
+    //   let mesh = new THREE.Mesh(cube, material);
+    //   mesh.position.copy(node.position);
+    //   this.face.add(mesh);
+    // });
+
+    // console.log(this.featurePointIndices[33]);
+    // this.calcWeightForNode(this.nodes[408]);
+    this.nodes.forEach(node => this.calcWeightForNode(node));
   }
 
   findNearestIndex(vertices, target) {
@@ -87,6 +136,104 @@ class App {
     });
     // console.log(index, Math.round(Math.sqrt(distance) * 10000) / 10000);
     return index;
+  }
+
+  buildConnectionData(geometry) {
+    this.nodes = geometry.vertices.map((v, i) => new Node(i, v.clone()));
+
+    let connected = {};
+    let connect = (a, b) => {
+      let key = a << 16 | b;
+      if (connected[key]) return;
+      this.nodes[a].connection.push(this.nodes[b]);
+      connected[key] = true;
+      this.nodes[b].connection.push(this.nodes[a]);
+      connected[b << 16 | a] = true;
+    };
+    geometry.faces.forEach((f) => {
+      connect(f.a, f.b);
+      connect(f.b, f.c);
+      connect(f.c, f.a);
+    });
+  }
+
+  calcDistanceToFeaturePoint(index) {
+    this.nodes.forEach(node => node.distanceToFP[index] = Number.MAX_VALUE);
+    let start = this.nodes[this.featurePointIndices[index]];
+    start.distanceToFP[index] = 0;
+    let processing = [start];
+    while (processing.length) {
+      let next = [];
+      processing.forEach(node => {
+        node.connection.forEach(connected => {
+          let distance = node.distanceToFP[index] + node.position.distanceTo(connected.position);
+          if (distance < connected.distanceToFP[index]) {
+            connected.distanceToFP[index] = distance;
+            next.push(connected);
+          }
+        });
+      });
+      processing = next;
+    }
+  }
+
+  calcWeightForNode(node) {
+    // console.log('node', node);
+
+    // console.log(node.distanceToFP);
+    let nearest = node.nearestFeaturePointIndex();
+    // console.log('nearest', nearest);
+    let fp1 = this.nodes[this.featurePointIndices[nearest]];
+    // console.log('fp1', fp1.position);
+    let p = node.position.clone().sub(fp1.position);
+    // console.log('p', p);
+    let angles = this.featurePointIndices.map((index, i) => {
+      if (index < 0) return NaN;
+      let node = this.nodes[index].position.clone().sub(fp1.position);
+      let angle = p.angleTo(node);
+      // console.log(i, index, node, angle, THREE.Math.radToDeg(angle));
+      return {index: i, angle: angle};
+    }).filter(a => {
+      return !isNaN(a.angle) && a.angle < Math.PI / 2;
+    }).sort((a, b) => a.angle - b.angle);
+    // angles.forEach((a, i) => console.log(i, a));
+
+    let d = 0;
+    switch (angles.length) {
+      case 0:
+        break;
+      case 1:
+        d = fp1.distanceToFP[angles[0].index] / Math.cos(angles[0].angle);
+        break;
+      default:
+        let d2 = fp1.distanceToFP[angles[0].index];
+        let d3 = fp1.distanceToFP[angles[1].index];
+        let cos2 = Math.cos(angles[0].angle);
+        let cos3 = Math.cos(angles[1].angle);
+        d = (d2 * cos2 + d3 * cos3) / (cos2 + cos3);
+        break;
+    }
+
+    if (d == 0) {
+      node.weights = this.featurePointIndices.map((id, i) => i == nearest ? 1 : 0);
+    } else {
+      const HALF_PI = Math.PI / 2;
+      node.weights = this.featurePointIndices.map(i => 0);
+      node.weights[nearest] = Math.max(0, Math.sin(HALF_PI * (1.0 - node.distanceToFP[nearest] / d)));
+      angles.forEach(a => {
+        if (node.distanceToFP[a.index] < d) {
+          node.weights[a.index] = Math.sin(HALF_PI * (1.0 - node.distanceToFP[a.index] / d));
+        }
+      });
+    }
+
+    node.weights = node.weights.map((w, i) => {
+      return {i: i, w: w};
+    }).sort((a, b) => b.w - a.w).filter(w => w.w > 0);
+
+    // node.weights.forEach(w => {
+    //   console.log(w);
+    // });
   }
 
   animate() {
