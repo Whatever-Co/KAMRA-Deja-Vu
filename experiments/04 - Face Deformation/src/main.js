@@ -323,12 +323,20 @@ class App {
 
     this.controls.update();
 
-    this.featurePoints.forEach((fp) => {
-      if (fp) {
-        // let v = this.nodes[fp.vertexIndex];
-        // fp.position.x = v.position.x + Math.sin(t / 500 + v.position.y) * 0.5;
-      }
+    const y = this.featurePoints[50].position.y;
+    [45, 46, 47, 48, 49, 59, 60, 61, 51, 52, 53, 54, 55, 56, 57, 58].forEach((i) => {
+      let fp = this.featurePoints[i];
+      let v = this.nodes[fp.vertexIndex];
+      fp.position.y = y + (v.position.y - y) * (Math.sin(t / 500) + 2.2) * 0.7;
     });
+
+    // this.featurePoints.forEach((fp) => {
+    //   if (fp) {
+    //     let v = this.nodes[fp.vertexIndex];
+    //     fp.position.x = v.position.x + Math.sin(t / 500 + v.position.y) * 0.5;
+    //   }
+    // });
+
     this.update();
 
     this.renderer.render(this.scene, this.camera);
