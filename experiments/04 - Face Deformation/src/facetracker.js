@@ -24,6 +24,7 @@ export default class extends EventEmitter {
 
   startVideo(url) {
     this.target = document.createElement('video');
+    this.target.loop = true;
     this.target.addEventListener('loadedmetadata', () => {
       this.target.width = this.debugCanvas.width = this.target.videoWidth;
       this.target.height = this.debugCanvas.height = this.target.videoHeight;

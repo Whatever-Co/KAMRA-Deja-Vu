@@ -3,7 +3,8 @@
 var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
 module.exports = {
-  entry: './src/trackrtest.js',
+  entry: './src/main.js',
+  // entry: './src/trackrtest.js',
   output: {
     path: './public',
     filename: 'bundle.js'

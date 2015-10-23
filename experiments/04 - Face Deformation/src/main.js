@@ -4,8 +4,10 @@
 require('./main.sass');
 document.body.innerHTML = require('./body.jade')();
 
+import FaceTracker from './facetracker';
+
 window.THREE = require('three');
-import 'OrbitControls';
+require('OrbitControls');
 
 
 
@@ -44,6 +46,7 @@ class App {
 
     this.initScene();
     this.initObjects();
+    this.initTracker();
     this.animate();
   }
 
@@ -280,6 +283,16 @@ class App {
   }
 
 
+  initTracker() {
+    this.tracker = new FaceTracker();
+    this.tracker.startVideo('media/cap13_edit2.mp4');
+
+    let container = document.querySelector('#tracker');
+    container.appendChild(this.tracker.target);
+    container.appendChild(this.tracker.debugCanvas);
+  }
+
+
   update() {
     let vertices = this.face.geometry.vertices;
 
@@ -323,12 +336,23 @@ class App {
 
     this.controls.update();
 
-    const y = this.featurePoints[50].position.y;
-    [45, 46, 47, 48, 49, 59, 60, 61, 51, 52, 53, 54, 55, 56, 57, 58].forEach((i) => {
-      let fp = this.featurePoints[i];
-      let v = this.nodes[fp.vertexIndex];
-      fp.position.y = y + (v.position.y - y) * (Math.sin(t / 500) + 2.2) * 0.7;
-    });
+    if (this.tracker.normalizedPoints) {
+      console.log(this.tracker.normalizedPoints.length);
+      this.featurePoints.forEach((fp, i) => {
+        if (fp) {
+          let np = this.tracker.normalizedPoints[i];
+          fp.position.x += (np[0] * 1.3 - fp.position.x) * 0.2;
+          fp.position.y += (-np[1] * 1.3 + 2.2 - fp.position.y) * 0.2;
+        }
+      });
+    }
+
+    // const y = this.featurePoints[50].position.y;
+    // [45, 46, 47, 48, 49, 59, 60, 61, 51, 52, 53, 54, 55, 56, 57, 58].forEach((i) => {
+    //   let fp = this.featurePoints[i];
+    //   let v = this.nodes[fp.vertexIndex];
+    //   fp.position.y = y + (v.position.y - y) * (Math.sin(t / 500) + 2.2) * 0.7;
+    // });
 
     // this.featurePoints.forEach((fp) => {
     //   if (fp) {

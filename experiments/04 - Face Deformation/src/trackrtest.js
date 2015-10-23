@@ -16,6 +16,7 @@ class App {
     let container = document.querySelector('#container');
     container.appendChild(this.tracker.target);
     container.appendChild(this.tracker.debugCanvas);
+    // container.style.transform = 'scale(0.5, 0.5)';
 
     this.canvas = document.querySelector('#face');
     this.context = this.canvas.getContext('2d');
@@ -34,7 +35,6 @@ class App {
 
 
   drawNormalizedFace(points) {
-
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.context.save();
@@ -43,8 +43,8 @@ class App {
     let scale = this.canvas.width * 0.5 * 0.8;
     this.context.scale(scale, scale);
 
-    this.context.strokeStyle = 'black';
-    this.context.lineWidth = 0.5 / scale;
+    this.context.strokeStyle = '#009090';
+    this.context.lineWidth = 1 / scale;
 
     this.tracker.model.path.normal.forEach((path) => {
       if (typeof(path) == 'number') return;
