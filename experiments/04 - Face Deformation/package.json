@@ -9,6 +9,8 @@
     "eslint": "^1.7.3",
     "eslint-friendly-formatter": "^1.2.2",
     "eslint-loader": "^1.1.0",
+    "exports-loader": "^0.6.2",
+    "gl-matrix": "^2.3.1",
     "jade": "^1.11.0",
     "jade-loader": "^0.7.1",
     "jquery": "^2.1.4",

@@ -1,0 +1,5 @@
+**/node_modules/*
+**/web_modules/*
+**/webpack.config.js
+public
+clmtrackr

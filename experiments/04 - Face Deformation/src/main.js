@@ -5,7 +5,7 @@ require('./main.sass');
 document.body.innerHTML = require('./body.jade')();
 
 window.THREE = require('three');
-require('OrbitControls');
+import 'OrbitControls';
 
 
 
