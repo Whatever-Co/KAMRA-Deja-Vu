@@ -53,6 +53,9 @@ class App {
 
   initScene() {
     this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 3000);
+    // let w = window.innerWidth / 2;
+    // let h = window.innerHeight / 2;
+    // this.camera = new THREE.OrthographicCamera(-w, w, h, -h, 1, 3000);
     this.camera.position.z = 500;
 
     this.controls = new THREE.OrbitControls(this.camera);
@@ -77,7 +80,7 @@ class App {
 
   initObjects() {
     this.root = new THREE.Object3D();
-    this.root.scale.set(90, 90, 90);
+    this.root.scale.set(150, 150, 150);
     this.scene.add(this.root);
 
     const geometry = new THREE.JSONLoader().parse(require('json!./face.json')).geometry;
@@ -86,13 +89,10 @@ class App {
     this.face.position.copy(geometry.boundingBox.center().negate());
     this.root.add(this.face);
 
-    this.featurePointIndices = [];
-    require('json!./fp.json').forEach((pa) => {
+    this.featurePointIndices = require('json!./fp.json').map((pa) => {
       const p = new THREE.Vector3(pa[0], pa[1], pa[2]);
-      this.featurePointIndices.push(p.length() > 0 ? this.findNearestIndex(geometry.vertices, p) : -1);
+      return p.length() > 0 ? this.findNearestIndex(geometry.vertices, p) : -1;
     });
-
-    // console.log(this.featurePointIndices);
 
     // this.cubes = [];
     // let cube = new THREE.BoxGeometry(0.05, 0.05, 0.05);
@@ -153,6 +153,9 @@ class App {
       return mesh;
     });
 
+    this.initHeadPoints();
+
+
     // this.nodes.forEach((node) => {
     //   node.weights.forEach((w) => {
     //     if (w.i == 0 && w.w > 0.5) {
@@ -164,6 +167,13 @@ class App {
     // let fp = this.featurePoints[0];
     // fp.position.x = this.nodes[fp.vertexIndex].position.x - 0.5;
     // this.update();
+
+
+    console.log(this.featurePoints[62].position);
+    this.root.updateMatrixWorld();
+    console.log(this.featurePoints[62].localToWorld(new THREE.Vector3()));
+    console.log(this.featurePoints[0].localToWorld(new THREE.Vector3()));
+    console.log(this.camera.position);
   }
 
 
@@ -283,6 +293,23 @@ class App {
   }
 
 
+  initHeadPoints() {
+    let v1 = this.featurePoints[14].position.clone();
+    let v0 = this.featurePoints[0].position.clone();
+    let center = new THREE.Vector3().lerpVectors(v1, v0, 0.5);
+    // console.log(center);
+    let scale = v1.clone().sub(center).x;
+    // console.log(scale);
+    for (let i = 71; i < this.featurePoints.length; i++) {
+      let fp = this.featurePoints[i];
+      let ip = fp.position.clone().sub(center);
+      ip.multiplyScalar(1 / scale);
+      // console.log(i, ip);
+      fp.initialPosition = ip;
+    }
+  }
+
+
   initTracker() {
     this.tracker = new FaceTracker();
     this.tracker.startVideo('media/cap13_edit2.mp4');
@@ -337,14 +364,24 @@ class App {
     this.controls.update();
 
     if (this.tracker.normalizedPoints) {
-      console.log(this.tracker.normalizedPoints.length);
-      this.featurePoints.forEach((fp, i) => {
+      this.tracker.normalizedPoints.forEach((np, i) => {
+        let fp = this.featurePoints[i];
         if (fp) {
-          let np = this.tracker.normalizedPoints[i];
-          fp.position.x += (np[0] * 1.3 - fp.position.x) * 0.2;
-          fp.position.y += (-np[1] * 1.3 + 2.2 - fp.position.y) * 0.2;
+          let scale = (500 - fp.localToWorld(new THREE.Vector3()).z) / 500 * 0.5;
+          fp.position.x += (np[0] * scale - fp.position.x) * 0.2;
+          fp.position.y += (-np[1] * scale - fp.position.y) * 0.2;
         }
       });
+
+      let v1 = this.featurePoints[14].position.clone();
+      let v0 = this.featurePoints[0].position.clone();
+      let center = new THREE.Vector3().lerpVectors(v1, v0, 0.5);
+      let rotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), v1.clone().sub(center).normalize());
+      let scale = v1.clone().sub(center).length();
+      for (let i = 71; i < this.featurePoints.length; i++) {
+        let fp = this.featurePoints[i];
+        fp.position.copy(fp.initialPosition.clone().multiplyScalar(scale).applyQuaternion(rotation).add(center));
+      }
     }
 
     // const y = this.featurePoints[50].position.y;

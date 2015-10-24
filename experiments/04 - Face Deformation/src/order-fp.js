@@ -51,27 +51,26 @@ class App {
     this.scene.add(hoge);
 
     const loader = new THREE.JSONLoader();
-    loader.load('face.json', (geometry) => {
-      geometry.computeBoundingBox();
-      let bb = geometry.boundingBox;
-      hoge.scale.set(100, 100, 100);
-      this.face = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({transparent: true, opacity: 0.3, wireframe: true}));
-      this.face.position.copy(bb.center().negate());
-      hoge.add(this.face);
+    let geometry = loader.parse(require('json!./face.json')).geometry;
+    geometry.computeBoundingBox();
+    let bb = geometry.boundingBox;
+    hoge.scale.set(200, 200, 200);
+    this.face = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({transparent: true, opacity: 0.3, wireframe: true}));
+    this.face.position.copy(bb.center().negate());
+    hoge.add(this.face);
 
-      let data = require('raw!../public/fp2.obj');
-      let cube = new THREE.BoxGeometry(0.05, 0.05, 0.05);
-      let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.5, depthTest: false});
-      this.featurePoints = [];
-      data.split(/\n/).forEach(line => {
-        let tokens = line.split(' ');
-        if (tokens[0] == 'v') {
-          let p = new THREE.Mesh(cube, material);
-          p.position.set(+tokens[1], +tokens[2], +tokens[3]);
-          this.face.add(p);
-          this.featurePoints.push(p);
-        }
-      });
+    let data = require('raw!./fp2.obj');
+    let cube = new THREE.BoxGeometry(0.02, 0.02, 0.02);
+    let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.5, depthTest: false});
+    this.featurePoints = [];
+    data.split(/\n/).forEach(line => {
+      let tokens = line.split(' ');
+      if (tokens[0] == 'v') {
+        let p = new THREE.Mesh(cube, material);
+        p.position.set(+tokens[1], +tokens[2], +tokens[3]);
+        this.face.add(p);
+        this.featurePoints.push(p);
+      }
     });
   }
 
