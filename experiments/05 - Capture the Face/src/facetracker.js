@@ -43,23 +43,36 @@ export default class extends EventEmitter {
   }
 
 
-  startVideo(url) {
+  startVideo(video) {
     this.tracker.reset();
 
-    this.target = document.createElement('video');
-    this.target.loop = true;
-    this.target.addEventListener('loadedmetadata', () => {
-      this.target.width = this.debugCanvas.width = this.target.videoWidth;
-      this.target.height = this.debugCanvas.height = this.target.videoHeight;
-      this.target.play();
+    if (typeof(video) == 'string') {
+      this.target = document.createElement('video');
+      this.target.loop = true;
+      this.target.addEventListener('loadedmetadata', () => {
+        this.target.width = this.debugCanvas.width = this.target.videoWidth;
+        this.target.height = this.debugCanvas.height = this.target.videoHeight;
+        this.target.play();
+        this.tracker.start(this.target);
+        this.update();
+      });
+      this.target.src = video;
+    } else {
+      this.target = video;
+      this.debugCanvas.width = this.target.videoWidth;
+      this.debugCanvas.height = this.target.videoHeight;
       this.tracker.start(this.target);
       this.update();
-    });
-    this.target.src = url;
+    }
   }
 
 
   startCamera() {
+  }
+
+
+  stop() {
+    this.tracker.stop();
   }
 
 
