@@ -39,6 +39,8 @@ class ImageApp {
       this.initObjects();
       this.animate();
     });
+
+    this.startTracker('media/franck_03909.jpg');
   }
 
 
@@ -95,9 +97,9 @@ class ImageApp {
     this.requestId = requestAnimationFrame(this.animate);
 
     this.controls.update();
-    if (this.face) {
-      this.face.rotation.y += 0.01;
-    }
+    // if (this.face) {
+    //   this.face.rotation.y += 0.01;
+    // }
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -210,5 +212,5 @@ class CameraApp {
 }
 
 
-// new ImageApp();
-new CameraApp();
+new ImageApp();
+// new CameraApp();

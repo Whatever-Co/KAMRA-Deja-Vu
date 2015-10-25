@@ -1,4 +1,5 @@
-import clm from 'exports?clm!clmtrackr';
+/*global clm*/
+// import clm from 'exports?clm!clmtrackr';
 import defaultModel from 'exports?pModel!models/model_pca_20_svm';
 import {EventEmitter} from 'events';
 

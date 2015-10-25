@@ -32,7 +32,15 @@ export default class extends THREE.Mesh {
 
   constructor(tracker) {
     let geometry = new THREE.JSONLoader().parse(require('json!./data/face.json')).geometry;
-    let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    // let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide});
+    let material = new THREE.ShaderMaterial({
+      uniforms: {
+        map: { type: 't', value: null }
+      },
+      vertexShader: require('raw!./face.vert'),
+      fragmentShader: require('raw!./face.frag'),
+      side: THREE.DoubleSide
+    });
     super(geometry, material);
 
     this.tracker = tracker;
@@ -40,6 +48,7 @@ export default class extends THREE.Mesh {
     this.initFeaturePoints();
     this.initTexture();
     this.initMesh();
+    this.initEyeMouth();
   }
 
 
@@ -57,7 +66,7 @@ export default class extends THREE.Mesh {
       }
     });
 
-    this.nodes.forEach((node) => this.calcWeightForNode(node));
+    this.nodes.forEach(this.calcWeightForNode.bind(this));
 
     let cube = new THREE.BoxGeometry(0.02, 0.02, 0.02);
     this.featurePoints = this.featurePointIndices.map((i) => {
@@ -201,7 +210,8 @@ export default class extends THREE.Mesh {
 
     this.texture = new THREE.Texture(this.textureCanvas);
     this.texture.needsUpdate = true;
-    this.material.map = this.texture;
+    // this.material.map = this.texture;
+    this.material.uniforms.map.value = this.texture;
 
 
     if (this.tracker.currentPosition) {
@@ -255,6 +265,8 @@ export default class extends THREE.Mesh {
           fpuv.push([p[0] / 256 - 1, p[1] / 256 - 1]);
         }
       }
+
+      this.featurePointUV = fpuv;
 
       this.textureContext.fillStyle = 'rgba(0, 0, 255, 0.5)';
 
@@ -351,6 +363,47 @@ export default class extends THREE.Mesh {
 
       this.geometry.verticesNeedUpdate = true;
     }
+  }
+
+
+  initEyeMouth() {
+    // console.log(this.featurePointUV);
+    this.featurePointUV.forEach((uv) => {
+      uv[0] = uv[0] * 0.5 + 0.5;
+      uv[1] = 1 - (uv[1] * 0.5 + 0.5);
+    });
+    let fp = require('json!./data/fp.json').map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+    let findFPIndex = (v) => {
+      let dist = Number.MAX_VALUE;
+      let index = -1;
+      fp.forEach((p, i) => {
+        let d = p.distanceToSquared(v);
+        if (d < dist) {
+          dist = d;
+          index = i;
+        }
+      });
+      return index;
+    };
+    let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry;
+    let fpIndices = geometry.vertices.map((v, i) => {
+      let index = findFPIndex(v);
+      v.copy(this.featurePoints[index].position);
+      v.z -= 0.01;
+      return index;
+    });
+    geometry.faces.forEach((face, i) => {
+      let uv = geometry.faceVertexUvs[0][i];
+      uv[0].x = this.featurePointUV[fpIndices[face.a]][0];
+      uv[0].y = this.featurePointUV[fpIndices[face.a]][1];
+      uv[1].x = this.featurePointUV[fpIndices[face.b]][0];
+      uv[1].y = this.featurePointUV[fpIndices[face.b]][1];
+      uv[2].x = this.featurePointUV[fpIndices[face.c]][0];
+      uv[2].y = this.featurePointUV[fpIndices[face.c]][1];
+    });
+    geometry.uvsNeedUpdate = true;
+    this.eyemouth = new THREE.Mesh(geometry, this.material);
+    this.add(this.eyemouth);
   }
 
 }
