@@ -1,13 +1,10 @@
 /*global THREE*/
-
-// import $ from 'jquery';
-require('OrbitControls');
-require('OBJLoader');
+import 'OrbitControls';
 
 import FaceTracker from './facetracker';
 import Face from './face';
 
-require('./main.sass');
+import './main.sass';
 document.body.innerHTML = require('./body.jade')();
 
 
@@ -17,8 +14,31 @@ class App {
   constructor() {
     this.animate = this.animate.bind(this);
 
+    document.body.addEventListener('dragover', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }, false);
+    document.body.addEventListener('drop', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      let file = e.dataTransfer.files[0];
+      if (file.type.match(/image/i)) {
+        let reader = new FileReader();
+        reader.onload = (e) => {
+          this.startTracker(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
     this.initScene();
-    this.startTracker();
+
+    this.tracker = new FaceTracker();
+    this.tracker.on('tracked', () => {
+      this.initObjects();
+      this.animate();
+    });
   }
 
 
@@ -44,34 +64,40 @@ class App {
   }
 
 
-  startTracker() {
-    this.tracker = new FaceTracker();
-    this.tracker.startImage('media/franck_01829.jpg');
-    this.tracker.on('tracked', () => {
-      this.initObjects();
-      this.animate();
-    });
-
+  startTracker(url) {
     let container = document.querySelector('#tracker');
+
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      this.scene.remove(this.scene.children[i]);
+    }
+    if (this.tracker.target) {
+      container.removeChild(this.tracker.target);
+      container.removeChild(this.tracker.debugCanvas);
+    }
+    cancelAnimationFrame(this.requestId);
+    this.face = null;
+
+    this.tracker.startImage(url);
+
     container.appendChild(this.tracker.target);
     container.appendChild(this.tracker.debugCanvas);
   }
 
 
   initObjects() {
-    this.root = new THREE.Object3D();
-    this.root.scale.set(150, 150, 150);
-    this.scene.add(this.root);
-
     this.face = new Face(this.tracker);
-    this.root.add(this.face);
+    this.face.scale.set(150, 150, 150);
+    this.scene.add(this.face);
   }
 
 
   animate() {
-    requestAnimationFrame(this.animate);
+    this.requestId = requestAnimationFrame(this.animate);
 
     this.controls.update();
+    if (this.face) {
+      this.face.rotation.y += 0.01;
+    }
     this.renderer.render(this.scene, this.camera);
   }
 

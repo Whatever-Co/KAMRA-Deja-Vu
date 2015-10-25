@@ -1,4 +1,5 @@
 /*global THREE*/
+import 'OBJLoader';
 import {vec2, mat3} from 'gl-matrix';
 
 
@@ -196,7 +197,7 @@ export default class extends THREE.Mesh {
     require('ctx-get-transform')(this.textureContext);
     this.textureContext.fillStyle = 'white';
     this.textureContext.fillRect(0, 0, this.textureCanvas.width, this.textureCanvas.height);
-    document.body.appendChild(this.textureCanvas);
+    // document.body.appendChild(this.textureCanvas);
 
     this.texture = new THREE.Texture(this.textureCanvas);
     this.texture.needsUpdate = true;

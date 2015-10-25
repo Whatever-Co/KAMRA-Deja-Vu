@@ -8,6 +8,7 @@ export default class extends EventEmitter {
   constructor() {
     super();
 
+    this.onTrackrConverged = this.onTrackrConverged.bind(this);
     this.update = this.update.bind(this);
 
     this.tracker = new clm.tracker({useWebGL: true});
@@ -23,7 +24,10 @@ export default class extends EventEmitter {
     this.debugContext = this.debugCanvas.getContext('2d');
   }
 
+
   startImage(url) {
+    this.tracker.reset();
+
     this.target = document.createElement('canvas');
     let image = new Image();
     image.onload = () => {
@@ -31,14 +35,17 @@ export default class extends EventEmitter {
       this.target.height = this.debugCanvas.height = image.height;
       let ctx = this.target.getContext('2d');
       ctx.drawImage(image, 0, 0);
-      document.addEventListener('clmtrackrConverged', this.onTrackrConverged.bind(this));
+      document.addEventListener('clmtrackrConverged', this.onTrackrConverged);
       this.tracker.start(this.target);
       this.update();
     };
     image.src = url;
   }
 
+
   startVideo(url) {
+    this.tracker.reset();
+
     this.target = document.createElement('video');
     this.target.loop = true;
     this.target.addEventListener('loadedmetadata', () => {
@@ -51,25 +58,31 @@ export default class extends EventEmitter {
     this.target.src = url;
   }
 
+
   startCamera() {
   }
+
 
   onTrackrNotFound() {
     console.warn('clmtrackrNotFound');
     this.normalizedPosition = null;
   }
 
+
   onTrackrLost() {
     console.warn('clmtrackrLost');
     this.normalizedPosition = null;
   }
 
+
   onTrackrConverged() {
     console.log('clmtrackrConverged');
+    document.removeEventListener('clmtrackrConverged', this.onTrackrConverged);
     cancelAnimationFrame(this.requestId);
     this.tracker.stop();
     this.emit('tracked');
   }
+
 
   update() {
     this.requestId = requestAnimationFrame(this.update);
@@ -81,6 +94,7 @@ export default class extends EventEmitter {
       this.normalizedPosition = this.normalizePoints(this.currentPosition);
     }
   }
+
 
   normalizePoints(points) {
     let center = points[62];
