@@ -14,7 +14,7 @@ export default class extends EventEmitter {
     this.model = defaultModel;
     this.tracker.init(this.model);
 
-    this.normalizedPoints = null;
+    this.normalizedPosition = null;
 
     document.addEventListener('clmtrackrNotFound', this.onTrackrNotFound.bind(this));
     document.addEventListener('clmtrackrLost', this.onTrackrLost.bind(this));
@@ -41,21 +41,22 @@ export default class extends EventEmitter {
 
   onTrackrNotFound() {
     console.warn('clmtrackrNotFound');
-    this.normalizedPoints = null;
+    this.normalizedPosition = null;
   }
 
   onTrackrLost() {
     console.warn('clmtrackrLost');
-    this.normalizedPoints = null;
+    this.normalizedPosition = null;
   }
 
   update() {
     this.requestId = requestAnimationFrame(this.update);
 
     this.debugContext.clearRect(0, 0, this.debugCanvas.width, this.debugCanvas.height);
-    if (this.tracker.getCurrentPosition()) {
+    this.currentPosition = this.tracker.getCurrentPosition();
+    if (this.currentPosition) {
       this.tracker.draw(this.debugCanvas);
-      this.normalizedPoints = this.normalizePoints(this.tracker.getCurrentPosition());
+      this.normalizedPosition = this.normalizePoints(this.currentPosition);
     }
   }
 

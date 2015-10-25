@@ -8,7 +8,10 @@ import FaceTracker from './facetracker';
 
 window.THREE = require('three');
 require('OrbitControls');
+require('OBJLoader');
 
+import {vec2, mat3} from 'gl-matrix';
+// console.log(vec2, mat3);
 
 
 class Node {
@@ -83,11 +86,23 @@ class App {
     this.root.scale.set(150, 150, 150);
     this.scene.add(this.root);
 
-    const geometry = new THREE.JSONLoader().parse(require('json!./face.json')).geometry;
+    let geometry = new THREE.JSONLoader().parse(require('json!./face.json')).geometry;
+    console.log(geometry);
     geometry.computeBoundingBox();
-    this.face = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({transparent: true, opacity: 0.3, wireframe: true}));
+    // let material = new THREE.MeshBasicMaterial({transparent: true, opacity: Math.pow(0.5, 2), wireframe: true});
+    let material = new THREE.MeshBasicMaterial({color: 0xffffff, map: THREE.ImageUtils.loadTexture('uvcheck.png')});
+    this.face = new THREE.Mesh(geometry, material);
+    this.face.frustumCulled = false;
     this.face.position.copy(geometry.boundingBox.center().negate());
     this.root.add(this.face);
+
+    // geometry.faceVertexUvs[0].forEach((uvs) => {
+    //   uvs.forEach((uv) => {
+    //     uv.x = Math.random();
+    //     uv.y = Math.random();
+    //   });
+    // });
+    // geometry.uvsNeedUpdate = true;
 
     this.featurePointIndices = require('json!./fp.json').map((pa) => {
       const p = new THREE.Vector3(pa[0], pa[1], pa[2]);
@@ -141,12 +156,13 @@ class App {
     //   });
     // });
 
-    let cube = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+    let cube = new THREE.BoxGeometry(0.02, 0.02, 0.02);
     this.featurePoints = this.featurePointIndices.map((i) => {
       if (i < 0) return;
       let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.7, depthTest: false});
       material.color.setHSL(Math.random(), 0.7, 0.5);
       let mesh = new THREE.Mesh(cube, material);
+      mesh.visible = false;
       mesh.vertexIndex = i;
       mesh.position.copy(geometry.vertices[i]);
       this.face.add(mesh);
@@ -154,7 +170,6 @@ class App {
     });
 
     this.initHeadPoints();
-
 
     // this.nodes.forEach((node) => {
     //   node.weights.forEach((w) => {
@@ -168,12 +183,25 @@ class App {
     // fp.position.x = this.nodes[fp.vertexIndex].position.x - 0.5;
     // this.update();
 
+    // console.log(this.featurePoints[62].position);
+    // this.root.updateMatrixWorld();
+    // console.log(this.featurePoints[62].localToWorld(new THREE.Vector3()));
+    // console.log(this.featurePoints[0].localToWorld(new THREE.Vector3()));
+    // console.log(this.camera.position);
 
-    console.log(this.featurePoints[62].position);
-    this.root.updateMatrixWorld();
-    console.log(this.featurePoints[62].localToWorld(new THREE.Vector3()));
-    console.log(this.featurePoints[0].localToWorld(new THREE.Vector3()));
-    console.log(this.camera.position);
+    this.textureCanvas = document.createElement('canvas');
+    this.textureCanvas.id = 'texture';
+    this.textureCanvas.width = 256;
+    this.textureCanvas.height = 256;
+    this.textureContext = this.textureCanvas.getContext('2d');
+    require('ctx-get-transform')(this.textureContext);
+    this.textureContext.fillStyle = 'white';
+    this.textureContext.fillRect(0, 0, 256, 256);
+    document.body.appendChild(this.textureCanvas);
+
+    this.texture = new THREE.Texture(this.textureCanvas);
+    this.texture.needsUpdate = true;
+    this.face.material.map = this.texture;
   }
 
 
@@ -320,56 +348,127 @@ class App {
   }
 
 
-  update() {
-    let vertices = this.face.geometry.vertices;
+  updateTexture() {
+    if (this.tracker.currentPosition) {
+      let min = [Number.MAX_VALUE, Number.MAX_VALUE];
+      let max = [Number.MIN_VALUE, Number.MIN_VALUE];
+      this.tracker.currentPosition.forEach((p) => {
+        let x = p[0];
+        let y = p[1];
+        if (x < min[0]) min[0] = x;
+        if (x > max[0]) max[0] = x;
+        if (y < min[1]) min[1] = y;
+        if (y > max[1]) max[1] = y;
+      });
+      let center = this.tracker.currentPosition[41];
+      let size = Math.max(center[0] - min[0], max[0] - center[0], center[1] - min[1], max[1] - center[1]);
+      this.textureContext.save();
+      let scale = 128 * 0.9 / size;
+      this.textureContext.translate(128, 128);
+      this.textureContext.scale(scale, scale);
+      this.textureContext.translate(-center[0], -center[1]);
+      this.textureContext.drawImage(this.tracker.target, 0, 0);
+      let mtx = this.textureContext.getTransform();
+      // this.textureContext.drawImage(this.tracker.debugCanvas, 0, 0);
+      this.textureContext.restore();
 
-    let displacement = this.featurePoints.map((mesh) => {
-      if (!mesh) return;
-      let node = this.nodes[mesh.vertexIndex];
-      // console.log(i, mesh.position.clone().sub(node.position));
-      return mesh.position.clone().sub(node.position);
-    });
-    this.nodes.forEach((target) => {
-    // let target = this.nodes[327];
-      if (target.weights.length == 0) return;
-      if (target.weights.length == 1) {
-        let w = target.weights[0];
-        // console.log(target.index, this.featurePointIndices[w.i], w);
-        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
-      } else {
-        let a = new THREE.Vector3();
-        let b = 0;
-        target.weights.forEach((w) => {
-        // console.log(w, displacement[w.i], target.distanceToFP[w.i]);
-          let dp = displacement[w.i].clone().multiplyScalar(w.w);
-          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
-        // console.log(dp, dist);
-          a.add(dp.multiplyScalar(dist));
-          b += w.w * dist;
-        });
-        // console.log(a, b, target.weights.length);
-        a.multiplyScalar(1 / b);
-        // console.log(a);
-        vertices[target.index].copy(target.position).add(a);
+      let fpuv = [];
+
+      this.textureContext.save();
+      this.textureContext.fillStyle = 'rgba(128, 255, 0, 0.5)';
+      this.tracker.currentPosition.forEach((p) => {
+        let q = vec2.transformMat3(vec2.create(), p, mtx);
+        // this.textureContext.fillRect(q[0] - 3, q[1] - 3, 6, 6);
+        vec2.scale(q, q, 1 / 256);
+        q[0] -= 0.5;
+        q[1] -= 0.5;
+        fpuv.push(q);
+      });
+
+      {
+        this.textureContext.fillStyle = 'red';
+        let v1 = this.tracker.currentPosition[14];
+        let v0 = this.tracker.currentPosition[0];
+        let center = vec2.lerp(vec2.create(), v1, v0, 0.5);
+        let xAxis = vec2.sub(vec2.create(), v1, center);
+        let scale = vec2.len(xAxis);
+        let rotation = mat3.create();
+        mat3.rotate(rotation, rotation, Math.atan2(xAxis[1], xAxis[0]));
+        for (let i = 71; i < this.featurePoints.length; i++) {
+          let fp = this.featurePoints[i].initialPosition;
+          let p = vec2.scale(vec2.create(), [fp.x, -fp.y], scale);
+          vec2.transformMat3(p, p, rotation);
+          vec2.add(p, p, center);
+          vec2.transformMat3(p, p, mtx);
+          // this.textureContext.fillRect(p[0] - 3, p[1] - 3, 6, 6);
+          vec2.scale(p, p, 1 / 256);
+          p[0] -= 0.5;
+          p[1] -= 0.5;
+          fpuv.push(p);
+        }
       }
-    });
 
-    this.face.geometry.verticesNeedUpdate = true;
+      this.textureContext.fillStyle = 'rgba(0, 0, 255, 0.5)';
+
+      this.featurePoints.forEach((mesh, i) => {
+        if (mesh) {
+          mesh.position.x = (fpuv[i][0]) * 2;
+          mesh.position.y = -(fpuv[i][1]) * 2;
+        }
+      });
+
+      let displacement = this.featurePoints.map((mesh) => {
+        if (!mesh) return;
+        let node = this.nodes[mesh.vertexIndex];
+        return mesh.position.clone().sub(node.position);
+      });
+      let uvs = this.nodes.map((target) => {
+        let p = new THREE.Vector3();
+        if (target.weights.length == 1) {
+          let w = target.weights[0];
+          p.copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
+        } else {
+          let a = new THREE.Vector3();
+          let b = 0;
+          target.weights.forEach((w) => {
+            let dp = displacement[w.i].clone().multiplyScalar(w.w);
+            let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
+            a.add(dp.multiplyScalar(dist));
+            b += w.w * dist;
+          });
+          a.multiplyScalar(1 / b);
+          p.copy(target.position).add(a);
+        }
+        // this.textureContext.fillRect(p.x * 128 + 128, -p.y * 128 + 128, 2, 2);
+        return [(p.x * 128 + 128) / 256, 1 - (-p.y * 128 + 128) / 256];
+      });
+
+      this.face.geometry.faces.forEach((face, i) => {
+        let uv = this.face.geometry.faceVertexUvs[0][i];
+        uv[0].x = uvs[face.a][0];
+        uv[0].y = uvs[face.a][1];
+        uv[1].x = uvs[face.b][0];
+        uv[1].y = uvs[face.b][1];
+        uv[2].x = uvs[face.c][0];
+        uv[2].y = uvs[face.c][1];
+      });
+      this.face.geometry.uvsNeedUpdate = true;
+
+      this.textureContext.restore();
+
+      this.texture.needsUpdate = true;
+    }
   }
 
 
-  animate(t) {
-    requestAnimationFrame(this.animate);
-
-    this.controls.update();
-
-    if (this.tracker.normalizedPoints) {
-      this.tracker.normalizedPoints.forEach((np, i) => {
+  updateFeaturePoints() {
+    if (this.tracker.normalizedPosition) {
+      this.tracker.normalizedPosition.forEach((np, i) => {
         let fp = this.featurePoints[i];
         if (fp) {
           let scale = (500 - fp.localToWorld(new THREE.Vector3()).z) / 500 * 0.5;
-          fp.position.x += (np[0] * scale - fp.position.x) * 0.2;
-          fp.position.y += (-np[1] * scale - fp.position.y) * 0.2;
+          fp.position.x += (np[0] * scale - fp.position.x) * 0.3;
+          fp.position.y += (-np[1] * scale - fp.position.y) * 0.3;
         }
       });
 
@@ -383,6 +482,49 @@ class App {
         fp.position.copy(fp.initialPosition.clone().multiplyScalar(scale).applyQuaternion(rotation).add(center));
       }
     }
+  }
+
+
+  updateMesh() {
+    let vertices = this.face.geometry.vertices;
+
+    let displacement = this.featurePoints.map((mesh) => {
+      if (!mesh) return;
+      let node = this.nodes[mesh.vertexIndex];
+      return mesh.position.clone().sub(node.position);
+    });
+    this.nodes.forEach((target) => {
+      if (target.weights.length == 0) return;
+      if (target.weights.length == 1) {
+        let w = target.weights[0];
+        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
+      } else {
+        let a = new THREE.Vector3();
+        let b = 0;
+        target.weights.forEach((w) => {
+          let dp = displacement[w.i].clone().multiplyScalar(w.w);
+          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
+          a.add(dp.multiplyScalar(dist));
+          b += w.w * dist;
+        });
+        a.multiplyScalar(1 / b);
+        vertices[target.index].copy(target.position).add(a);
+      }
+    });
+
+    // this.face.geometry.computeBoundingBox();
+    this.face.geometry.verticesNeedUpdate = true;
+  }
+
+
+  animate() {
+    requestAnimationFrame(this.animate);
+
+    this.controls.update();
+
+    // this.updateFeaturePoints();
+    this.updateTexture();
+    this.updateMesh();
 
     // const y = this.featurePoints[50].position.y;
     // [45, 46, 47, 48, 49, 59, 60, 61, 51, 52, 53, 54, 55, 56, 57, 58].forEach((i) => {
@@ -397,8 +539,6 @@ class App {
     //     fp.position.x = v.position.x + Math.sin(t / 500 + v.position.y) * 0.5;
     //   }
     // });
-
-    this.update();
 
     this.renderer.render(this.scene, this.camera);
   }
