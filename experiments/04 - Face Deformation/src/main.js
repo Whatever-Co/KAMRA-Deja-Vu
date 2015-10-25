@@ -90,7 +90,7 @@ class App {
     console.log(geometry);
     geometry.computeBoundingBox();
     // let material = new THREE.MeshBasicMaterial({transparent: true, opacity: Math.pow(0.5, 2), wireframe: true});
-    let material = new THREE.MeshBasicMaterial({color: 0xffffff, map: THREE.ImageUtils.loadTexture('uvcheck.png')});
+    let material = new THREE.MeshBasicMaterial({color: 0xffffff, map: THREE.ImageUtils.loadTexture('uvcheck.png'), side: THREE.DoubleSide});
     this.face = new THREE.Mesh(geometry, material);
     this.face.frustumCulled = false;
     this.face.position.copy(geometry.boundingBox.center().negate());
@@ -378,11 +378,7 @@ class App {
       this.textureContext.fillStyle = 'rgba(128, 255, 0, 0.5)';
       this.tracker.currentPosition.forEach((p) => {
         let q = vec2.transformMat3(vec2.create(), p, mtx);
-        // this.textureContext.fillRect(q[0] - 3, q[1] - 3, 6, 6);
-        vec2.scale(q, q, 1 / 256);
-        q[0] -= 0.5;
-        q[1] -= 0.5;
-        fpuv.push(q);
+        fpuv.push([q[0] / 128 - 1, q[1] / 128 - 1]);
       });
 
       {
@@ -401,46 +397,36 @@ class App {
           vec2.add(p, p, center);
           vec2.transformMat3(p, p, mtx);
           // this.textureContext.fillRect(p[0] - 3, p[1] - 3, 6, 6);
-          vec2.scale(p, p, 1 / 256);
-          p[0] -= 0.5;
-          p[1] -= 0.5;
-          fpuv.push(p);
+          fpuv.push([p[0] / 128 - 1, p[1] / 128 - 1]);
         }
       }
 
       this.textureContext.fillStyle = 'rgba(0, 0, 255, 0.5)';
 
-      this.featurePoints.forEach((mesh, i) => {
-        if (mesh) {
-          mesh.position.x = (fpuv[i][0]) * 2;
-          mesh.position.y = -(fpuv[i][1]) * 2;
-        }
-      });
-
-      let displacement = this.featurePoints.map((mesh) => {
+      let displacement = this.featurePoints.map((mesh, i) => {
         if (!mesh) return;
         let node = this.nodes[mesh.vertexIndex];
-        return mesh.position.clone().sub(node.position);
+        return [fpuv[i][0] - node.position.x, -fpuv[i][1] - node.position.y];
       });
+
       let uvs = this.nodes.map((target) => {
-        let p = new THREE.Vector3();
+        let p = vec2.create();
         if (target.weights.length == 1) {
           let w = target.weights[0];
-          p.copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
+          vec2.add(p, [target.position.x, target.position.y], vec2.scale([], displacement[w.i], w.w));
         } else {
-          let a = new THREE.Vector3();
+          let a = vec2.create();
           let b = 0;
           target.weights.forEach((w) => {
-            let dp = displacement[w.i].clone().multiplyScalar(w.w);
+            let dp = vec2.scale([], displacement[w.i], w.w);
             let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
-            a.add(dp.multiplyScalar(dist));
+            vec2.add(a, a, vec2.scale(dp, dp, dist));
             b += w.w * dist;
           });
-          a.multiplyScalar(1 / b);
-          p.copy(target.position).add(a);
+          vec2.scale(a, a, 1 / b);
+          vec2.add(p, [target.position.x, target.position.y], a);
         }
-        // this.textureContext.fillRect(p.x * 128 + 128, -p.y * 128 + 128, 2, 2);
-        return [(p.x * 128 + 128) / 256, 1 - (-p.y * 128 + 128) / 256];
+        return [(p[0] * 128 + 128) / 256, (p[1] * 128 + 128) / 256];
       });
 
       this.face.geometry.faces.forEach((face, i) => {
@@ -522,7 +508,7 @@ class App {
 
     this.controls.update();
 
-    // this.updateFeaturePoints();
+    this.updateFeaturePoints();
     this.updateTexture();
     this.updateMesh();
 
