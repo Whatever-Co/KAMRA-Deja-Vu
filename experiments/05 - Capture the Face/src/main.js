@@ -40,7 +40,7 @@ class ImageApp {
       this.animate();
     });
 
-    this.startTracker('media/franck_03909.jpg');
+    this.startTracker('media/shutterstock_282461870.jpg');
   }
 
 

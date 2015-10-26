@@ -72,7 +72,7 @@ export default class extends THREE.Mesh {
     this.featurePoints = this.featurePointIndices.map((i) => {
       if (i < 0) return;
       let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.7, depthTest: false});
-      material.color.setHSL(Math.random(), 0.7, 0.5);
+      // material.color.setHSL(Math.random(), 0.7, 0.5);
       let mesh = new THREE.Mesh(cube, material);
       mesh.visible = false;
       mesh.vertexIndex = i;
@@ -321,8 +321,11 @@ export default class extends THREE.Mesh {
         if (fp) {
           // let scale = (500 - fp.localToWorld(new THREE.Vector3()).z) / 500 * 0.5;
           let scale = (500 - fp.position.z * 150) / 500 * 0.5;
-          fp.position.x += (np[0] * scale - fp.position.x) * 0.3;
-          fp.position.y += (-np[1] * scale - fp.position.y) * 0.3;
+          // fp.position.x += (np[0] * scale - fp.position.x) * 0.3;
+          // fp.position.y += (-np[1] * scale - fp.position.y) * 0.3;
+          fp.position.x = np[0] * scale;
+          fp.position.y = -np[1] * scale;
+          // fp.position.z *= 2 * scale;
         }
       });
 
@@ -336,33 +339,39 @@ export default class extends THREE.Mesh {
         fp.position.copy(fp.initialPosition.clone().multiplyScalar(scale).applyQuaternion(rotation).add(center));
       }
 
-      let vertices = this.geometry.vertices;
-
-      let displacement = this.featurePoints.map((mesh) => {
-        if (!mesh) return;
-        let node = this.nodes[mesh.vertexIndex];
-        return mesh.position.clone().sub(node.position);
-      });
-      this.nodes.forEach((target) => {
-        if (target.weights.length == 1) {
-          let w = target.weights[0];
-          vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
-        } else {
-          let a = new THREE.Vector3();
-          let b = 0;
-          target.weights.forEach((w) => {
-            let dp = displacement[w.i].clone().multiplyScalar(w.w);
-            let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
-            a.add(dp.multiplyScalar(dist));
-            b += w.w * dist;
-          });
-          a.multiplyScalar(1 / b);
-          vertices[target.index].copy(target.position).add(a);
-        }
-      });
-
-      this.geometry.verticesNeedUpdate = true;
+      this.deformVertices();
     }
+  }
+
+
+  deformVertices() {
+    let vertices = this.geometry.vertices;
+
+    let displacement = this.featurePoints.map((mesh) => {
+      if (!mesh) return;
+      let node = this.nodes[mesh.vertexIndex];
+      return mesh.position.clone().sub(node.position);
+    });
+
+    this.nodes.forEach((target) => {
+      if (target.weights.length == 1) {
+        let w = target.weights[0];
+        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
+      } else {
+        let a = new THREE.Vector3();
+        let b = 0;
+        target.weights.forEach((w) => {
+          let dp = displacement[w.i].clone().multiplyScalar(w.w);
+          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
+          a.add(dp.multiplyScalar(dist));
+          b += w.w * dist;
+        });
+        a.multiplyScalar(1 / b);
+        vertices[target.index].copy(target.position).add(a);
+      }
+    });
+
+    this.geometry.verticesNeedUpdate = true;
   }
 
 
@@ -386,7 +395,7 @@ export default class extends THREE.Mesh {
       return index;
     };
     let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry;
-    let fpIndices = geometry.vertices.map((v, i) => {
+    let fpIndices = geometry.vertices.map((v) => {
       let index = findFPIndex(v);
       v.copy(this.featurePoints[index].position);
       v.z -= 0.01;
