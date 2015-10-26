@@ -49,6 +49,7 @@ export default class extends THREE.Mesh {
     this.initTexture();
     this.initMesh();
     this.initEyeMouth();
+    this.deformVertices();
   }
 
 
@@ -349,44 +350,11 @@ export default class extends THREE.Mesh {
         let fp = this.featurePoints[i];
         fp.position.copy(fp.initialPosition.clone().multiplyScalar(scale).applyQuaternion(rotation).add(center));
       }
-
-      this.deformVertices();
     }
   }
 
 
-  deformVertices() {
-    let vertices = this.geometry.vertices;
-
-    let displacement = this.featurePoints.map((mesh) => {
-      if (!mesh) return;
-      let node = this.nodes[mesh.vertexIndex];
-      return mesh.position.clone().sub(node.position);
-    });
-
-    this.nodes.forEach((target) => {
-      if (target.weights.length == 1) {
-        let w = target.weights[0];
-        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
-      } else {
-        let a = new THREE.Vector3();
-        let b = 0;
-        target.weights.forEach((w) => {
-          let dp = displacement[w.i].clone().multiplyScalar(w.w);
-          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
-          a.add(dp.multiplyScalar(dist));
-          b += w.w * dist;
-        });
-        a.multiplyScalar(1 / b);
-        vertices[target.index].copy(target.position).add(a);
-      }
-    });
-
-    this.geometry.verticesNeedUpdate = true;
-  }
-
-
-  initEyeMouth() {
+  initEyeMouth_() {
     // console.log(this.featurePointUV);
     this.featurePointUV.forEach((uv) => {
       uv[0] = uv[0] * 0.5 + 0.5;
@@ -424,6 +392,80 @@ export default class extends THREE.Mesh {
     geometry.uvsNeedUpdate = true;
     this.eyemouth = new THREE.Mesh(geometry, this.material);
     this.add(this.eyemouth);
+  }
+
+
+  initEyeMouth() {
+    let faceUVs = [];
+    this.geometry.faces.forEach((face, i) => {
+      let uv = this.geometry.faceVertexUvs[0][i];
+      faceUVs[face.a] = uv[0];
+      faceUVs[face.b] = uv[1];
+      faceUVs[face.c] = uv[2];
+    });
+
+    let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry;
+
+    let vertexIndices = geometry.vertices.map((v) => {
+      let dist = Number.MAX_VALUE;
+      let index = -1;
+      this.geometry.vertices.forEach((fv, i) => {
+        let d = fv.distanceToSquared(v);
+        if (d < dist) {
+          dist = d;
+          index = i;
+        }
+      });
+      v.copy(this.geometry.vertices[index]);
+      v.followVertex = index;
+      return index;
+    });
+
+    geometry.faces.forEach((face, i) => {
+      geometry.faceVertexUvs[0][i] = [
+        faceUVs[vertexIndices[face.a]],
+        faceUVs[vertexIndices[face.b]],
+        faceUVs[vertexIndices[face.c]]
+      ];
+    });
+    this.eyemouth = new THREE.Mesh(geometry, this.material);
+    this.add(this.eyemouth);
+  }
+
+
+  deformVertices() {
+    let vertices = this.geometry.vertices;
+
+    let displacement = this.featurePoints.map((mesh) => {
+      if (!mesh) return;
+      let node = this.nodes[mesh.vertexIndex];
+      return mesh.position.clone().sub(node.position);
+    });
+
+    this.nodes.forEach((target) => {
+      if (target.weights.length == 1) {
+        let w = target.weights[0];
+        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w));
+      } else {
+        let a = new THREE.Vector3();
+        let b = 0;
+        target.weights.forEach((w) => {
+          let dp = displacement[w.i].clone().multiplyScalar(w.w);
+          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i]);
+          a.add(dp.multiplyScalar(dist));
+          b += w.w * dist;
+        });
+        a.multiplyScalar(1 / b);
+        vertices[target.index].copy(target.position).add(a);
+      }
+    });
+
+    this.geometry.verticesNeedUpdate = true;
+
+    this.eyemouth.geometry.vertices.forEach((v) => {
+      v.copy(this.geometry.vertices[v.followVertex]);
+    });
+    this.eyemouth.geometry.verticesNeedUpdate = true;
   }
 
 }
