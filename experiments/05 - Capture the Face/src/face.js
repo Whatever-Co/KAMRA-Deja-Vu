@@ -53,9 +53,9 @@ export default class extends THREE.Mesh {
 
 
   initFeaturePoints() {
-    this.featurePointIndices = require('json!./data/fp.json').map((pa) => {
+    this.featurePointIndices = require('json!./data/fp.json').map((pa, i) => {
       const p = new THREE.Vector3(pa[0], pa[1], pa[2]);
-      return p.length() > 0 ? this.findNearestIndex(this.geometry.vertices, p) : -1;
+      return i == 41 || p.length() > 0 ? this.findNearestIndex(this.geometry.vertices, p) : -1;
     });
 
     this.buildConnectionData(this.geometry);
@@ -191,9 +191,15 @@ export default class extends THREE.Mesh {
       });
     }
 
+    let total = 0;
     node.weights = node.weights.map((w, i) => {
+      total += w;
       return {i, w};
-    }).sort((a, b) => b.w - a.w).filter((w) => w.w > 0);
+    }).sort((a, b) => b.w - a.w).filter((w) => w.w > 0).slice(0, 4);
+    node.weights.forEach((w) => {
+      w.w /= total;
+    });
+    // console.log(node.index, node.weights);
   }
 
 
@@ -225,10 +231,10 @@ export default class extends THREE.Mesh {
         if (y < min[1]) min[1] = y;
         if (y > max[1]) max[1] = y;
       });
-      let center = this.tracker.currentPosition[41];
+      let center = this.tracker.currentPosition[33];
       let size = Math.max(center[0] - min[0], max[0] - center[0], center[1] - min[1], max[1] - center[1]);
       this.textureContext.save();
-      let scale = 256 * 0.9 / size;
+      let scale = 256 * 0.95 / size;
       this.textureContext.translate(256, 256);
       this.textureContext.scale(scale, scale);
       this.textureContext.translate(-center[0], -center[1]);
@@ -308,8 +314,6 @@ export default class extends THREE.Mesh {
       this.geometry.uvsNeedUpdate = true;
 
       this.textureContext.restore();
-
-      this.texture.needsUpdate = true;
     }
   }
 
@@ -321,6 +325,7 @@ export default class extends THREE.Mesh {
         if (fp) {
           // let scale = (500 - fp.localToWorld(new THREE.Vector3()).z) / 500 * 0.5;
           let scale = (500 - fp.position.z * 150) / 500 * 0.5;
+          // scale = 0.3;
           // fp.position.x += (np[0] * scale - fp.position.x) * 0.3;
           // fp.position.y += (-np[1] * scale - fp.position.y) * 0.3;
           fp.position.x = np[0] * scale;
@@ -328,6 +333,12 @@ export default class extends THREE.Mesh {
           // fp.position.z *= 2 * scale;
         }
       });
+
+      // console.log(this.featurePoints);
+      // [33, 41, 62, 34, 35, 36, 42, 37, 43, 38, 39, 40].forEach((i) => {
+      //   let fp = this.featurePoints[i];
+      //   fp.position.x += 0.2;
+      // });
 
       let v1 = this.featurePoints[14].position.clone();
       let v0 = this.featurePoints[0].position.clone();

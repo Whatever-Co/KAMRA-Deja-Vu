@@ -3,8 +3,8 @@
 var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
 module.exports = {
-  entry: './src/main.js',
-  // entry: './src/order-fp.js',
+  // entry: './src/main.js',
+  entry: './src/order-fp.js',
   // entry: './src/trackrtest.js',
   output: {
     path: './public',
