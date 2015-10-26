@@ -409,7 +409,7 @@ export default class extends THREE.Mesh {
     let fpIndices = geometry.vertices.map((v) => {
       let index = findFPIndex(v);
       v.copy(this.featurePoints[index].position);
-      v.z -= 0.01;
+      // v.z -= 0.01;
       return index;
     });
     geometry.faces.forEach((face, i) => {

@@ -38,6 +38,12 @@ class ImageApp {
     this.tracker.on('tracked', () => {
       this.initObjects();
       this.animate();
+
+      let ctx = this.tracker.debugCanvas.getContext('2d');
+      ctx.fillStyle = 'red';
+      this.tracker.currentPosition.forEach((p) => {
+        ctx.fillRect(p[0] - 1, p[1] - 1, 2, 2);
+      });
     });
 
     this.startTracker('media/shutterstock_282461870.jpg');
