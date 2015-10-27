@@ -513,7 +513,7 @@ export default class extends THREE.Mesh {
     //   }
     // })
 
-    this.featurePoints.forEach((p, i) => {
+    this.featurePoints.forEach((p) => {
       if (p) {
         let node = this.nodes[p.vertexIndex]
         p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
@@ -525,6 +525,16 @@ export default class extends THREE.Mesh {
 
 
   export() {
+    return {
+      face: this.exportFace(),
+      rightEye: this.exportRightEye(),
+      leftEye: this.exportLeftEye(),
+      mouth: this.exportMouth()
+    }
+  }
+
+
+  exportFace() {
     let position = []
     this.geometry.vertices.forEach((v) => {
       position.push(v.x, v.y, v.z)
@@ -544,13 +554,62 @@ export default class extends THREE.Mesh {
     })
 
     return {
-      face: {
-        position,
-        index,
-        featurePoint,
-        weight
+      position,
+      index,
+      featurePoint,
+      weight
+    }
+  }
+
+
+  exportRightEye() {
+    let index = []
+    let add = (i) => {
+      let v = this.eyemouth.geometry.vertices[i]
+      if (v.x < 0 && v.y > 0) {
+        index.push(v.followVertex)
       }
     }
+    this.eyemouth.geometry.faces.forEach((f) => {
+      add(f.a)
+      add(f.b)
+      add(f.c)
+    })
+    return {index}
+  }
+
+
+  exportLeftEye() {
+    let index = []
+    let add = (i) => {
+      let v = this.eyemouth.geometry.vertices[i]
+      if (v.x > 0 && v.y > 0) {
+        index.push(v.followVertex)
+      }
+    }
+    this.eyemouth.geometry.faces.forEach((f) => {
+      add(f.a)
+      add(f.b)
+      add(f.c)
+    })
+    return {index}
+  }
+
+
+  exportMouth() {
+    let index = []
+    let add = (i) => {
+      let v = this.eyemouth.geometry.vertices[i]
+      if (v.y < 0) {
+        index.push(v.followVertex)
+      }
+    }
+    this.eyemouth.geometry.faces.forEach((f) => {
+      add(f.a)
+      add(f.b)
+      add(f.c)
+    })
+    return {index}
   }
 
 }
