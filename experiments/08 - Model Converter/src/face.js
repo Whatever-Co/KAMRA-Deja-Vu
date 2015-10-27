@@ -264,11 +264,16 @@ export default class extends THREE.Mesh {
     node.weights = node.weights.map((w, i) => {
       return {i, w}
     }).sort((a, b) => b.w - a.w).filter((w) => w.w > 0).slice(0, 4)
-    let total = node.weights.reduce((p, w) => p + w.w, 0)
-    node.weights.forEach((w) => {
-      w.w /= total
-    })
+    // let total = node.weights.reduce((p, w) => p + w.w, 0)
+    // node.weights.forEach((w) => {
+    //   w.w /= total
+    // })
     // console.log(node.index, node.weights);
+
+    node.weights.forEach((w) => {
+      let d = node.distanceToFP[w.i]
+      w.f = w.w / (d * d)
+    })
   }
 
 
@@ -477,10 +482,12 @@ export default class extends THREE.Mesh {
         let a = new THREE.Vector3()
         let b = 0
         target.weights.forEach((w) => {
-          let dp = displacement[w.i].clone().multiplyScalar(w.w)
-          let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i])
-          a.add(dp.multiplyScalar(dist))
-          b += w.w * dist
+          // let dp = displacement[w.i].clone().multiplyScalar(w.w)
+          // let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i])
+          // a.add(dp.multiplyScalar(dist))
+          // b += w.w * dist
+          a.add(displacement[w.i].clone().multiplyScalar(w.f))
+          b += w.f
         })
         a.multiplyScalar(1 / b)
         vertices[target.index].copy(target.position).add(a)
@@ -537,7 +544,7 @@ export default class extends THREE.Mesh {
   exportFace() {
     let position = []
     this.geometry.vertices.forEach((v) => {
-      position.push(v.x, v.y, v.z)
+      position.push(parseFloat(v.x.toPrecision(4)), parseFloat(v.y.toPrecision(4)), parseFloat(v.z.toPrecision(4)))
     })
 
     let index = []
@@ -548,9 +555,7 @@ export default class extends THREE.Mesh {
     let featurePoint = this.featurePoints.map((fp) => fp ? fp.vertexIndex : -1)
 
     let weight = this.nodes.map((node) => {
-      let nw = []
-      node.weights.forEach((w) => nw.push(w.i, Math.round(w.w * 100000) / 100000))
-      return nw
+      return node.weights.map((w) => [w.i, parseFloat(w.f.toPrecision(4))])
     })
 
     return {
