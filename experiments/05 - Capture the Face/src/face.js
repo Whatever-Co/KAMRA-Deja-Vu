@@ -2,6 +2,8 @@
 import 'OBJLoader';
 import {vec2, mat3} from 'gl-matrix';
 
+const faceJson = require('json!./data/face3.json');
+const eyemouthJson = require('json!./data/eyemouth3.json');
 
 class Node {
 
@@ -31,7 +33,7 @@ class Node {
 export default class extends THREE.Mesh {
 
   constructor(tracker) {
-    let geometry = new THREE.JSONLoader().parse(require('json!./data/face.json')).geometry;
+    let geometry = new THREE.JSONLoader().parse(faceJson).geometry;
     // let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide});
     let material = new THREE.ShaderMaterial({
       uniforms: {
@@ -373,7 +375,7 @@ export default class extends THREE.Mesh {
       });
       return index;
     };
-    let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry;
+    let geometry = new THREE.JSONLoader().parse(eyemouthJson).geometry;
     let fpIndices = geometry.vertices.map((v) => {
       let index = findFPIndex(v);
       v.copy(this.featurePoints[index].position);
@@ -404,7 +406,7 @@ export default class extends THREE.Mesh {
       faceUVs[face.c] = uv[2];
     });
 
-    let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry;
+    let geometry = new THREE.JSONLoader().parse(eyemouthJson).geometry;
 
     let vertexIndices = geometry.vertices.map((v) => {
       let dist = Number.MAX_VALUE;
