@@ -272,8 +272,9 @@ export default class extends THREE.Mesh {
 
     node.weights.forEach((w) => {
       let d = node.distanceToFP[w.i]
-      w.f = w.w / (d * d)
+      w.f = d == 0 ? 1 : w.w / (d * d)
     })
+    console.log(node.weights)
   }
 
 
