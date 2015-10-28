@@ -1,4 +1,4 @@
-/*global clm,pModel*/
+/* global clm pModel */
 // import defaultModel from 'exports?pModel!models/model_pca_20_svm'
 import {EventEmitter} from 'events'
 
@@ -14,6 +14,7 @@ export default class extends EventEmitter {
     this.tracker = new clm.tracker({useWebGL: true})
     this.model = pModel
     this.tracker.init(this.model)
+    this.stopOnConvergence = false
 
     this.normalizedPosition = null
 
@@ -25,21 +26,31 @@ export default class extends EventEmitter {
   }
 
 
-  startImage(url) {
+  startImage(image) {
     this.tracker.reset()
 
-    this.target = document.createElement('canvas')
-    let image = new Image()
-    image.onload = () => {
-      this.target.width = this.debugCanvas.width = image.width
-      this.target.height = this.debugCanvas.height = image.height
-      let ctx = this.target.getContext('2d')
-      ctx.drawImage(image, 0, 0)
-      document.addEventListener('clmtrackrConverged', this.onTrackrConverged)
+    if (typeof(image) == 'string') {
+      this.target = document.createElement('canvas')
+      let image = new Image()
+      image.onload = () => {
+        this.target.width = this.debugCanvas.width = image.width
+        this.target.height = this.debugCanvas.height = image.height
+        let ctx = this.target.getContext('2d')
+        ctx.drawImage(image, 0, 0)
+        document.addEventListener('clmtrackrConverged', this.onTrackrConverged)
+        this.tracker.start(this.target)
+        this.update()
+      }
+      image.src = image
+    } else {
+      this.target = image
+      this.debugCanvas.width = image.width
+      this.debugCanvas.height = image.height
       this.tracker.start(this.target)
       this.update()
     }
-    image.src = url
+
+    this.stopOnConvergence = true
   }
 
 
@@ -94,6 +105,11 @@ export default class extends EventEmitter {
     cancelAnimationFrame(this.requestId)
     this.tracker.stop()
     this.emit('tracked')
+  }
+
+
+  getScore() {
+    return this.tracker.getScore()
   }
 
 

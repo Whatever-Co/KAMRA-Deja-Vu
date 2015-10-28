@@ -5,35 +5,42 @@ html, body
   padding: 0
   overflow: hidden
 
-#tracker
-  // opacity: 0.5
-  position: absolute
-  left: 0
-  top: 0
-  transform-origin: left top
-  transform: scale(0.7, 0.7)
-  canvas
-    position: absolute
-    left: 0
-    top: 0
-    z-index: 10
-
-#texture
-  position: absolute
-  left: 0
-  bottom: 0
-  transform-origin: left bottom
-  // transform: scale(2, 2)
-
-#tracker-debug
-  position: absolute
-  left: 0
-  top: 0
-  transform: scale(-1, 1)
-
-.download
-  position: absolute
-  left: 5px
-  bottom: 5px
-  color: white
+body
+  color: #666
+  background-color: #ccc
   font: 20px sans-serif
+
+#model-preview
+  position: absolute
+  left: 0
+  top: 0
+
+#editor
+  position: absolute
+  right: 0
+  top: 0
+  height: 100%
+  overflow: hidden
+  background-color: #eee
+  display: flex
+  align-items: center
+  justify-content: center
+
+.edit-point
+  position: absolute
+  width: 12px
+  height: 12px
+  background-image: url(dot.png)
+
+#texture-preview
+  position: absolute
+  left: 0
+  top: 0
+
+.buttons
+  position: absolute
+  right: 5px
+  top: 5px
+  z-index: 100
+  a
+    margin: 5px
