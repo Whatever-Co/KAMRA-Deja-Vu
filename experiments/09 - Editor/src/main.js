@@ -41,8 +41,8 @@ class FeaturePointEditor {
 
     this.initDropHandler()
     // this.filename = 'shutterstock_62329042.jpg'
-    this.filename = 'shutterstock_102487424.jpg'
-    this.loadImage(`media/${this.filename}`)
+    // this.filename = 'shutterstock_102487424.jpg'
+    // this.loadImage(`media/${this.filename}`)
   }
 
 
