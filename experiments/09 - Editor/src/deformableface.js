@@ -53,8 +53,8 @@ export default class extends THREE.Mesh {
   }
 
 
-  applyTexture(texture, coords) {
-    let displacement = coords.map((c, i) => {
+  applyTexture(texture, uv) {
+    let displacement = uv.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
       return vec2.sub([], c, fp)
     })
@@ -79,7 +79,7 @@ export default class extends THREE.Mesh {
     map.needsUpdate = true
     this.material.map = map
 
-    displacement = coords.map((c, i) => {
+    displacement = uv.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
       let scale = (500 - fp[2] * 200) / 500
       let p = vec3.clone(fp)
@@ -102,13 +102,32 @@ export default class extends THREE.Mesh {
       attribute.array[i * 3 + 2] = p[2]
     }
     attribute.needsUpdate = true
+
+    this.initialPosition = new Float32Array(attribute.array)
+    // console.log(this.initialPosition)
   }
 
 
-  getPosition(index) {
+  update(t) {
+    if (this.initialPosition) {
+      let open = (Math.sin(t * 0.001) + 1) * 0.5
+      ![[67, 70], [29, 31], [68, 69]].forEach((pair) => {
+        
+      })
+      // let attribute = this.geometry.getAttribute('position')
+      // for (let i = 0; i < this.initialPosition.length; i += 3) {
+      //   attribute.array[i + 0] = this.initialPosition[i + 0] + Math.sin(t * 0.003 + this.initialPosition[i + 1] * 5) * 0.2
+      //   attribute.array[i + 1] = this.initialPosition[i + 1]
+      //   attribute.array[i + 2] = this.initialPosition[i + 2]
+      // }
+      // attribute.needsUpdate = true
+    }
+  }
+
+
+  getPosition(index, array = this.data.face.position) {
     let i = index * 3
-    let p = this.data.face.position
-    return [p[i], p[i + 1], p[i + 2]]
+    return [array[i], array[i + 1], array[i + 2]]
   }
 
 

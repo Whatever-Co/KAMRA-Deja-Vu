@@ -40,9 +40,9 @@ class FeaturePointEditor {
     this.tracker = new FaceTracker()
 
     this.initDropHandler()
-    this.filename = 'shutterstock_62329042.jpg'
+    // this.filename = 'shutterstock_62329042.jpg'
+    this.filename = 'shutterstock_102487424.jpg'
     this.loadImage(`media/${this.filename}`)
-    // this.loadImage('media/shutterstock_102487424.jpg')
   }
 
 
@@ -267,6 +267,7 @@ class EditorApp {
   animate(t) {
     requestAnimationFrame(this.animate)
 
+    this.face.update(t)
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
