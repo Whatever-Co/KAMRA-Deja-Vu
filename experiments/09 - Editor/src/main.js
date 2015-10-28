@@ -166,7 +166,7 @@ class FeaturePointEditor {
     let max = [Number.MIN_VALUE, Number.MIN_VALUE]
     this.editPoints.forEach((p) => {
       let c = p.position()
-      c = [c.left, c.top]
+      c = [c.left + 6, c.top + 6]
       vec2.min(min, min, c)
       vec2.max(max, max, c)
     })
@@ -189,7 +189,7 @@ class FeaturePointEditor {
 
     this.textureCoords = this.editPoints.map((ep) => {
       let c = ep.position()
-      let p = vec2.transformMat3([], [c.left, c.top], mtx)
+      let p = vec2.transformMat3([], [c.left + 6, c.top + 6], mtx)
       vec2.scale(p, p, 1 / 512)
       p[1] = 1 - p[1]
       return p
