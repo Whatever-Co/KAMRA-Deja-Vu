@@ -4,18 +4,21 @@ import {vec2, vec3} from 'gl-matrix'
 
 export default class extends THREE.Object3D {
 
-  constructor(basename) {
+  constructor() {
     super()
-    this.loadAssets(basename)
+    // this.loadAssets(basename)
   }
 
 
-  loadAssets(basename) {
-    let loader = new createjs.LoadQueue()
-    loader.loadFile({id: 'json', src: `${basename}.json`})
-    loader.loadFile({id: 'image', src: `${basename}.png`})
-    loader.on('complete', () => {
-      this.buildMesh(loader.getResult('image'), loader.getResult('json'))
+  load(basename) {
+    return new Promise((resolve) => {
+      let loader = new createjs.LoadQueue()
+      loader.loadFile({id: 'json', src: `${basename}.json`})
+      loader.loadFile({id: 'image', src: `${basename}.png`})
+      loader.on('complete', () => {
+        this.buildMesh(loader.getResult('image'), loader.getResult('json'))
+        resolve()
+      })
     })
   }
 
@@ -40,15 +43,17 @@ export default class extends THREE.Object3D {
     map.needsUpdate = true
     let material = new THREE.ShaderMaterial({
       uniforms: {
-        map: {type: 't', value: map}
+        map: {type: 't', value: map},
+        offset: {type: 'f', value: 0},
+        amount: {type: 'f', value: 0.5}
       },
       vertexShader: require('raw!./face.vert'),
       fragmentShader: require('raw!./face.frag'),
       side: THREE.DoubleSide
     })
 
-    this.face = new THREE.Mesh(geometry, material)
-    this.add(this.face)
+    this.mesh = new THREE.Mesh(geometry, material)
+    this.add(this.mesh)
   }
 
 
