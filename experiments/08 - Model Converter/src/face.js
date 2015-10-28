@@ -38,7 +38,7 @@ class Node {
 export default class extends THREE.Mesh {
 
   constructor(tracker) {
-    let geometry = new THREE.JSONLoader().parse(require('json!./data/face.json')).geometry
+    let geometry = new THREE.JSONLoader().parse(require('./data/face3.json')).geometry
     // let geometry = new THREE.BufferGeometry()
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true})
     // let material = new THREE.ShaderMaterial({
@@ -103,7 +103,7 @@ export default class extends THREE.Mesh {
       setDistance(index[i + 2], index[i + 1])
     }
 
-    this.featurePoints = require('json!./data/fp.json').map((p, i) => {
+    this.featurePoints = require('./data/fp.json').map((p, i) => {
       let index = -1
       if (i == 41 || vec3.length(p) > 0) {
         let distance = Number.MAX_VALUE
@@ -122,7 +122,7 @@ export default class extends THREE.Mesh {
 
 
   initFeaturePoints() {
-    this.featurePointIndices = require('json!./data/fp.json').map((pa, i) => {
+    this.featurePointIndices = require('./data/fp.json').map((pa, i) => {
       const p = new THREE.Vector3(pa[0], pa[1], pa[2])
       return i == 41 || p.length() > 0 ? this.findNearestIndex(this.geometry.vertices, p) : -1
     })
@@ -274,7 +274,7 @@ export default class extends THREE.Mesh {
       let d = node.distanceToFP[w.i]
       w.f = d == 0 ? 1 : w.w / (d * d)
     })
-    console.log(node.weights)
+    // console.log(node.weights)
   }
 
 
@@ -437,7 +437,7 @@ export default class extends THREE.Mesh {
     //   faceUVs[face.c] = uv[2]
     // })
 
-    let geometry = new THREE.JSONLoader().parse(require('json!./data/eyemouth.json')).geometry
+    let geometry = new THREE.JSONLoader().parse(require('./data/eyemouth3.json')).geometry
 
     let vertexIndices = geometry.vertices.map((v) => {
       let dist = Number.MAX_VALUE

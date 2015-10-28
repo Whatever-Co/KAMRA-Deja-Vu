@@ -104,7 +104,7 @@ class ImportApp {
 
 
   initObjects() {
-    let data = require('json!./data/face2.json')
+    let data = require('./data/face2.json')
 
     let position = toTypedArray(Float32Array, data.face.position)
     // let index = toTypedArray(Uint16Array, data.face.index)

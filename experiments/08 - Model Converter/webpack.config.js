@@ -15,8 +15,8 @@ module.exports = {
     loaders: [
       { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel' },
       { test: /\.sass$/, loaders: ['style', 'css', 'autoprefixer', 'sass?indentedSyntax'] },
-      { test: /\.jade$/, loader: 'jade-loader?self' }
-      // { test: /\.json$/, loader: 'json' }
+      { test: /\.jade$/, loader: 'jade?self' },
+      { test: /\.json$/, loader: 'json' }
     ]
   },
   amd: { jQuery: true },
