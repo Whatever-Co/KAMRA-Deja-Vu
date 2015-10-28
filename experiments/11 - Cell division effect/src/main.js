@@ -7,8 +7,6 @@ import './main.sass'
 document.body.innerHTML = require('./main.jade')()
 
 
-
-
 class App {
 
   constructor() {
@@ -38,7 +36,7 @@ class App {
 
 
   initObjects() {
-    this.face = new DeformableFace()
+    this.face = new DeformableFace('media/shutterstock_102487424')
     this.face.scale.set(200, 200, 150)
     this.scene.add(this.face)
   }
