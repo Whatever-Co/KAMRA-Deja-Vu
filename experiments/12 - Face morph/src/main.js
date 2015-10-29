@@ -45,7 +45,7 @@ class App {
 
       let gui = new dat.GUI()
       for (let i = 0; i < 11; i++) {
-        let p = gui.add(this.face.mesh.material.uniforms.morphTargetInfluences.value, i, -1, 1).name(`morphTarget${i}`)
+        let p = gui.add(this.face.mesh.material.uniforms.morphTargetInfluences.value, i, -1, 1).name(this.face.morph[i].name)
         this.face.mesh.material.uniforms.morphTargetInfluences.value[i] = 0
       }
       gui.__controllers.forEach((c) => c.updateDisplay())
