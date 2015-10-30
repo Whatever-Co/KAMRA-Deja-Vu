@@ -50,16 +50,18 @@ def plot_image_distance(_imgA, _imgB, saveFile='', useHsv=False):
         ax.set_xlabel("Hue")
         ax.set_ylabel("Saturation")
         ax.set_zlabel("Brightness")
+        ax.set_xlim(0, 180)
+        ax.set_ylim(0, 255)
+        ax.set_zlim(0, 255)
     else:
         imgA = _imgA
         imgB = _imgB
         ax.set_xlabel("Blue")
         ax.set_ylabel("Green")
         ax.set_zlabel("Red")
-
-    ax.set_xlim(0, 255)
-    ax.set_ylim(0, 255)
-    ax.set_zlim(0, 255)
+        ax.set_xlim(0, 255)
+        ax.set_ylim(0, 255)
+        ax.set_zlim(0, 255)
 
     ax.scatter(
         imgA[:, :, 0],
@@ -82,12 +84,13 @@ def plot_image_distance(_imgA, _imgB, saveFile='', useHsv=False):
 
 def plot_dictance_color(paths):
     template = images_to_average_colors(paths)
+    useHsv = True
 
     for path in paths:
         testImg = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         testImgSmall = pixelate(testImg, 20)
         # Export plot to tmp image
-        plot_image_distance(testImgSmall, template, 'tmp.png')
+        plot_image_distance(testImgSmall, template, 'tmp.png', useHsv)
         figImg = cv2.imread('tmp.png', cv2.IMREAD_UNCHANGED)
         # Resize and export
         testImg = cv2.resize(testImg, (512, 600))
