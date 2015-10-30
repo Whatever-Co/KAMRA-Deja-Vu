@@ -1,0 +1,5 @@
+numpy
+cv2
+matplotlib
+mpl_toolkits
+pylab
