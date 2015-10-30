@@ -95,11 +95,10 @@ def plot_average_color(paths):
         aveColor = cv2.resize(aveColor, (img.shape[1], img.shape[0]))
         img = cv2.hconcat([img, aveColor])
 
-        exportPath = os.path.join('average', os.path.basename(imagePath))
+        exportPath = os.path.join('average', os.path.basename(path))
         cv2.imwrite(exportPath, img)
 
 if __name__ == '__main__':
-    args = parser.parse_args()
     paths = glob.glob('source/*.png')
 
     plot_average_color(paths)
