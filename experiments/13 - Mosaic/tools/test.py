@@ -39,14 +39,24 @@ def images_to_average_colors(paths):
     return np.array(rows)
 
 
-def plot_image_distance(imgA, imgB, saveFile=''):
+def plot_image_distance(_imgA, _imgB, saveFile='', useHsv=False):
 
     fig = pyplot.figure()
     ax = Axes3D(fig)
 
-    ax.set_xlabel("Blue")
-    ax.set_ylabel("Green")
-    ax.set_zlabel("Red")
+    if useHsv:
+        imgA = cv2.cvtColor(_imgA, cv2.COLOR_BGR2HSV)
+        imgB = cv2.cvtColor(_imgB, cv2.COLOR_BGR2HSV)
+        ax.set_xlabel("Hue")
+        ax.set_ylabel("Saturation")
+        ax.set_zlabel("Brightness")
+    else:
+        imgA = _imgA
+        imgB = _imgB
+        ax.set_xlabel("Blue")
+        ax.set_ylabel("Green")
+        ax.set_zlabel("Red")
+
     ax.set_xlim(0, 255)
     ax.set_ylim(0, 255)
     ax.set_zlim(0, 255)
@@ -76,12 +86,14 @@ def plot_dictance_color(paths):
     for path in paths:
         testImg = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         testImgSmall = pixelate(testImg, 20)
+        # Export plot to tmp image
         plot_image_distance(testImgSmall, template, 'tmp.png')
         figImg = cv2.imread('tmp.png', cv2.IMREAD_UNCHANGED)
-        testRisize = cv2.resize(testImg, (512, 600))
+        # Resize and export
+        testImg = cv2.resize(testImg, (512, 600))
         exportPath = os.path.join('plot', os.path.basename(path))
         cv2.imwrite(exportPath,
-                    cv2.hconcat([testRisize, figImg]))
+                    cv2.hconcat([testImg, figImg]))
 
 
 def plot_average_color(paths):
@@ -101,5 +113,5 @@ def plot_average_color(paths):
 if __name__ == '__main__':
     paths = glob.glob('source/*.png')
 
-    plot_average_color(paths)
+    # plot_average_color(paths)
     plot_dictance_color(paths)
