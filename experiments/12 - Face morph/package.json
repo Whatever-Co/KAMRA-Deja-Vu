@@ -7,6 +7,7 @@
     "browser-sync-webpack-plugin": "^1.0.0",
     "css-loader": "^0.21.0",
     "dat-gui": "^0.5.0",
+    "delaunay-fast": "^1.0.1",
     "eslint": "^1.7.3",
     "eslint-friendly-formatter": "^1.2.2",
     "eslint-loader": "^1.1.0",
