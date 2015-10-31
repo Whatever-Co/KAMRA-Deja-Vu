@@ -1,6 +1,5 @@
 /* global THREE */
 import path from 'path'
-console.log(path)
 
 import $ from 'jquery'
 import 'jquery-ui'
@@ -12,7 +11,6 @@ import DeformableFace from './deformableface'
 
 import './main.sass'
 document.body.innerHTML = require('./body.jade')()
-
 
 
 class FeaturePointEditor {
@@ -41,8 +39,8 @@ class FeaturePointEditor {
 
     this.initDropHandler()
     // this.filename = 'shutterstock_62329042.jpg'
-    // this.filename = 'shutterstock_102487424.jpg'
-    // this.loadImage(`media/${this.filename}`)
+    this.filename = 'shutterstock_102487424.jpg'
+    this.loadImage(`media/${this.filename}`)
   }
 
 
@@ -109,7 +107,15 @@ class FeaturePointEditor {
       this.placeEditPoints()
       this.cropTexture()
       this.face.applyTexture(this.texture, this.textureCoords)
+      this.face.applyMorph()
       this.setupDownloadData()
+
+      window.addEventListener('keydown', (e) => {
+        let n = e.keyCode - 49
+        if (0 <= n && n <= 9) {
+          this.face.applyMorph(n)
+        }
+      })
     }
   }
 
@@ -148,6 +154,7 @@ class FeaturePointEditor {
     dot.draggable({stop: () => {
       this.cropTexture()
       this.face.applyTexture(this.texture, this.textureCoords)
+      this.face.applyMorph()
       this.setupDownloadData()
     }})
     this.editPoints.push(dot)
@@ -267,7 +274,7 @@ class EditorApp {
   animate(t) {
     requestAnimationFrame(this.animate)
 
-    this.face.update(t)
+    // this.face.update(t)
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
