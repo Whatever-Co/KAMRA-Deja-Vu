@@ -17,7 +17,8 @@ module.exports = {
       { test: /\.sass$/, loaders: ['style', 'css', 'autoprefixer', 'sass?indentedSyntax'] },
       { test: /\.jade$/, loader: 'jade?self' },
       { test: /\.png$/, loader: 'url?limit=5000' },
-      { test: /\.json$/, loader: 'json' }
+      { test: /\.json$/, loader: 'json' },
+      { test: /\.(vert|frag)$/, loader: 'raw' }
     ]
   },
   amd: { jQuery: true },

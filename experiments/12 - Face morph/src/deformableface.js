@@ -1,12 +1,9 @@
 /* global THREE createjs */
-import {vec2, vec3} from 'gl-matrix'
+import {vec2, vec3, mat3} from 'gl-matrix'
+import Delaunay from 'delaunay-fast'
 
 
 export default class extends THREE.Object3D {
-
-  constructor() {
-    super()
-  }
 
 
   load(basename) {
@@ -17,7 +14,6 @@ export default class extends THREE.Object3D {
       loader.loadFile({id: 'anime', src: 'keyframes.json'})
       loader.on('complete', () => {
         this.frames = loader.getResult('anime')
-        console.log(this.frames.length, this.frames[500])
         this.buildMesh(loader.getResult('image'), loader.getResult('json'))
         resolve()
       })
@@ -26,9 +22,6 @@ export default class extends THREE.Object3D {
 
 
   buildMesh(image, featurePoints) {
-    this.morph = require('./morph.json')
-    console.log(this.morph)
-
     this.data = require('./face.json')
     console.log(this.data)
 
@@ -37,55 +30,104 @@ export default class extends THREE.Object3D {
     let geometry = new THREE.BufferGeometry()
     geometry.dynamic = true
     geometry.setIndex(new THREE.Uint16Attribute(index, 1))
-    this.positionAttribute = new THREE.Float32Attribute(this.frames[0].faces[0].morph.face.vertices, 3)
-    // geometry.addAttribute('position', this.getInitialDeformedVertices(featurePoints))
-    // geometry.addAttribute('position', new THREE.Float32Attribute(this.morph[0].face.vertices, 3))
-    // geometry.addAttribute('position', new THREE.Float32Attribute(this.data.face.position, 3))
+    // this.positionAttribute = new THREE.Float32Attribute(this.frames[0].faces[0].morph.face.vertices, 3)
+    // this.positionAttribute = new THREE.Float32Attribute(this.data.face.position, 3)
+    this.positionAttribute = this.buildCapturedVertices(this.normalizeFeaturePoints(featurePoints))
     geometry.addAttribute('position', this.positionAttribute)
     geometry.addAttribute('uv', this.getDeformedUV(featurePoints))
-
-    this.morph.forEach((target, i) => {
-      geometry.addAttribute(`morphTarget${i}`, new THREE.Float32Attribute(target.face.vertices, 3))
-    })
-
-    let morphTargetInfluences = []
-    for (let i = 0; i < this.morph.length; i++) {
-      morphTargetInfluences.push(0.001)
-    }
-    // morphTargetInfluences[3] = 1
-    // console.log(morphTargetInfluences)
 
     let map = new THREE.Texture(image)
     map.needsUpdate = true
     let material = new THREE.ShaderMaterial({
       uniforms: {
-        map: {type: 't', value: map},
-        morphTargetInfluences: {type: 'fv1', value: morphTargetInfluences}
+        map: {type: 't', value: map}
       },
-      vertexShader: require('raw!./face.vert'),
-      fragmentShader: require('raw!./face.frag'),
+      vertexShader: require('./face.vert'),
+      fragmentShader: require('./face.frag'),
       side: THREE.DoubleSide
     })
     // let material = new THREE.MeshBasicMaterial({map, side: THREE.DoubleSide, morphTargets: true})
 
     this.mesh = new THREE.Mesh(geometry, material)
-    this.mesh.scale.set(0.01, 0.01, 0.01)
+    // this.mesh.scale.set(0.01, 0.01, 0.01)
     this.add(this.mesh)
+
+    this.prepareForMorph()
+    this.applyMorph(0)
   }
 
 
-  getInitialDeformedVertices(featurePoints) {
+  normalizeFeaturePoints(points) {
+    let {size} = this.getBounds2(points)
+    let scale = 1.52 / vec2.len(size)
+    // console.log('scale', scale)
+    let center = points[41]
+
+    let yAxis = vec2.sub([], points[75], points[7])
+    let angle = Math.atan2(yAxis[1], yAxis[0]) - Math.PI * 0.5
+
+    let mtx = mat3.create()
+    mat3.rotate(mtx, mtx, -angle)
+    mat3.scale(mtx, mtx, [scale, scale])
+    mat3.translate(mtx, mtx, vec2.scale([], center, -1))
+    let normalized = points.map((p) => {
+      return vec2.transformMat3([], p, mtx)
+    })
+
+    // open the mouth
+    let lipPair = [[45, 61], [47, 60], [49, 59], [52, 58], [53, 57], [54, 56]]
+    let lipThickness = lipPair.map((pair) => {
+      return normalized[pair[0]][1] - normalized[pair[1]][1]
+    })
+
+    let mouthWidth = normalized[50][0] - normalized[44][0]
+    let mouthHeight = normalized[60][1] - normalized[57][1]
+    let offset = mouthWidth * 0.2 - mouthHeight
+    let origin = vec2.lerp([], normalized[46], normalized[48], 0.5)
+    scale = (Math.abs(normalized[53][1] - origin[1]) + offset) / Math.abs(normalized[53][1] - origin[1])
+    mtx = mat3.create()
+    mat3.translate(mtx, mtx, origin)
+    mat3.scale(mtx, mtx, [1, scale])
+    mat3.translate(mtx, mtx, vec2.scale([], origin, -1))
+    for (let i = 44; i <= 61; i++) {
+      vec2.transformMat3(normalized[i], normalized[i], mtx)
+    }
+    lipPair.forEach((pair, i) => {
+      normalized[pair[1]][1] = normalized[pair[0]][1] - lipThickness[i]
+    })
+
+    return normalized
+  }
+
+
+  prepareForMorph() {
+    this.standardFacePoints = []
+    let position = this.data.face.position
+    for (let i = 0; i < position.length; i += 3) {
+      this.standardFacePoints.push([position[i], position[i + 1]])
+    }
+    this.standardFacePoints.push([1, 1])
+    this.standardFacePoints.push([1, -1])
+    this.standardFacePoints.push([-1, -1])
+    this.standardFacePoints.push([-1, 1])
+
+    this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
+  }
+
+
+  buildCapturedVertices(featurePoints) {
     let displacement = featurePoints.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
-      let scale = (500 - fp[2] * 200) / 500
+      let scale = (500 - fp[2] * 150) / 500
       let p = vec3.clone(fp)
-      p[0] = (c[0] - 0.5) * scale
-      p[1] = (c[1] - 0.5) * scale
+      p[0] = c[0] * scale
+      p[1] = c[1] * scale
       return vec3.sub(p, p, fp)
     })
 
     let n = this.data.face.position.length / 3
     let position = new Float32Array(n * 3)
+    let zMin = Number.MAX_VALUE
     for (let i = 0; i < n; i++) {
       let p = vec3.create()
       let b = 0
@@ -98,8 +140,48 @@ export default class extends THREE.Object3D {
       position[i * 3 + 0] = p[0]
       position[i * 3 + 1] = p[1]
       position[i * 3 + 2] = p[2]
+      if (p[2] < zMin) zMin = p[2]
     }
+
+    this.capturedVertices = []
+    for (let i = 0; i < n; i++) {
+      this.capturedVertices.push([position[i * 3 + 0], position[i * 3 + 1], position[i * 3 + 2]])
+    }
+    this.capturedVertices.push([1, 1, zMin])
+    this.capturedVertices.push([1, -1, zMin])
+    this.capturedVertices.push([-1, -1, zMin])
+    this.capturedVertices.push([-1, 1, zMin])
+
     return new THREE.BufferAttribute(position, 3)
+  }
+
+
+  applyMorph(frame) {
+    let targetVertices = []
+    {
+      const scale = 0.006667229494618528
+      let position = this.frames[frame].faces[0].morph.face.vertices
+      for (let i = 0; i < position.length; i += 3) {
+        targetVertices.push([position[i] * scale, position[i + 1] * scale, position[i + 2] * scale])
+      }
+      // console.table(this.getBounds2(targetVertices))
+    }
+
+    targetVertices.forEach((mp, i) => {
+      let r = this.getTriangleIndex(mp, this.standardFacePoints)
+      if (!r) return
+      let [index, bc] = r
+      // console.log(i, index, bc)
+      let p0 = this.capturedVertices[this.triangleIndices[index + 0]]
+      let p1 = this.capturedVertices[this.triangleIndices[index + 1]]
+      let p2 = this.capturedVertices[this.triangleIndices[index + 2]]
+      i *= 3
+      this.positionAttribute.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
+      this.positionAttribute.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
+      // this.positionAttribute.array[i + 2] = p0[2] * bc[0] + p1[2] * bc[1] + p2[2] * bc[2]
+      this.positionAttribute.array[i + 2] = mp[2]
+    })
+    this.positionAttribute.needsUpdate = true
   }
 
 
@@ -133,16 +215,39 @@ export default class extends THREE.Object3D {
   }
 
 
+  getTriangleIndex(p, vertices) {
+    // console.log(p)
+    for (let i = 0; i < this.triangleIndices.length; i += 3) {
+      let uv = Delaunay.contains([vertices[this.triangleIndices[i]], vertices[this.triangleIndices[i + 1]], vertices[this.triangleIndices[i + 2]]], p)
+      if (uv) {
+        uv.unshift(1 - uv[0] - uv[1])
+        return [i, uv]
+      }
+    }
+  }
+
+
+  getBounds2(vertices) {
+    let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+    let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+    vertices.forEach((v) => {
+      vec2.min(min, min, v)
+      vec2.max(max, max, v)
+    })
+    return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
+  }
+
   update(t) {
     if (this.frames) {
-      let currentFrame = Math.floor(t / 1000 * 30) % this.frames.length
-      let data = this.frames[currentFrame].faces[0]
-      // console.log(data.quat)
-      this.mesh.quaternion.set(data.quat[0], data.quat[1], data.quat[2], data.quat[3])
-      // console.log(this.mesh.rotation)
-      this.rotation.set(Math.PI, 0, 0)
-      this.positionAttribute.array.set(data.morph.face.vertices)
-      this.positionAttribute.needsUpdate = true
+      let currentFrame = Math.floor(t / 1000 * 24) % this.frames.length
+      this.applyMorph(currentFrame)
+      // let data = this.frames[currentFrame].faces[0]
+      // // console.log(data.quat)
+      // this.mesh.quaternion.set(data.quat[0], data.quat[1], data.quat[2], data.quat[3])
+      // // console.log(this.mesh.rotation)
+      // this.rotation.set(Math.PI, 0, 0)
+      // this.positionAttribute.array.set(data.morph.face.vertices)
+      // this.positionAttribute.needsUpdate = true
     }
   }
 

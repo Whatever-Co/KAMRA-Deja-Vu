@@ -43,8 +43,8 @@ class App {
   initObjects() {
     this.face = new DeformableFace()
     // shutterstock_62329042.png
-    this.face.load('media/shutterstock_62329042').then(() => {
-      this.face.scale.set(200, 200, 150)
+    this.face.load('media/shutterstock_102487424').then(() => {
+      this.face.scale.set(200, 200, 200)
       this.scene.add(this.face)
 
       // let gui = new dat.GUI()
@@ -98,6 +98,7 @@ class DelauneyTestApp {
     for (let i = 0; i < position.length; i += 3) {
       this.originalPoints.push([position[i], position[i + 1]])
     }
+    console.table(this.getBounds2(this.originalPoints))
     this.originalPoints.push([1, 1])
     this.originalPoints.push([1, -1])
     this.originalPoints.push([-1, -1])
@@ -117,8 +118,9 @@ class DelauneyTestApp {
 
     this.loadCapturedFace().done(() => {
       window.addEventListener('mousemove', this.onMouseMove)
-      this.loadMorphTarget()
-      this.calcMorphed()
+      this.loadMorphTarget().done(() => {
+        this.calcMorphed()
+      })
     })
   }
 
@@ -129,7 +131,7 @@ class DelauneyTestApp {
       return [this.standardData.face.position[i], this.standardData.face.position[i + 1]]
     }
 
-    return $.getJSON('media/shutterstock_62329042.json').done((fp) => {
+    return $.getJSON('media/shutterstock_102487424.json').done((fp) => {
 
       let displacement = this.normalizeFeaturePoints(fp).map((c, i) => {
         let fp = getPosition(this.standardData.face.featurePoint[i])
@@ -218,20 +220,29 @@ class DelauneyTestApp {
 
 
   loadMorphTarget() {
-    this.morphedPoints = []
-    let position = require('./morph2.json')[4].face.vertices
-    for (let i = 0; i < position.length; i += 3) {
-      this.morphedPoints.push([position[i], position[i + 1]])
-    }
-    this.morphedPoints.push([1, 1])
-    this.morphedPoints.push([1, -1])
-    this.morphedPoints.push([-1, -1])
-    this.morphedPoints.push([-1, 1])
+    return $.getJSON('keyframes.json').done((result) => {
+      const frame = 600
+      let scale = 0.01 / result[frame].faces[0].scale
+      console.log(scale)
+      scale = 0.006667229494618528
+      // console.log(scale, result[frame].faces[0].morph.face.vertices)
+      this.morphedPoints = []
+      // let position = require('./morph2.json')[4].face.vertices
+      let position = result[frame].faces[0].morph.face.vertices
+      for (let i = 0; i < position.length; i += 3) {
+        this.morphedPoints.push([position[i] * scale, position[i + 1] * scale])
+      }
+      console.table(this.getBounds2(this.morphedPoints))
+      this.morphedPoints.push([1, 1])
+      this.morphedPoints.push([1, -1])
+      this.morphedPoints.push([-1, -1])
+      this.morphedPoints.push([-1, 1])
 
-    this.context.save()
-    this.context.translate(0, -2)
-    this.drawTriangles(this.morphedPoints)
-    this.context.restore()
+      this.context.save()
+      this.context.translate(0, -2)
+      this.drawTriangles(this.morphedPoints)
+      this.context.restore()
+    })
   }
 
 
@@ -406,5 +417,5 @@ class DelauneyTestApp {
 }
 
 
-// new App()
-new DelauneyTestApp()
+new App()
+// new DelauneyTestApp()
