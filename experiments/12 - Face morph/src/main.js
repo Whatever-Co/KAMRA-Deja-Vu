@@ -94,13 +94,14 @@ class DelauneyTestApp {
     this.standardData = require('./face.json')
     this.originalPoints = []
     let position = this.standardData.face.position
+    // console.table(this.getBounds(position))
     for (let i = 0; i < position.length; i += 3) {
-      this.originalPoints.push([250 + position[i] * 300, 250 - position[i + 1] * 300])
+      this.originalPoints.push([position[i], position[i + 1]])
     }
-    this.originalPoints.push([0, 0])
-    this.originalPoints.push([500, 0])
-    this.originalPoints.push([0, 500])
-    this.originalPoints.push([500, 500])
+    this.originalPoints.push([1, 1])
+    this.originalPoints.push([1, -1])
+    this.originalPoints.push([-1, -1])
+    this.originalPoints.push([-1, 1])
 
     this.triangleIndices = Delaunay.triangulate(this.originalPoints)
 
@@ -108,7 +109,10 @@ class DelauneyTestApp {
     this.context.fillStyle = '#ffffff'
     this.context.fillRect(0, 0, this.canvas.width, this.canvas.height)
     this.context.strokeStyle = '#000000'
-    this.context.lineWidth = 0.2
+    let scale = 250
+    this.context.lineWidth = 0.2 / scale
+    this.context.translate(250, 250)
+    this.context.scale(scale, -scale)
     this.drawTriangles(this.originalPoints)
 
     this.loadCapturedFace().done(() => {
@@ -125,7 +129,7 @@ class DelauneyTestApp {
       return [this.standardData.face.position[i], this.standardData.face.position[i + 1]]
     }
 
-    return $.getJSON('media/shutterstock_102487424.json').done((fp) => {
+    return $.getJSON('media/shutterstock_62329042.json').done((fp) => {
 
       let displacement = this.normalizeFeaturePoints(fp).map((c, i) => {
         let fp = getPosition(this.standardData.face.featurePoint[i])
@@ -143,16 +147,16 @@ class DelauneyTestApp {
         })
         vec2.scale(p, p, 1 / b)
         vec2.add(p, p, getPosition(i))
-        this.capturedPoints.push([250 + p[0] * 300, 250 - p[1] * 300])
+        this.capturedPoints.push(p)
       }
 
-      this.capturedPoints.push([0, 0])
-      this.capturedPoints.push([500, 0])
-      this.capturedPoints.push([0, 500])
-      this.capturedPoints.push([500, 500])
+      this.capturedPoints.push([1, 1])
+      this.capturedPoints.push([1, -1])
+      this.capturedPoints.push([-1, -1])
+      this.capturedPoints.push([-1, 1])
 
       this.context.save()
-      this.context.translate(500, 0)
+      this.context.translate(2, 0)
       this.drawTriangles(this.capturedPoints)
       this.context.restore()
     })
@@ -170,6 +174,7 @@ class DelauneyTestApp {
       return [position[index], position[index + 1]]
     }))
     let len = vec2.len(standardSize)
+    // console.log(standardSize)
 
     let {size} = this.getBounds2(points)
     let scale = len / vec2.len(size)
@@ -194,7 +199,7 @@ class DelauneyTestApp {
 
     let mouthWidth = normalized[50][0] - normalized[44][0]
     let mouthHeight = normalized[60][1] - normalized[57][1]
-    let offset = mouthWidth * 0.25 - mouthHeight
+    let offset = mouthWidth * 0.2 - mouthHeight
     let origin = vec2.lerp([], normalized[46], normalized[48], 0.5)
     scale = (Math.abs(normalized[53][1] - origin[1]) + offset) / Math.abs(normalized[53][1] - origin[1])
     mtx = mat3.create()
@@ -214,17 +219,17 @@ class DelauneyTestApp {
 
   loadMorphTarget() {
     this.morphedPoints = []
-    let position = require('./morph.json')[10].face.vertices
+    let position = require('./morph2.json')[4].face.vertices
     for (let i = 0; i < position.length; i += 3) {
-      this.morphedPoints.push([250 + position[i] * 300, 250 - position[i + 1] * 300])
+      this.morphedPoints.push([position[i], position[i + 1]])
     }
-    this.morphedPoints.push([0, 0])
-    this.morphedPoints.push([500, 0])
-    this.morphedPoints.push([0, 500])
-    this.morphedPoints.push([500, 500])
+    this.morphedPoints.push([1, 1])
+    this.morphedPoints.push([1, -1])
+    this.morphedPoints.push([-1, -1])
+    this.morphedPoints.push([-1, 1])
 
     this.context.save()
-    this.context.translate(0, 500)
+    this.context.translate(0, -2)
     this.drawTriangles(this.morphedPoints)
     this.context.restore()
   }
@@ -234,7 +239,6 @@ class DelauneyTestApp {
     let deformed = this.morphedPoints.map((mp, i) => {
       let r = this.getTriangleIndex(mp, this.originalPoints)
       if (r) {
-        // console.log(i, r[0], r[1])
         let [index, bc] = r
         let p0 = this.capturedPoints[this.triangleIndices[index + 0]]
         let p1 = this.capturedPoints[this.triangleIndices[index + 1]]
@@ -248,7 +252,7 @@ class DelauneyTestApp {
     })
 
     this.context.save()
-    this.context.translate(500, 500)
+    this.context.translate(2, -2)
     this.drawTriangles(deformed)
     this.context.restore()
   }
@@ -261,19 +265,26 @@ class DelauneyTestApp {
     let ctx = this.overlay.getContext('2d')
     ctx.clearRect(0, 0, 1000, 1000)
 
-    let ret = this.getTriangleIndex([e.offsetX, e.offsetY], this.originalPoints)
-    // console.log(e.offsetX, e.offsetY, ret)
+    let mx = (e.offsetX - 250) / 250
+    let my = -(e.offsetY - 250) / 250
+    let ret = this.getTriangleIndex([mx, my], this.originalPoints)
+    // console.log(mx, my, ret)
     if (ret) {
       let [index, coord] = ret
       // console.log(index, coord)
       ctx.save()
+      let scale = 250
+      // ctx.lineWidth = 0.2 / scale
+      ctx.translate(250, 250)
+      ctx.scale(scale, -scale)
+
       ctx.fillStyle = 'rgba(255, 0, 0, 0.2'
       ctx.beginPath()
-      ctx.arc(e.offsetX, e.offsetY, 10, 0, Math.PI * 2)
+      ctx.arc(mx, my, 10 / scale, 0, Math.PI * 2)
       ctx.fill()
       
       ctx.strokeStyle = 'rgba(200, 0, 0, 0.7)'
-      ctx.lineWidth = 3
+      ctx.lineWidth = 3 / scale
       ctx.lineJoin = 'round'
       ctx.beginPath()
       let p0 = this.originalPoints[this.triangleIndices[index + 0]]
@@ -288,12 +299,12 @@ class DelauneyTestApp {
       ctx.closePath()
       ctx.stroke()
 
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.5'
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'
       ctx.beginPath()
-      ctx.arc(p0[0] * coord[0] + p1[0] * coord[1] + p2[0] * coord[2], p0[1] * coord[0] + p1[1] * coord[1] + p2[1] * coord[2], 3, 0, Math.PI * 2)
+      ctx.arc(p0[0] * coord[0] + p1[0] * coord[1] + p2[0] * coord[2], p0[1] * coord[0] + p1[1] * coord[1] + p2[1] * coord[2], 3 / scale, 0, Math.PI * 2)
       ctx.fill()
 
-      ctx.translate(500, 0)
+      ctx.translate(2, 0)
       ctx.beginPath()
       p0 = this.capturedPoints[this.triangleIndices[index + 0]]
       p1 = this.capturedPoints[this.triangleIndices[index + 1]]
@@ -304,9 +315,9 @@ class DelauneyTestApp {
       ctx.closePath()
       ctx.stroke()
 
-      ctx.fillStyle = 'rgba(255, 0, 0, 0.5'
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)'
       ctx.beginPath()
-      ctx.arc(p0[0] * coord[0] + p1[0] * coord[1] + p2[0] * coord[2], p0[1] * coord[0] + p1[1] * coord[1] + p2[1] * coord[2], 3, 0, Math.PI * 2)
+      ctx.arc(p0[0] * coord[0] + p1[0] * coord[1] + p2[0] * coord[2], p0[1] * coord[0] + p1[1] * coord[1] + p2[1] * coord[2], 3 / scale, 0, Math.PI * 2)
       ctx.fill()
 
       ctx.restore()
