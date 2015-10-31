@@ -2,7 +2,7 @@
 import $ from 'jquery'
 import 'OrbitControls'
 import dat from 'dat-gui'
-import {vec2} from 'gl-matrix'
+import {vec2, mat3} from 'gl-matrix'
 
 import Delaunay from 'delaunay-fast'
 import DeformableFace from './deformableface'
@@ -126,9 +126,10 @@ class DelauneyTestApp {
     }
 
     return $.getJSON('media/shutterstock_102487424.json').done((fp) => {
-      let displacement = fp.map((c, i) => {
+
+      let displacement = this.normalizeFeaturePoints(fp).map((c, i) => {
         let fp = getPosition(this.standardData.face.featurePoint[i])
-        return vec2.sub([], [c[0] - 0.5, c[1] - 0.5], [fp[0] * 0.7, fp[1] * 0.7])
+        return vec2.sub([], c, fp)
       })
 
       let n = this.standardData.face.position.length / 3
@@ -155,6 +156,59 @@ class DelauneyTestApp {
       this.drawTriangles(this.capturedPoints)
       this.context.restore()
     })
+  }
+
+
+  normalizeFeaturePoints(points) {
+    // console.log(points.length, points)
+
+    let {size: standardSize} = this.getBounds2(this.standardData.face.featurePoint.filter((fp) => {
+      return fp >= 0
+    }).map((fp) => {
+      let index = fp * 3
+      let position = this.standardData.face.position
+      return [position[index], position[index + 1]]
+    }))
+    let len = vec2.len(standardSize)
+
+    let {size} = this.getBounds2(points)
+    let scale = len / vec2.len(size)
+    let center = points[41]
+
+    let yAxis = vec2.sub([], points[75], points[7])
+    let angle = Math.atan2(yAxis[1], yAxis[0]) - Math.PI * 0.5
+
+    let mtx = mat3.create()
+    mat3.rotate(mtx, mtx, -angle)
+    mat3.scale(mtx, mtx, [scale, scale])
+    mat3.translate(mtx, mtx, vec2.scale([], center, -1))
+    let normalized = points.map((p) => {
+      return vec2.transformMat3([], p, mtx)
+    })
+
+    // open the mouth
+    let lipPair = [[45, 61], [47, 60], [49, 59], [52, 58], [53, 57], [54, 56]]
+    let lipThickness = lipPair.map((pair) => {
+      return normalized[pair[0]][1] - normalized[pair[1]][1]
+    })
+
+    let mouthWidth = normalized[50][0] - normalized[44][0]
+    let mouthHeight = normalized[60][1] - normalized[57][1]
+    let offset = mouthWidth * 0.25 - mouthHeight
+    let origin = vec2.lerp([], normalized[46], normalized[48], 0.5)
+    scale = (Math.abs(normalized[53][1] - origin[1]) + offset) / Math.abs(normalized[53][1] - origin[1])
+    mtx = mat3.create()
+    mat3.translate(mtx, mtx, origin)
+    mat3.scale(mtx, mtx, [1, scale])
+    mat3.translate(mtx, mtx, vec2.scale([], origin, -1))
+    for (let i = 44; i <= 61; i++) {
+      vec2.transformMat3(normalized[i], normalized[i], mtx)
+    }
+    lipPair.forEach((pair, i) => {
+      normalized[pair[1]][1] = normalized[pair[0]][1] - lipThickness[i]
+    })
+
+    return normalized
   }
 
 
@@ -291,10 +345,8 @@ class DelauneyTestApp {
   getTriangleIndex(p, vertices) {
     // console.log(p)
     for (let i = 0; i < this.triangleIndices.length; i += 3) {
-      // console.log([vertices[this.triangleIndices[i]], vertices[this.triangleIndices[i + 1]], vertices[this.triangleIndices[i + 2]]])
       let uv = Delaunay.contains([vertices[this.triangleIndices[i]], vertices[this.triangleIndices[i + 1]], vertices[this.triangleIndices[i + 2]]], p)
       if (uv) {
-        // console.log(i, uv)
         uv.unshift(1 - uv[0] - uv[1])
         return [i, uv]
       }
@@ -326,7 +378,7 @@ class DelauneyTestApp {
       vec2.min(min, min, v)
       vec2.max(max, max, v)
     }
-    console.log(min, max)
+    return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
   }
 
 
@@ -337,7 +389,7 @@ class DelauneyTestApp {
       vec2.min(min, min, v)
       vec2.max(max, max, v)
     })
-    console.log(min, max)
+    return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
   }
 
 }
