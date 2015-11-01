@@ -197,6 +197,7 @@ class App {
       })
 
       let mtx = mat3.create()
+      let scale2 = 1
       {
         let min = [Number.MAX_VALUE, Number.MAX_VALUE]
         let max = [Number.MIN_VALUE, Number.MIN_VALUE]
@@ -208,6 +209,7 @@ class App {
         })
         let size = vec2.sub([], max, min)
         let scale = this.data.size / vec2.len(size)
+        scale2 = scale
         let center = points[41]
         let yAxis = vec2.sub([], points[75], points[7])
         let angle = Math.atan2(yAxis[1], yAxis[0]) - Math.PI * 0.5
@@ -223,7 +225,7 @@ class App {
           let fp = this.data.getFeatureVertex(i)
           let p = [marker.position.x, marker.position.y]
           vec2.transformMat3(p, p, mtx)
-          return vec3.sub([], [p[0], p[1], marker.position.z], fp)
+          return vec3.sub([], [p[0], p[1], marker.position.z / scale], fp)
         })
         let attribute = this.face.geometry.getAttribute('position')
         let n = attribute.array.length / 3
@@ -237,10 +239,9 @@ class App {
           vec3.scale(p, p, 1 / b)
           vec3.add(p, p, this.data.getVertex(i))
           let q = vec2.transformMat3([], p, invertMtx)
-          // vec2.transformMat3(p, p, invertMtx)
           attribute.array[i * 3 + 0] = q[0]
           attribute.array[i * 3 + 1] = q[1]
-          attribute.array[i * 3 + 2] = p[2]
+          attribute.array[i * 3 + 2] = p[2] * scale
         }
         attribute.needsUpdate = true
       }
