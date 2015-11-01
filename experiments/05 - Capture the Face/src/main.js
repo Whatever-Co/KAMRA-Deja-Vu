@@ -62,6 +62,10 @@ class ImageApp {
     this.scene = new THREE.Scene();
     // this.scene.fog = new THREE.Fog(0x000000, 100, 600);
 
+
+
+
+
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -96,6 +100,14 @@ class ImageApp {
     this.face = new Face(this.tracker);
     this.face.scale.set(150, 150, 150);
     this.scene.add(this.face);
+
+    let axisHelper  = new THREE.AxisHelper(200);
+    this.scene.add(axisHelper);
+
+    let gridHelper = new THREE.GridHelper(200, 10);
+    this.scene.add(gridHelper);
+
+    window.scene = this.scene;
   }
 
 
