@@ -40,7 +40,7 @@ export default class extends THREE.Mesh {
   constructor(tracker) {
     let geometry = new THREE.JSONLoader().parse(require('./data/face3.json')).geometry
     // let geometry = new THREE.BufferGeometry()
-    let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true})
+    let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true, transparent: true, opacity: 0.3})
     // let material = new THREE.ShaderMaterial({
     //   uniforms: {
     //     map: { type: 't', value: null }
@@ -137,8 +137,9 @@ export default class extends THREE.Mesh {
     })
 
     this.nodes.forEach(this.calcWeightForNode.bind(this))
+    // console.table(this.nodes)
 
-    let cube = new THREE.BoxGeometry(0.02, 0.02, 0.02)
+    let cube = new THREE.BoxGeometry(0.01, 0.01, 0.01)
     this.featurePoints = this.featurePointIndices.map((i) => {
       if (i < 0) return
       let material = new THREE.MeshBasicMaterial({color: 0xff0000, transparent: true, opacity: 0.7, depthTest: false})
@@ -252,29 +253,34 @@ export default class extends THREE.Mesh {
       node.weights = this.featurePointIndices.map((id, i) => i == nearest ? 1 : 0)
     } else {
       const HALF_PI = Math.PI / 2
-      node.weights = []
-      node.weights[nearest] = Math.max(0, Math.sin(HALF_PI * (1.0 - node.distanceToFP[nearest] / d)))
-      angles.forEach((a) => {
-        if (node.distanceToFP[a.index] < d) {
-          node.weights[a.index] = Math.sin(HALF_PI * (1.0 - node.distanceToFP[a.index] / d))
-        }
+      node.weights = this.featurePointIndices.map((index, i) => {
+        if (node.distanceToFP[i] > d) return 0
+        return Math.sin(HALF_PI * (1.0 - node.distanceToFP[i] / d))
       })
+      // if (node.index == 0) {
+      //   console.log(nearest, node.weights[nearest], node.distanceToFP[nearest], d, Math.sin(HALF_PI * (1.0 - node.distanceToFP[nearest] / d)))
+      //   console.log(node.distanceToFP)
+      //   console.log(node.weights)
+      // }
     }
 
     node.weights = node.weights.map((w, i) => {
       return {i, w}
     }).sort((a, b) => b.w - a.w).filter((w) => w.w > 0).slice(0, 4)
-    // let total = node.weights.reduce((p, w) => p + w.w, 0)
-    // node.weights.forEach((w) => {
-    //   w.w /= total
-    // })
-    // console.log(node.index, node.weights);
 
     node.weights.forEach((w) => {
       let d = node.distanceToFP[w.i]
       w.f = d == 0 ? 1 : w.w / (d * d)
     })
-    // console.log(node.weights)
+
+    // if (node.index == 0) {
+    //   console.table(node.weights)
+    // }
+
+    // if (node.weights.length == 2) {
+    //   console.table(node.weights)
+    //   console.log(this.nodes[this.featurePointIndices[node.weights[0].i]])
+    // }
   }
 
 
@@ -469,30 +475,21 @@ export default class extends THREE.Mesh {
   deformVertices() {
     let vertices = this.geometry.vertices
 
-    let displacement = this.featurePoints.map((mesh) => {
-      if (!mesh) return
-      let node = this.nodes[mesh.vertexIndex]
-      return mesh.position.clone().sub(node.position)
+    let displacement = this.featurePoints.map((fp) => {
+      if (!fp) return
+      let node = this.nodes[fp.vertexIndex]
+      return fp.position.clone().sub(node.position)
     })
 
-    this.nodes.forEach((target) => {
-      if (target.weights.length == 1) {
-        let w = target.weights[0]
-        vertices[target.index].copy(target.position).add(displacement[w.i].clone().multiplyScalar(w.w))
-      } else {
-        let a = new THREE.Vector3()
-        let b = 0
-        target.weights.forEach((w) => {
-          // let dp = displacement[w.i].clone().multiplyScalar(w.w)
-          // let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i])
-          // a.add(dp.multiplyScalar(dist))
-          // b += w.w * dist
-          a.add(displacement[w.i].clone().multiplyScalar(w.f))
-          b += w.f
-        })
-        a.multiplyScalar(1 / b)
-        vertices[target.index].copy(target.position).add(a)
-      }
+    this.nodes.forEach((node, i) => {
+      let a = new THREE.Vector3()
+      let b = 0
+      node.weights.forEach((w) => {
+        a.add(displacement[w.i].clone().multiplyScalar(w.f))
+        b += w.f
+      })
+      a.multiplyScalar(1 / b)
+      vertices[node.index].copy(node.position).add(a)
     })
 
     this.geometry.verticesNeedUpdate = true
@@ -505,13 +502,13 @@ export default class extends THREE.Mesh {
 
 
   animate(t) {
-    [56, 57, 58, 51, 52, 53, 54, 55, 4, 5, 6, 7, 8, 9, 10].forEach((i) => {
-      let p = this.featurePoints[i]
-      if (p) {
-        let node = this.nodes[p.vertexIndex]
-        p.position.y = node.position.y - (Math.sin(t * 0.005) + 1) * 0.05
-      }
-    })
+    // [56, 57, 58, 51, 52, 53, 54, 55, 4, 5, 6, 7, 8, 9, 10].forEach((i) => {
+    //   let p = this.featurePoints[i]
+    //   if (p) {
+    //     let node = this.nodes[p.vertexIndex]
+    //     p.position.y = node.position.y - (Math.sin(t * 0.005) + 1) * 0.05
+    //   }
+    // })
 
     // [33, 41, 62, 34, 35, 36, 42, 37, 43, 38, 39, 40].forEach((i) => {
     //   let p = this.featurePoints[i]
@@ -521,12 +518,25 @@ export default class extends THREE.Mesh {
     //   }
     // })
 
+    // this.featurePoints.forEach((p) => {
+    //   if (p) {
+    //     let node = this.nodes[p.vertexIndex]
+    //     p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
+    //   }
+    // })
+
+    let scale = (Math.sin(t * 0.002) + 1) *3 + 0.2
     this.featurePoints.forEach((p) => {
       if (p) {
         let node = this.nodes[p.vertexIndex]
-        p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
+        // p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
+        p.position.copy(node.position)
+        p.position.multiplyScalar(scale)
+        p.scale.set(scale, scale, scale)
       }
     })
+    scale = 1 / scale * 200
+    this.scale.set(scale, scale, scale)
 
     this.deformVertices()
   }
