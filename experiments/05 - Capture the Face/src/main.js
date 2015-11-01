@@ -106,8 +106,6 @@ class ImageApp {
 
     let gridHelper = new THREE.GridHelper(200, 10);
     this.scene.add(gridHelper);
-
-    window.scene = this.scene;
   }
 
 

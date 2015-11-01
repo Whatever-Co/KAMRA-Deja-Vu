@@ -2,8 +2,8 @@
 import 'OBJLoader';
 import {vec2, mat3} from 'gl-matrix';
 
-const faceJson = require('json!./data/face.json');
-const eyemouthJson = require('json!./data/eyemouth.json');
+const faceJson = require('json!../../../data/face.json');
+const eyemouthJson = require('json!../../../data/eyemouth.json');
 
 class Node {
 
