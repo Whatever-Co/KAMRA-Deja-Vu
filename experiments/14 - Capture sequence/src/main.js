@@ -65,21 +65,27 @@ class App {
   constructor() {
     this.animate = this.animate.bind(this)
 
-    this.initScene()
-    this.initObjects()
+    $.getJSON('keyframes.json').done((result) => {
+      this.keyframes = result
+      console.log(this.keyframes)
 
-    this.stats = new Stats()
-    document.body.appendChild(this.stats.domElement)
+      this.initScene()
+      this.initObjects()
 
-    this.previousFrame = -1
-    this.scoreHistory = []
-    this.animate()
+      this.stats = new Stats()
+      document.body.appendChild(this.stats.domElement)
+
+      this.previousFrame = -1
+      this.scoreHistory = []
+      this.animate()
+    })
   }
 
 
   initScene() {
-    this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 3000)
-    this.camera.position.z = 500
+    let fov = this.keyframes.camera.property.fov[0]
+    this.camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 3000)
+    this.camera.position.z = this.keyframes.camera.property.position[2]
 
     this.scene = new THREE.Scene()
 
@@ -96,7 +102,7 @@ class App {
   initObjects() {
     this.video = document.createElement('video')
     this.video.id = 'webcam'
-    // this.video.style.display = 'none'
+    this.video.style.display = 'none'
     document.body.appendChild(this.video)
 
     navigator.webkitGetUserMedia({
@@ -122,7 +128,7 @@ class App {
         map.minFilter = THREE.LinearFilter
         let material = new THREE.MeshBasicMaterial({map, side: THREE.DoubleSide, depthWrite: false})
         this.webcam = new THREE.Mesh(geometry, material)
-        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 500 * 2
+        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
         this.webcam.scale.set(-scale, scale, scale)
         this.scene.add(this.webcam)
 
@@ -146,6 +152,30 @@ class App {
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true})
     this.face = new THREE.Mesh(geometry, material)
     // this.scene.add(this.face)
+  }
+
+
+  startIntro() {
+    let position = this.face.geometry.getAttribute('position')
+    let n = position.array.length / 3
+    let ray = new THREE.Ray(this.camera.position.clone())
+    let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
+    let uv = new Float32Array(n * 2)
+    let height = this.webcam.scale.y
+    let width = height / 9 * 16
+    console.log(width, height)
+    for (let i = 0; i < n; i++) {
+      let p = new THREE.Vector3(position.array[i * 3], position.array[i * 3 + 1], position.array[i * 3 + 2])
+      this.face.localToWorld(p)
+      ray.direction.copy(p).sub(this.camera.position)
+      ray.intersectPlane(plane, p)
+      // console.log(i, p)
+      uv[i * 2 + 0] = 1 - (p.x + width / 2) / width
+      uv[i * 2 + 1] = (p.y + height / 2) / height
+    }
+    this.face.geometry.addAttribute('uv', new THREE.BufferAttribute(uv, 2))
+
+    this.face.material = new THREE.MeshBasicMaterial({map: this.texture, side: THREE.DoubleSide})
   }
 
 
@@ -206,10 +236,16 @@ class App {
         // console.log(this.scoreHistory)
         if (this.scoreHistory && this.scoreHistory.every((s) => s)) {
           // this.stream.stop()
+          let canvas = document.createElement('canvas')
+          canvas.width = canvas.height = 512
+          let ctx = canvas.getContext('2d')
+          ctx.drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight, 0, 0, 512, 512)
+          this.texture = new THREE.CanvasTexture(canvas)
           this.stream.getVideoTracks()[0].stop()
           this.video.pause()
           this.tracker.stop()
           this.tracker = null
+          this.startIntro()
           return
         }
       }
@@ -239,7 +275,8 @@ class App {
       this.tracker.currentPosition.forEach((p, i) => {
         let z = this.data.getFeatureVertex(i)[2] * scale
         let wz = this.webcam.localToWorld(new THREE.Vector3(0, 0, z)).z
-        let pc = (500 - wz) / 500
+        let cameraZ = this.camera.position.z
+        let pc = (cameraZ - wz) / cameraZ
         this.markers[i].position.set((p[0] / 180 - .888888889) * pc, -(p[1] / 180 - 0.5) * pc, z)
       })
 
@@ -266,7 +303,7 @@ class App {
 
         this.face.rotation.z = -angle
         let s = 1 / scale * -this.webcam.scale.x
-        this.face.scale.set(-s, s, s)
+        this.face.scale.set(s, s, s)
         this.face.position.set(center[0] * this.webcam.scale.x, center[1] * this.webcam.scale.y, 0)
       }
 
@@ -290,7 +327,7 @@ class App {
           vec3.scale(p, p, 1 / b)
           vec3.add(p, p, this.data.getVertex(i))
 
-          attribute.array[i * 3 + 0] = p[0]
+          attribute.array[i * 3 + 0] = -p[0]
           attribute.array[i * 3 + 1] = p[1]
           attribute.array[i * 3 + 2] = p[2]
         }
