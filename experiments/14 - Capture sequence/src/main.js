@@ -126,8 +126,8 @@ class App {
         this.webcam.scale.set(-scale, scale, scale)
         this.scene.add(this.webcam)
 
-        this.webcam.add(this.face)
-        // this.scene.add(this.face)
+        // this.webcam.add(this.face)
+        this.scene.add(this.face)
 
         this.tracker = new FaceTracker()
         this.tracker.startVideo(this.video)
@@ -245,15 +245,9 @@ class App {
 
       // normalize captured feature points coords
       let mtx = mat3.create()
-      let scale2
       {
         let min = [Number.MAX_VALUE, Number.MAX_VALUE]
         let max = [Number.MIN_VALUE, Number.MIN_VALUE]
-        // let points = this.tracker.currentPosition.map((p) => {
-        //   vec2.min(min, min, p)
-        //   vec2.max(max, max, p)
-        //   return vec2.clone(p)
-        // })
         let points = this.markers.map((marker) => {
           let p = [marker.position.x, marker.position.y]
           vec2.min(min, min, p)
@@ -261,8 +255,7 @@ class App {
           return p
         })
         let size = vec2.sub([], max, min)
-        let scale = this.data.size / vec2.len(size)
-        scale2 = scale
+        scale = this.data.size / vec2.len(size)
         let center = points[41]
         let yAxis = vec2.sub([], points[75], points[7])
         let angle = Math.atan2(yAxis[1], yAxis[0]) - Math.PI * 0.5
@@ -270,11 +263,12 @@ class App {
         mat3.rotate(mtx, mtx, -angle)
         mat3.scale(mtx, mtx, [scale, scale])
         mat3.translate(mtx, mtx, vec2.scale([], center, -1))
-      }
-      let invertMtx = mat3.invert(mat3.create(), mtx)
 
-      // // let scale3 = 1 / scale2
-      // this.face.scale.set(scale3, scale3, scale3)
+        this.face.rotation.z = -angle
+        let s = 1 / scale * -this.webcam.scale.x
+        this.face.scale.set(-s, s, s)
+        this.face.position.set(center[0] * this.webcam.scale.x, center[1] * this.webcam.scale.y, 0)
+      }
 
       {
         // displace standard mesh to captured face (in normalized coords)
@@ -282,16 +276,8 @@ class App {
           let fp = this.data.getFeatureVertex(i)
           let p = [marker.position.x, marker.position.y]
           vec2.transformMat3(p, p, mtx)
-          // console.log(i, p[0], p[1], marker.position.z * scale2)
-          return vec3.sub([], [p[0], p[1], marker.position.z * scale2], fp)
+          return vec3.sub([], [p[0], p[1], marker.position.z * scale], fp)
         })
-        // let displacement = this.tracker.currentPosition.map((p, i) => {
-        //   let fp = this.data.getFeatureVertex(i)
-        //   p = vec2.transformMat3([], p, mtx)
-        //   console.log(i, p[0], p[1], fp[2])
-        //   return vec3.sub([], [p[0], p[1], fp[2]], fp)
-        // })
-        // console.log(displacement)
         let attribute = this.face.geometry.getAttribute('position')
         let n = attribute.array.length / 3
         for (let i = 0; i < n; i++) {
@@ -304,11 +290,9 @@ class App {
           vec3.scale(p, p, 1 / b)
           vec3.add(p, p, this.data.getVertex(i))
 
-          // convert to mesh local coords
-          let q = vec2.transformMat3([], p, invertMtx)
-          attribute.array[i * 3 + 0] = q[0]
-          attribute.array[i * 3 + 1] = q[1]
-          attribute.array[i * 3 + 2] = p[2] / scale2
+          attribute.array[i * 3 + 0] = p[0]
+          attribute.array[i * 3 + 1] = p[1]
+          attribute.array[i * 3 + 2] = p[2]
         }
         attribute.needsUpdate = true
       }
