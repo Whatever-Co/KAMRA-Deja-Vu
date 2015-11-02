@@ -113,6 +113,11 @@ export default class extends EventEmitter {
   }
 
 
+  getConvergence() {
+    return this.tracker.getConvergence()
+  }
+
+
   update() {
     this.requestId = requestAnimationFrame(this.update)
 

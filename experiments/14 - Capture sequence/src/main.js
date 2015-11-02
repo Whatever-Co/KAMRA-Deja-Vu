@@ -71,6 +71,8 @@ class App {
     this.stats = new Stats()
     document.body.appendChild(this.stats.domElement)
 
+    this.previousFrame = -1
+    this.scoreHistory = []
     this.animate()
   }
 
@@ -92,10 +94,10 @@ class App {
 
 
   initObjects() {
-    let el = document.createElement('video')
-    el.id = 'webcam'
-    // el.style.display = 'none'
-    document.body.appendChild(el)
+    this.video = document.createElement('video')
+    this.video.id = 'webcam'
+    // this.video.style.display = 'none'
+    document.body.appendChild(this.video)
 
     navigator.webkitGetUserMedia({
       video: {
@@ -109,13 +111,14 @@ class App {
         ]
       }
     }, (stream) => {
-      el.src = window.URL.createObjectURL(stream)
-      el.addEventListener('loadedmetadata', () => {
-        console.log({width: el.videoWidth, height: el.videoHeight})
-        el.width = el.videoWidth / 4
-        el.height = el.videoHeight / 4
-        let geometry = new THREE.PlaneGeometry(el.videoWidth / el.videoHeight, 1, 10, 10)
-        let map = new THREE.VideoTexture(el)
+      this.stream = stream
+      this.video.src = window.URL.createObjectURL(stream)
+      this.video.addEventListener('loadedmetadata', () => {
+        console.log({width: this.video.videoWidth, height: this.video.videoHeight})
+        this.video.width = this.video.videoWidth / 4
+        this.video.height = this.video.videoHeight / 4
+        let geometry = new THREE.PlaneGeometry(this.video.videoWidth / this.video.videoHeight, 1, 10, 10)
+        let map = new THREE.VideoTexture(this.video)
         map.minFilter = THREE.LinearFilter
         let material = new THREE.MeshBasicMaterial({map, side: THREE.DoubleSide, depthWrite: false})
         this.webcam = new THREE.Mesh(geometry, material)
@@ -124,11 +127,12 @@ class App {
         this.scene.add(this.webcam)
 
         this.webcam.add(this.face)
+        // this.scene.add(this.face)
 
         this.tracker = new FaceTracker()
-        this.tracker.startVideo(el)
+        this.tracker.startVideo(this.video)
       })
-      el.play()
+      this.video.play()
     }, (error) => {
       console.log(error)
     })
@@ -146,14 +150,30 @@ class App {
 
 
   animate(t) {
-    this.stats.begin()
-
     requestAnimationFrame(this.animate)
 
+    let currentFrame = Math.floor(t / 1000 * 24)
+    if (currentFrame != this.previousFrame) {
+      this.stats.begin()
+  
+      this.update(currentFrame)
+  
+      this.controls.update()
+      this.renderer.render(this.scene, this.camera)
+
+      this.previousFrame = currentFrame
+  
+      this.stats.end()
+    }
+  }
+
+
+  update(currentFrame) {
     if (this.tracker && this.tracker.currentPosition) {
+
+      // add head feature points
       let fpCenter = vec2.lerp([], this.data.getFeatureVertex(14), this.data.getFeatureVertex(0), 0.5)
       let scale = 1.0 / vec2.sub([], this.data.getFeatureVertex(14), fpCenter)[0]
-
       let v0 = this.tracker.currentPosition[0]
       let v1 = this.tracker.currentPosition[14]
       let center = vec2.lerp(vec2.create(), v0, v1, 0.5)
@@ -170,8 +190,33 @@ class App {
         this.tracker.currentPosition[i] = p
       }
 
+      // check capture condition
+      {
+        const faceIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
+        const partsIndices = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
+        let {size, center} = this.getBoundsFor(this.tracker.currentPosition, faceIndices)
+        let len = vec2.len(size)
+        let {center: pCenter} = this.getBoundsFor(this.tracker.currentPosition, partsIndices)
+        let isOK = size[1] > 120 && Math.abs(center[0] - pCenter[0]) < 3 && this.tracker.getConvergence() < 20
+        $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
+        this.scoreHistory.push(isOK)
+        if (this.scoreHistory.length > 30) {
+          this.scoreHistory.shift()
+        }
+        // console.log(this.scoreHistory)
+        if (this.scoreHistory && this.scoreHistory.every((s) => s)) {
+          // this.stream.stop()
+          this.stream.getVideoTracks()[0].stop()
+          this.video.pause()
+          this.tracker.stop()
+          this.tracker = null
+          return
+        }
+      }
+
+      // add markers for feature points
       if (!this.markers) {
-        this.markers = this.tracker.currentPosition.map((p) => {
+        this.markers = this.tracker.currentPosition.map(() => {
           let geometry = new THREE.BoxGeometry(0.005, 0.005, 0.005)
           let material = new THREE.MeshBasicMaterial({color: 0xff0000})
           let marker = new THREE.Mesh(geometry, material)
@@ -180,6 +225,7 @@ class App {
         })
       }
 
+      // calc captured face size (in canvas coordinate)
       let min = [Number.MAX_VALUE, Number.MAX_VALUE]
       let max = [Number.MIN_VALUE, Number.MIN_VALUE]
       this.tracker.currentPosition.forEach((p) => {
@@ -189,6 +235,7 @@ class App {
       let size = vec2.sub([], max, min)
       scale = vec2.len(size) / this.data.size / 180
 
+      // move markers to captured position (in mesh local coordinates (height = 2.0))
       this.tracker.currentPosition.forEach((p, i) => {
         let z = this.data.getFeatureVertex(i)[2] * scale
         let wz = this.webcam.localToWorld(new THREE.Vector3(0, 0, z)).z
@@ -196,11 +243,17 @@ class App {
         this.markers[i].position.set((p[0] / 180 - .888888889) * pc, -(p[1] / 180 - 0.5) * pc, z)
       })
 
+      // normalize captured feature points coords
       let mtx = mat3.create()
-      let scale2 = 1
+      let scale2
       {
         let min = [Number.MAX_VALUE, Number.MAX_VALUE]
         let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+        // let points = this.tracker.currentPosition.map((p) => {
+        //   vec2.min(min, min, p)
+        //   vec2.max(max, max, p)
+        //   return vec2.clone(p)
+        // })
         let points = this.markers.map((marker) => {
           let p = [marker.position.x, marker.position.y]
           vec2.min(min, min, p)
@@ -220,13 +273,25 @@ class App {
       }
       let invertMtx = mat3.invert(mat3.create(), mtx)
 
+      // // let scale3 = 1 / scale2
+      // this.face.scale.set(scale3, scale3, scale3)
+
       {
+        // displace standard mesh to captured face (in normalized coords)
         let displacement = this.markers.map((marker, i) => {
           let fp = this.data.getFeatureVertex(i)
           let p = [marker.position.x, marker.position.y]
           vec2.transformMat3(p, p, mtx)
-          return vec3.sub([], [p[0], p[1], marker.position.z / scale], fp)
+          // console.log(i, p[0], p[1], marker.position.z * scale2)
+          return vec3.sub([], [p[0], p[1], marker.position.z * scale2], fp)
         })
+        // let displacement = this.tracker.currentPosition.map((p, i) => {
+        //   let fp = this.data.getFeatureVertex(i)
+        //   p = vec2.transformMat3([], p, mtx)
+        //   console.log(i, p[0], p[1], fp[2])
+        //   return vec3.sub([], [p[0], p[1], fp[2]], fp)
+        // })
+        // console.log(displacement)
         let attribute = this.face.geometry.getAttribute('position')
         let n = attribute.array.length / 3
         for (let i = 0; i < n; i++) {
@@ -238,19 +303,27 @@ class App {
           })
           vec3.scale(p, p, 1 / b)
           vec3.add(p, p, this.data.getVertex(i))
+
+          // convert to mesh local coords
           let q = vec2.transformMat3([], p, invertMtx)
           attribute.array[i * 3 + 0] = q[0]
           attribute.array[i * 3 + 1] = q[1]
-          attribute.array[i * 3 + 2] = p[2] * scale
+          attribute.array[i * 3 + 2] = p[2] / scale2
         }
         attribute.needsUpdate = true
       }
     }
+  }
 
-    this.controls.update()
-    this.renderer.render(this.scene, this.camera)
-
-    this.stats.end()
+  
+  getBoundsFor(vertices, indices) {
+    let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+    let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+    indices.forEach((index) => {
+      vec2.min(min, min, vertices[index])
+      vec2.max(max, max, vertices[index])
+    })
+    return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
   }
 
 
@@ -385,5 +458,5 @@ class KeyframeAnimeApp {
 
 
 
-// new App()
-new KeyframeAnimeApp()
+new App()
+// new KeyframeAnimeApp()
