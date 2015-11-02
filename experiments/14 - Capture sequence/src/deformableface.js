@@ -22,7 +22,7 @@ export default class extends THREE.Object3D {
 
 
   buildMesh(image, featurePoints) {
-    this.data = require('./face.json')
+    this.data = require('./face2.json')
     console.log(this.data)
 
     let index = this.data.face.index.concat(this.data.rightEye.index, this.data.leftEye.index)

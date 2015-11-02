@@ -1,5 +1,6 @@
 /* global THREE */
 import $ from 'jquery'
+import 'jquery.transit'
 import 'OrbitControls'
 import dat from 'dat-gui'
 import {vec2, vec3, mat3} from 'gl-matrix'
@@ -18,7 +19,7 @@ document.body.innerHTML = require('./main.jade')()
 class StandardFaceData {
 
   constructor() {
-    this.data = require('./face.json')
+    this.data = require('./face2.json')
 
     let index = this.data.face.index.concat(this.data.rightEye.index, this.data.leftEye.index)
     this.index = new THREE.Uint16Attribute(index, 1)
@@ -84,18 +85,19 @@ class App {
 
   initScene() {
     let fov = this.keyframes.camera.property.fov[0]
-    this.camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 3000)
+    this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
 
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer()
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
+    this.renderer.setSize(1280, 720)
     document.body.appendChild(this.renderer.domElement)
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
     window.addEventListener('resize', this.onResize.bind(this))
+    this.onResize()
   }
 
 
@@ -227,7 +229,7 @@ class App {
         let {size, center} = this.getBoundsFor(this.tracker.currentPosition, faceIndices)
         let len = vec2.len(size)
         let {center: pCenter} = this.getBoundsFor(this.tracker.currentPosition, partsIndices)
-        let isOK = size[1] > 120 && Math.abs(center[0] - pCenter[0]) < 3 && this.tracker.getConvergence() < 20
+        let isOK = size[1] > 80 && Math.abs(center[0] - pCenter[0]) < 3 && this.tracker.getConvergence() < 20
         $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
         this.scoreHistory.push(isOK)
         if (this.scoreHistory.length > 30) {
@@ -349,130 +351,15 @@ class App {
 
 
   onResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight
-    this.camera.updateProjectionMatrix()
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-  }
-
-}
-
-
-
-class KeyframeAnimeApp {
-
-
-  constructor() {
-    this.animate = this.animate.bind(this)
-
-    $.getJSON('keyframes.json').done((result) => {
-      this.keyframes = result
-      console.log(this.keyframes)
-
-      this.initScene()
-      this.initObjects()
-
-      this.stats = new Stats()
-      document.body.appendChild(this.stats.domElement)
-      this.counter = $('#frame-counter')
-
-      this.startTime = performance.now()
-      this.previousFrame = -1
-
-      this.animate()
+    // this.camera.aspect = window.innerWidth / window.innerHeight
+    // this.camera.updateProjectionMatrix()
+    // this.renderer.setSize(window.innerWidth, window.innerHeight)
+    let s = Math.max(window.innerWidth / 1280, window.innerHeight / 720)
+    $(this.renderer.domElement).css({
+      transformOrigin: 'left top',
+      scale: [s, s],
+      translate: [(window.innerWidth - 1280 * s) / 2, (window.innerHeight - 720 * s) / 2]
     })
-  }
-
-
-  getBounds(vertices) {
-    let min = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE]
-    let max = [Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE]
-    for (let i = 0; i < vertices.length; i += 3) {
-      let p = [vertices[i], vertices[i + 1], vertices[i + 2]]
-      vec3.min(min, min, p)
-      vec3.max(max, max, p)
-    }
-    return {min, max, size: vec3.sub([], max, min), center: vec3.lerp([], min, max, 0.5)}
-  }
-
-
-  initScene() {
-    this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000)
-    this.camera.position.z = 500
-    console.log(this.camera.fov, this.camera.position, this.camera.quaternion)
-
-    this.scene = new THREE.Scene()
-
-    this.renderer = new THREE.WebGLRenderer({antialias: true})
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(this.renderer.domElement)
-
-    // this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
-
-    window.addEventListener('resize', this.onResize.bind(this))
-  }
-
-
-  initObjects() {
-    // console.table(this.getBounds(this.keyframes.user.property.face_vertices[0]))
-
-    // let geometry = new THREE.BoxGeometry(87.6, 124.2, 65.2)
-    // let geometry = new THREE.SphereGeometry(2, 8, 8, 0, Math.PI)
-
-    let data = require('./face.json')
-    let geometry = new THREE.BufferGeometry()
-    geometry.dynamic = true
-    geometry.setIndex(new THREE.Uint16Attribute(data.face.index, 1))
-    geometry.addAttribute('position', new THREE.Float32Attribute(data.face.position, 3))
-    let material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5})
-    this.mesh = new THREE.Mesh(geometry, material)
-    this.scene.add(this.mesh)
-  }
-
-
-  animate(t) {
-    this.stats.begin()
-
-    requestAnimationFrame(this.animate)
-
-    let currentFrame = Math.floor((performance.now() - this.startTime) / 1000 * 24) % 1000
-    if (currentFrame != this.previousFrame) {
-      let props = this.keyframes.camera.property
-      this.camera.fov = props.fov[currentFrame]
-      this.camera.updateProjectionMatrix()
-      let index = currentFrame * 3
-      this.camera.position.set(props.position[index], props.position[index + 1], props.position[index + 2])
-      index = currentFrame * 4
-      this.camera.quaternion.set(props.quaternion[index + 1], props.quaternion[index + 2], props.quaternion[index + 3], props.quaternion[index])
-
-      let prop = this.keyframes.user.property.position
-      index = currentFrame * 3
-      this.mesh.position.set(prop[index], prop[index + 1], prop[index + 2])
-      prop = this.keyframes.user.property.quaternion
-      index = currentFrame * 4
-      this.mesh.quaternion.set(prop[index + 1], prop[index + 2], prop[index + 3], prop[index])
-      prop = this.keyframes.user.property.scale
-      index = currentFrame
-      let scale = prop[index] * 100
-      this.mesh.scale.set(scale, scale, scale)
-
-      let attribute = this.mesh.geometry.getAttribute('position')
-      attribute.array.set(this.keyframes.user.property.face_vertices[currentFrame])
-      attribute.needsUpdate = true
-
-      this.renderer.render(this.scene, this.camera)
-
-      this.counter.text(currentFrame)
-      this.previousFrame = currentFrame
-    }
-
-    this.stats.end()
-  }
-
-
-  onResize() {
-    this.camera.aspect = window.innerWidth / window.innerHeight
-    this.camera.updateProjectionMatrix()
-    this.renderer.setSize(window.innerWidth, window.innerHeight)
   }
 
 }
@@ -480,4 +367,4 @@ class KeyframeAnimeApp {
 
 
 new App()
-// new KeyframeAnimeApp()
+// new (require('./keyframeanimeapp.js'))()
