@@ -38,7 +38,7 @@ class Node {
 export default class extends THREE.Mesh {
 
   constructor(tracker) {
-    let geometry = new THREE.JSONLoader().parse(require('./data/face3.json')).geometry
+    let geometry = new THREE.JSONLoader().parse(require('./data/face.json')).geometry
     // let geometry = new THREE.BufferGeometry()
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true, transparent: true, opacity: 0.3})
     // let material = new THREE.ShaderMaterial({
@@ -443,7 +443,7 @@ export default class extends THREE.Mesh {
     //   faceUVs[face.c] = uv[2]
     // })
 
-    let geometry = new THREE.JSONLoader().parse(require('./data/eyemouth3.json')).geometry
+    let geometry = new THREE.JSONLoader().parse(require('./data/eyemouth.json')).geometry
 
     let vertexIndices = geometry.vertices.map((v) => {
       let dist = Number.MAX_VALUE
@@ -547,7 +547,7 @@ export default class extends THREE.Mesh {
       face: this.exportFace(),
       rightEye: this.exportRightEye(),
       leftEye: this.exportLeftEye(),
-      mouth: this.exportMouth()
+      // mouth: this.exportMouth()
     }
   }
 
@@ -560,7 +560,7 @@ export default class extends THREE.Mesh {
 
     let index = []
     this.geometry.faces.forEach((f) => {
-      index.push(f.a, f.b, f.c)
+      index.push(f.a, f.c, f.b)
     })
 
     let featurePoint = this.featurePoints.map((fp) => fp ? fp.vertexIndex : -1)
@@ -588,8 +588,8 @@ export default class extends THREE.Mesh {
     }
     this.eyemouth.geometry.faces.forEach((f) => {
       add(f.a)
-      add(f.b)
       add(f.c)
+      add(f.b)
     })
     return {index}
   }
@@ -605,8 +605,8 @@ export default class extends THREE.Mesh {
     }
     this.eyemouth.geometry.faces.forEach((f) => {
       add(f.a)
-      add(f.b)
       add(f.c)
+      add(f.b)
     })
     return {index}
   }
