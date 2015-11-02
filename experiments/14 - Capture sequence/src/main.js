@@ -319,9 +319,16 @@ class KeyframeAnimeApp {
 
 
   initObjects() {
-    console.table(this.getBounds(this.keyframes.user.property.face_vertices[0]))
+    // console.table(this.getBounds(this.keyframes.user.property.face_vertices[0]))
 
-    let geometry = new THREE.BoxGeometry(87.6, 124.2, 65.2)
+    // let geometry = new THREE.BoxGeometry(87.6, 124.2, 65.2)
+    // let geometry = new THREE.SphereGeometry(2, 8, 8, 0, Math.PI)
+
+    let data = require('./face.json')
+    let geometry = new THREE.BufferGeometry()
+    geometry.dynamic = true
+    geometry.setIndex(new THREE.Uint16Attribute(data.face.index, 1))
+    geometry.addAttribute('position', new THREE.Float32Attribute(data.face.position, 3))
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, transparent: true, opacity: 0.5})
     this.mesh = new THREE.Mesh(geometry, material)
     this.scene.add(this.mesh)
@@ -337,6 +344,7 @@ class KeyframeAnimeApp {
     if (currentFrame != this.previousFrame) {
       let props = this.keyframes.camera.property
       this.camera.fov = props.fov[currentFrame]
+      this.camera.updateProjectionMatrix()
       let index = currentFrame * 3
       this.camera.position.set(props.position[index], props.position[index + 1], props.position[index + 2])
       index = currentFrame * 4
@@ -350,7 +358,12 @@ class KeyframeAnimeApp {
       this.mesh.quaternion.set(prop[index + 1], prop[index + 2], prop[index + 3], prop[index])
       prop = this.keyframes.user.property.scale
       index = currentFrame
-      this.mesh.scale.set(prop[index], prop[index], prop[index])
+      let scale = prop[index] * 100
+      this.mesh.scale.set(scale, scale, scale)
+
+      let attribute = this.mesh.geometry.getAttribute('position')
+      attribute.array.set(this.keyframes.user.property.face_vertices[currentFrame])
+      attribute.needsUpdate = true
 
       this.renderer.render(this.scene, this.camera)
 
