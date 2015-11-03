@@ -560,7 +560,7 @@ export default class extends THREE.Mesh {
 
     let index = []
     this.geometry.faces.forEach((f) => {
-      index.push(f.a, f.c, f.b)
+      index.push(f.a, f.b, f.c)
     })
 
     let featurePoint = this.featurePoints.map((fp) => fp ? fp.vertexIndex : -1)
@@ -588,8 +588,8 @@ export default class extends THREE.Mesh {
     }
     this.eyemouth.geometry.faces.forEach((f) => {
       add(f.a)
-      add(f.c)
       add(f.b)
+      add(f.c)
     })
     return {index}
   }
@@ -605,8 +605,8 @@ export default class extends THREE.Mesh {
     }
     this.eyemouth.geometry.faces.forEach((f) => {
       add(f.a)
-      add(f.c)
       add(f.b)
+      add(f.c)
     })
     return {index}
   }
