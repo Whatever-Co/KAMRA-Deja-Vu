@@ -1,5 +1,6 @@
 /* global THREE clm pModel */
 
+import $ from 'jquery'
 import {vec2, vec3, mat3} from 'gl-matrix'
 
 import Ticker from './ticker'
@@ -40,6 +41,8 @@ export default class extends THREE.Mesh {
 
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
+
+    this.scoreHistory = []
   }
 
 
@@ -59,6 +62,10 @@ export default class extends THREE.Mesh {
 
 
   stop() {
+    if (this.stream) {
+      this.stream.getVideoTracks()[0].stop()
+      this.video.pause()
+    }
     Ticker.removeListener('update', this.update)
   }
 
@@ -88,6 +95,13 @@ export default class extends THREE.Mesh {
 
 
   normralizeFeaturePoints() {
+    this.featurePoint3D = null
+    this.normalizedFeaturePoints = null
+
+    if (!this.rawFeaturePoints) {
+      return
+    }
+
     // add head feature points
     {
       let faceCenter = vec2.lerp([], this.standardFaceData.getFeatureVertex(14), this.standardFaceData.getFeatureVertex(0), 0.5)
@@ -112,7 +126,7 @@ export default class extends THREE.Mesh {
     }
 
     // convert to canvas coord to world coord
-    let size, featurePoint3D
+    let size
     {
       let min = [Number.MAX_VALUE, Number.MAX_VALUE]
       let max = [Number.MIN_VALUE, Number.MIN_VALUE]
@@ -120,7 +134,7 @@ export default class extends THREE.Mesh {
       let scale = this.scale.y / 180
       mat3.scale(mtx, mtx, [scale, -scale, scale])
       mat3.translate(mtx, mtx, [-160, -90, 0])
-      featurePoint3D = this.rawFeaturePoints.map((p) => {
+      this.featurePoint3D = this.rawFeaturePoints.map((p) => {
         let q = vec2.transformMat3([], p, mtx)
         vec2.min(min, min, q)
         vec2.max(max, max, q)
@@ -135,7 +149,7 @@ export default class extends THREE.Mesh {
       let min = [Number.MAX_VALUE, Number.MAX_VALUE]
       let max = [Number.MIN_VALUE, Number.MIN_VALUE]
       let cameraZ = this.camera.position.length()
-      featurePoint3D.forEach((p, i) => {
+      this.featurePoint3D.forEach((p, i) => {
         let z = this.standardFaceData.getFeatureVertex(i)[2] * scale
         if (isNaN(z)) {
           return
@@ -151,12 +165,10 @@ export default class extends THREE.Mesh {
       scale = this.standardFaceData.size / vec2.len(size)
     }
 
-    this._featurePoints3D = featurePoint3D
-
     // normalize captured feature point coords
     {
-      let center = featurePoint3D[41]
-      let yAxis = vec2.sub([], featurePoint3D[75], featurePoint3D[7])
+      let center = this.featurePoint3D[41]
+      let yAxis = vec2.sub([], this.featurePoint3D[75], this.featurePoint3D[7])
       let angle = Math.atan2(yAxis[1], yAxis[0]) - Math.PI * 0.5
 
       let mtx = mat3.create()
@@ -170,13 +182,57 @@ export default class extends THREE.Mesh {
       this.matrixFeaturePoints.scale(new THREE.Vector3(s, s, s))
       this.matrixFeaturePoints.setPosition(new THREE.Vector3(center[0], center[1], center[2]))
 
-      return featurePoint3D.map((p) => {
+      this.normalizedFeaturePoints = this.featurePoint3D.map((p) => {
         let q = vec2.transformMat3([], p, mtx)
         q[2] = p[2] * scale
         return q
       })
     }
+  }
 
+
+  checkCaptureScore() {
+    if (this.featurePoint3D) {
+      const faceIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
+      const partsIndices = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
+      let {size, center} = this.getBoundsFor(this.featurePoint3D, faceIndices)
+      let len = vec2.len(size)
+      let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, partsIndices)
+      let isOK = len > 400 && Math.abs(center[0] - pCenter[0]) < 10 && this.tracker.getConvergence() < 50
+      $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
+      this.scoreHistory.push(isOK)
+    } else {
+      this.scoreHistory.push(false)
+    }
+
+    const WAIT_FOR_FRAMES = 48 // 2 secs
+    if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
+      this.scoreHistory.shift()
+    }
+    if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
+      this.dispatchEvent({type: 'complete'})
+    }
+  }
+
+
+  applyTextureForFace(face) {
+    let position = face.geometry.getAttribute('position')
+    let uv = face.geometry.getAttribute('uv')
+    const n = position.array.length / 3
+    let ray = new THREE.Ray(this.camera.position.clone())
+    let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
+    const height = this.scale.y
+    const width = height / 9 * 16
+    for (let i = 0; i < n; i++) {
+      let p = new THREE.Vector3(position.array[i * 3], position.array[i * 3 + 1], position.array[i * 3 + 2])
+      face.localToWorld(p)
+      ray.direction.copy(p).sub(this.camera.position)
+      ray.intersectPlane(plane, p)
+      uv.array[i * 2 + 0] = (p.x + width / 2) / width
+      uv.array[i * 2 + 1] = (p.y + height / 2) / height
+    }
+    uv.needsUpdate = true
+    face.setTexture(this.texture)
   }
 
 
@@ -191,9 +247,21 @@ export default class extends THREE.Mesh {
     for (let i = 0; i < 2; i++) {
       this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
     }
+    this.normralizeFeaturePoints()
     // this.tracker.draw(this.trackerCanvas)
 
-    this.normalizedFeaturePoints = this.rawFeaturePoints ? this.normralizeFeaturePoints() : null
+    this.checkCaptureScore()
+  }
+
+  
+  getBoundsFor(vertices, indices) {
+    let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+    let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+    indices.forEach((index) => {
+      vec2.min(min, min, vertices[index])
+      vec2.max(max, max, vertices[index])
+    })
+    return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
   }
 
 }

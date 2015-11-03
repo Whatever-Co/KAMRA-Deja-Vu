@@ -32,12 +32,10 @@ export default class extends THREE.Mesh {
     this.geometry.setIndex(this.standardFaceData.index)
     this.geometry.addAttribute('position', this.standardFaceData.position)
     this.geometry.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(this.standardFaceData.position.array.length / 3 * 2), 2))
-    // this.scale.set(300, 300, 300)
   }
 
 
   deform(featurePoints) {
-    // displace standard mesh to captured face (in normalized coords)
     let displacement = featurePoints.map((p, i) => {
       let fp = this.standardFaceData.getFeatureVertex(i)
       return vec3.sub([], p, fp)
@@ -62,6 +60,17 @@ export default class extends THREE.Mesh {
     attribute.needsUpdate = true
   }
 
+
+  setTexture(texture) {
+    this.material = new THREE.ShaderMaterial({
+      uniforms: {
+        map: {type: 't', value: texture.clone()}
+      },
+      vertexShader: require('./shaders/face.vert'),
+      fragmentShader: require('./shaders/face.frag'),
+      side: THREE.DoubleSide
+    })
+  }
 
 
 
