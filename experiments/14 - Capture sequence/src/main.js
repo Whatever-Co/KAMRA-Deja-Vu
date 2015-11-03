@@ -64,6 +64,9 @@ class App {
       console.info('OK!!!!!!!!!!!!!', e)
       this.webcam.stop()
       this.webcam.applyTextureForFace(this.face)
+      this.webcam.visible = false
+      this.face.prepareForMorph()
+      this.morphStart = performance.now()
     })
     this.webcam.start()
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
@@ -92,14 +95,19 @@ class App {
   animate(t) {
     this.stats.begin()
 
-    if (this.webcam.normalizedFeaturePoints) {
-      this.face.deform(this.webcam.normalizedFeaturePoints)
-      this.face.matrix.copy(this.webcam.matrixFeaturePoints)
-      this.face.matrixWorldNeedsUpdate = true
+    if (this.webcam.visible) {
+      if (this.webcam.normalizedFeaturePoints) {
+        this.face.deform(this.webcam.normalizedFeaturePoints)
+        this.face.matrix.copy(this.webcam.matrixFeaturePoints)
+        this.face.matrixWorldNeedsUpdate = true
 
-      // this.webcam.featurePoint3D.forEach((p, i) => {
-      //   this._markers[i].position.set(p[0], p[1], p[2])
-      // })
+        // this.webcam.featurePoint3D.forEach((p, i) => {
+        //   this._markers[i].position.set(p[0], p[1], p[2])
+        // })
+      }
+    } else {
+      let currentFrame = Math.floor((performance.now() - this.morphStart) / 1000 * 24) % 1000
+      this.face.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
     }
 
     this.controls.update()

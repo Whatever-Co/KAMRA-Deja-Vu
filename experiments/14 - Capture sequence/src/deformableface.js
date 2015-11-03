@@ -21,13 +21,12 @@ export default class extends THREE.Mesh {
     material = new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})
     super(new THREE.BufferGeometry(), material)
 
+    this.standardFaceData = new StandardFaceData()
     this.buildMesh()
   }
 
 
   buildMesh() {
-    this.standardFaceData = new StandardFaceData()
-
     this.geometry.dynamic = true
     this.geometry.setIndex(this.standardFaceData.index)
     this.geometry.addAttribute('position', this.standardFaceData.position)
@@ -41,8 +40,8 @@ export default class extends THREE.Mesh {
       return vec3.sub([], p, fp)
     })
 
-    let attribute = this.geometry.getAttribute('position')
-    let n = attribute.array.length / 3
+    let position = this.geometry.getAttribute('position')
+    let n = position.array.length / 3
     for (let i = 0; i < n; i++) {
       let p = vec3.create()
       let b = 0
@@ -53,11 +52,11 @@ export default class extends THREE.Mesh {
       vec3.scale(p, p, 1 / b)
       vec3.add(p, p, this.standardFaceData.getVertex(i))
 
-      attribute.array[i * 3 + 0] = p[0]
-      attribute.array[i * 3 + 1] = p[1]
-      attribute.array[i * 3 + 2] = p[2]
+      position.array[i * 3 + 0] = p[0]
+      position.array[i * 3 + 1] = p[1]
+      position.array[i * 3 + 2] = p[2]
     }
-    attribute.needsUpdate = true
+    position.needsUpdate = true
   }
 
 
@@ -70,6 +69,39 @@ export default class extends THREE.Mesh {
       fragmentShader: require('./shaders/face.frag'),
       side: THREE.DoubleSide
     })
+  }
+
+
+  prepareForMorph() {
+    this.standardFacePoints = []
+    let position = this.standardFaceData.data.face.position
+    for (let i = 0; i < position.length; i += 3) {
+      this.standardFacePoints.push([position[i], position[i + 1]])
+    }
+    console.table(this.getBounds2(this.standardFacePoints))
+    this.standardFacePoints.push([1, 1])
+    this.standardFacePoints.push([1, -1])
+    this.standardFacePoints.push([-1, -1])
+    this.standardFacePoints.push([-1, 1])
+
+    this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
+
+    {
+      let position = this.geometry.getAttribute('position').array
+      this.capturedVertices = []
+      let zMin = Number.MAX_VALUE
+      for (let i = 0; i < position.length; i += 3) {
+        let z = position[i + 2]
+        this.capturedVertices.push([position[i], position[i + 1], z])
+        if (z < zMin) {
+          zMin = z
+        }
+      }
+      this.capturedVertices.push([1, 1, zMin])
+      this.capturedVertices.push([1, -1, zMin])
+      this.capturedVertices.push([-1, -1, zMin])
+      this.capturedVertices.push([-1, 1, zMin])
+    }
   }
 
 
@@ -134,21 +166,6 @@ export default class extends THREE.Mesh {
   }
 
 
-  prepareForMorph() {
-    this.standardFacePoints = []
-    let position = this.data.face.position
-    for (let i = 0; i < position.length; i += 3) {
-      this.standardFacePoints.push([position[i], position[i + 1]])
-    }
-    this.standardFacePoints.push([1, 1])
-    this.standardFacePoints.push([1, -1])
-    this.standardFacePoints.push([-1, -1])
-    this.standardFacePoints.push([-1, 1])
-
-    this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
-  }
-
-
   buildCapturedVertices(featurePoints) {
     let displacement = featurePoints.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
@@ -190,32 +207,20 @@ export default class extends THREE.Mesh {
   }
 
 
-  applyMorph(frame) {
-    let targetVertices = []
-    {
-      const scale = 0.006667229494618528
-      let position = this.frames[frame].faces[0].morph.face.vertices
-      for (let i = 0; i < position.length; i += 3) {
-        targetVertices.push([position[i] * scale, position[i + 1] * scale, position[i + 2] * scale])
-      }
-      // console.table(this.getBounds2(targetVertices))
-    }
-
-    targetVertices.forEach((mp, i) => {
-      let r = this.getTriangleIndex(mp, this.standardFacePoints)
+  applyMorph(vertices) {
+    let position = this.geometry.getAttribute('position')
+    for (let i = 0; i < vertices.length; i += 3) {
+      let r = this.getTriangleIndex([vertices[i], vertices[i + 1]], this.standardFacePoints)
       if (!r) return
       let [index, bc] = r
-      // console.log(i, index, bc)
       let p0 = this.capturedVertices[this.triangleIndices[index + 0]]
       let p1 = this.capturedVertices[this.triangleIndices[index + 1]]
       let p2 = this.capturedVertices[this.triangleIndices[index + 2]]
-      i *= 3
-      this.positionAttribute.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
-      this.positionAttribute.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
-      // this.positionAttribute.array[i + 2] = p0[2] * bc[0] + p1[2] * bc[1] + p2[2] * bc[2]
-      this.positionAttribute.array[i + 2] = mp[2]
-    })
-    this.positionAttribute.needsUpdate = true
+      position.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
+      position.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
+      position.array[i + 2] = vertices[i + 2]
+    }
+    position.needsUpdate = true
   }
 
 
