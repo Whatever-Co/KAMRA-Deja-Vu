@@ -1,63 +1,20 @@
 /* global THREE */
+
 import $ from 'jquery'
 import 'jquery.transit'
 import 'OrbitControls'
-import dat from 'dat-gui'
+// import dat from 'dat-gui'
 import {vec2, vec3, mat3} from 'gl-matrix'
 import Stats from 'stats-js'
 
-import Delaunay from 'delaunay-fast'
-
-import FaceTracker from './facetracker'
+import Ticker from './ticker'
+import WebcamPlane from './webcamplane'
 import DeformableFace from './deformableface'
 
 import './main.sass'
 document.body.innerHTML = require('./main.jade')()
 
 
-
-class StandardFaceData {
-
-  constructor() {
-    this.data = require('./face2.json')
-
-    let index = this.data.face.index.concat(this.data.rightEye.index, this.data.leftEye.index)
-    this.index = new THREE.Uint16Attribute(index, 1)
-    this.position = new THREE.Float32Attribute(this.data.face.position, 3)
-
-    this.bounds = this.getBounds()
-    this.size = vec2.len(this.bounds.size)
-  }
-
-
-  getBounds() {
-    let min = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE]
-    let max = [Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE]
-    let position = this.data.face.position
-    let n = position.length
-    for (let i = 0; i < n; i += 3) {
-      let p = [position[i], position[i + 1], position[i + 2]]
-      vec3.min(min, min, p)
-      vec3.max(max, max, p)
-    }
-    return {min, max, size: vec3.sub([], max, min), center: vec3.lerp([], min, max, 0.5)}
-  }
-
-
-  getFeatureVertex(index) {
-    let i = this.data.face.featurePoint[index] * 3
-    let p = this.data.face.position
-    return [p[i], p[i + 1], p[i + 2]]
-  }
-
-
-  getVertex(index) {
-    let i = index * 3
-    let p = this.data.face.position
-    return [p[i], p[i + 1], p[i + 2]]
-  }
- 
-}
 
 
 
@@ -78,7 +35,9 @@ class App {
 
       this.previousFrame = -1
       this.scoreHistory = []
-      this.animate()
+
+      Ticker.on('update', this.animate)
+      Ticker.start()
     })
   }
 
@@ -96,12 +55,46 @@ class App {
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
-    window.addEventListener('resize', this.onResize.bind(this))
-    this.onResize()
+    // window.addEventListener('resize', this.onResize.bind(this))
+    // this.onResize()
   }
 
 
   initObjects() {
+    this.webcam = new WebcamPlane(this.camera)
+    this.webcam.start()
+    let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+    this.webcam.scale.set(scale, scale, scale)
+    this.scene.add(this.webcam)
+
+    this.face = new DeformableFace()
+    this.face.matrixAutoUpdate = false
+    this.scene.add(this.face)
+
+    // debug markers
+    {
+      this._markers = []
+      let size = 5
+      let geometry = new THREE.BoxGeometry(size, size, size)
+      let material = new THREE.MeshBasicMaterial({color: 0xff0000, depthTest: false, transparent: true, opacity: 0.5})
+      for (let i = 0;  i < 80; i++) {
+        let mesh = new THREE.Mesh(geometry, material)
+        this.scene.add(mesh)
+        this._markers.push(mesh)
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.keyCode == 32) {
+        console.table(this.webcam._featurePoints3D)
+        console.table(this.webcam.normalizedFeaturePoints)
+      }
+    })
+  }
+
+
+  /*
+  initObjects_() {
     this.video = document.createElement('video')
     this.video.id = 'webcam'
     this.video.style.display = 'none'
@@ -155,6 +148,7 @@ class App {
     this.face = new THREE.Mesh(geometry, material)
     // this.scene.add(this.face)
   }
+  */
 
 
   startIntro() {
@@ -182,21 +176,22 @@ class App {
 
 
   animate(t) {
-    requestAnimationFrame(this.animate)
+    this.stats.begin()
 
-    let currentFrame = Math.floor(t / 1000 * 24)
-    if (currentFrame != this.previousFrame) {
-      this.stats.begin()
-  
-      this.update(currentFrame)
-  
-      this.controls.update()
-      this.renderer.render(this.scene, this.camera)
-
-      this.previousFrame = currentFrame
-  
-      this.stats.end()
+    // this.update()
+    if (this.webcam.normalizedFeaturePoints) {
+      this.face.deform(this.webcam.normalizedFeaturePoints)
+      this.face.matrix.copy(this.webcam.matrixFeaturePoints)
+      this.face.matrixWorldNeedsUpdate = true
+      this.webcam._featurePoints3D.forEach((p, i) => {
+        this._markers[i].position.set(p[0], p[1], p[2])
+      })
     }
+
+    this.controls.update()
+    this.renderer.render(this.scene, this.camera)
+
+    this.stats.end()
   }
 
 
