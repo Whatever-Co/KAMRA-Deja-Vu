@@ -1,111 +1,9 @@
 /* global THREE createjs */
-
 import {vec2, vec3, mat3} from 'gl-matrix'
 import Delaunay from 'delaunay-fast'
 
-import StandardFaceData from './standardfacedata'
 
-
-export default class extends THREE.Mesh {
-
-
-  constructor() {
-    let material = new THREE.ShaderMaterial({
-      uniforms: {
-        map: {type: 't', value: null}
-      },
-      vertexShader: require('./shaders/face.vert'),
-      fragmentShader: require('./shaders/face.frag'),
-      side: THREE.DoubleSide
-    })
-    material = new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})
-    super(new THREE.BufferGeometry(), material)
-
-    this.standardFaceData = new StandardFaceData()
-    this.buildMesh()
-  }
-
-
-  buildMesh() {
-    this.geometry.dynamic = true
-    this.geometry.setIndex(this.standardFaceData.index)
-    this.geometry.addAttribute('position', this.standardFaceData.position)
-    this.geometry.addAttribute('uv', new THREE.BufferAttribute(new Float32Array(this.standardFaceData.position.array.length / 3 * 2), 2))
-  }
-
-
-  deform(featurePoints) {
-    let displacement = featurePoints.map((p, i) => {
-      let fp = this.standardFaceData.getFeatureVertex(i)
-      return vec3.sub([], p, fp)
-    })
-
-    let position = this.geometry.getAttribute('position')
-    let n = position.array.length / 3
-    for (let i = 0; i < n; i++) {
-      let p = vec3.create()
-      let b = 0
-      this.standardFaceData.data.face.weight[i].forEach((w) => {
-        vec3.add(p, p, vec3.scale(vec3.create(), displacement[w[0]], w[1]))
-        b += w[1]
-      })
-      vec3.scale(p, p, 1 / b)
-      vec3.add(p, p, this.standardFaceData.getVertex(i))
-
-      position.array[i * 3 + 0] = p[0]
-      position.array[i * 3 + 1] = p[1]
-      position.array[i * 3 + 2] = p[2]
-    }
-    position.needsUpdate = true
-  }
-
-
-  setTexture(texture) {
-    this.material = new THREE.ShaderMaterial({
-      uniforms: {
-        map: {type: 't', value: texture.clone()}
-      },
-      vertexShader: require('./shaders/face.vert'),
-      fragmentShader: require('./shaders/face.frag'),
-      side: THREE.DoubleSide
-    })
-  }
-
-
-  prepareForMorph() {
-    this.standardFacePoints = []
-    let position = this.standardFaceData.data.face.position
-    for (let i = 0; i < position.length; i += 3) {
-      this.standardFacePoints.push([position[i], position[i + 1]])
-    }
-    console.table(this.getBounds2(this.standardFacePoints))
-    this.standardFacePoints.push([1, 1])
-    this.standardFacePoints.push([1, -1])
-    this.standardFacePoints.push([-1, -1])
-    this.standardFacePoints.push([-1, 1])
-
-    this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
-
-    {
-      let position = this.geometry.getAttribute('position').array
-      this.capturedVertices = []
-      let zMin = Number.MAX_VALUE
-      for (let i = 0; i < position.length; i += 3) {
-        let z = position[i + 2]
-        this.capturedVertices.push([position[i], position[i + 1], z])
-        if (z < zMin) {
-          zMin = z
-        }
-      }
-      this.capturedVertices.push([1, 1, zMin])
-      this.capturedVertices.push([1, -1, zMin])
-      this.capturedVertices.push([-1, -1, zMin])
-      this.capturedVertices.push([-1, 1, zMin])
-    }
-  }
-
-
-
+export default class extends THREE.Object3D {
 
 
   load(basename) {
@@ -120,6 +18,42 @@ export default class extends THREE.Mesh {
         resolve()
       })
     })
+  }
+
+
+  buildMesh(image, featurePoints) {
+    this.data = require('./face2.json')
+    console.log(this.data)
+
+    let index = this.data.face.index.concat(this.data.rightEye.index, this.data.leftEye.index)
+
+    let geometry = new THREE.BufferGeometry()
+    geometry.dynamic = true
+    geometry.setIndex(new THREE.Uint16Attribute(index, 1))
+    // this.positionAttribute = new THREE.Float32Attribute(this.frames[0].faces[0].morph.face.vertices, 3)
+    // this.positionAttribute = new THREE.Float32Attribute(this.data.face.position, 3)
+    this.positionAttribute = this.buildCapturedVertices(this.normalizeFeaturePoints(featurePoints))
+    geometry.addAttribute('position', this.positionAttribute)
+    geometry.addAttribute('uv', this.getDeformedUV(featurePoints))
+
+    let map = new THREE.Texture(image)
+    map.needsUpdate = true
+    let material = new THREE.ShaderMaterial({
+      uniforms: {
+        map: {type: 't', value: map}
+      },
+      vertexShader: require('./face.vert'),
+      fragmentShader: require('./face.frag'),
+      side: THREE.DoubleSide
+    })
+    // let material = new THREE.MeshBasicMaterial({map, side: THREE.DoubleSide, morphTargets: true})
+
+    this.mesh = new THREE.Mesh(geometry, material)
+    // this.mesh.scale.set(0.01, 0.01, 0.01)
+    this.add(this.mesh)
+
+    this.prepareForMorph()
+    this.applyMorph(0)
   }
 
 
@@ -166,6 +100,21 @@ export default class extends THREE.Mesh {
   }
 
 
+  prepareForMorph() {
+    this.standardFacePoints = []
+    let position = this.data.face.position
+    for (let i = 0; i < position.length; i += 3) {
+      this.standardFacePoints.push([position[i], position[i + 1]])
+    }
+    this.standardFacePoints.push([1, 1])
+    this.standardFacePoints.push([1, -1])
+    this.standardFacePoints.push([-1, -1])
+    this.standardFacePoints.push([-1, 1])
+
+    this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
+  }
+
+
   buildCapturedVertices(featurePoints) {
     let displacement = featurePoints.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
@@ -207,20 +156,32 @@ export default class extends THREE.Mesh {
   }
 
 
-  applyMorph(vertices) {
-    let position = this.geometry.getAttribute('position')
-    for (let i = 0; i < vertices.length; i += 3) {
-      let r = this.getTriangleIndex([vertices[i], vertices[i + 1]], this.standardFacePoints)
+  applyMorph(frame) {
+    let targetVertices = []
+    {
+      const scale = 0.006667229494618528
+      let position = this.frames[frame].faces[0].morph.face.vertices
+      for (let i = 0; i < position.length; i += 3) {
+        targetVertices.push([position[i] * scale, position[i + 1] * scale, position[i + 2] * scale])
+      }
+      // console.table(this.getBounds2(targetVertices))
+    }
+
+    targetVertices.forEach((mp, i) => {
+      let r = this.getTriangleIndex(mp, this.standardFacePoints)
       if (!r) return
       let [index, bc] = r
+      // console.log(i, index, bc)
       let p0 = this.capturedVertices[this.triangleIndices[index + 0]]
       let p1 = this.capturedVertices[this.triangleIndices[index + 1]]
       let p2 = this.capturedVertices[this.triangleIndices[index + 2]]
-      position.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
-      position.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
-      position.array[i + 2] = vertices[i + 2]
-    }
-    position.needsUpdate = true
+      i *= 3
+      this.positionAttribute.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
+      this.positionAttribute.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
+      // this.positionAttribute.array[i + 2] = p0[2] * bc[0] + p1[2] * bc[1] + p2[2] * bc[2]
+      this.positionAttribute.array[i + 2] = mp[2]
+    })
+    this.positionAttribute.needsUpdate = true
   }
 
 
@@ -274,6 +235,20 @@ export default class extends THREE.Mesh {
       vec2.max(max, max, v)
     })
     return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
+  }
+
+  update(t) {
+    if (this.frames) {
+      let currentFrame = Math.floor(t / 1000 * 24) % this.frames.length
+      this.applyMorph(currentFrame)
+      // let data = this.frames[currentFrame].faces[0]
+      // // console.log(data.quat)
+      // this.mesh.quaternion.set(data.quat[0], data.quat[1], data.quat[2], data.quat[3])
+      // // console.log(this.mesh.rotation)
+      // this.rotation.set(Math.PI, 0, 0)
+      // this.positionAttribute.array.set(data.morph.face.vertices)
+      // this.positionAttribute.needsUpdate = true
+    }
   }
 
 }

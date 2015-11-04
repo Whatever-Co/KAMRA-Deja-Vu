@@ -221,10 +221,10 @@ class DelauneyTestApp {
 
   loadMorphTarget() {
     return $.getJSON('keyframes.json').done((result) => {
-      const frame = 600
+      const frame = 0
       let scale = 0.01 / result[frame].faces[0].scale
       console.log(scale)
-      scale = 0.006667229494618528
+      // scale = 0.006667229494618528
       // console.log(scale, result[frame].faces[0].morph.face.vertices)
       this.morphedPoints = []
       // let position = require('./morph2.json')[4].face.vertices
@@ -417,5 +417,5 @@ class DelauneyTestApp {
 }
 
 
-new App()
-// new DelauneyTestApp()
+// new App()
+new DelauneyTestApp()
