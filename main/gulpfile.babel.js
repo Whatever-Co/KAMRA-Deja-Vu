@@ -1,62 +1,97 @@
+/* global process */
 import gulp from 'gulp'
 import loadPlugins from 'gulp-load-plugins'
 const $ = loadPlugins()
-import webpack from 'webpack-stream'
+import webpackStream from 'webpack-stream'
+import webpack from 'webpack'
 import browserSync from 'browser-sync'
+import mergeStream from 'merge-stream'
 
+
+let developmentMode = process.env.NODE_ENV == 'development'
 
 gulp.task('webpack', () => {
+  let config = {
+    watch: developmentMode,
+    entry: {
+      main: './src/pc/main.js',
+      'sp/main': './src/sp/main.js'
+    },
+    output: {
+      filename: '[name].js'
+    },
+    module: {
+      preLoaders: [
+        { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint' }
+      ],
+      loaders: [
+        { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel' },
+        { test: /\.json$/, loader: 'json' },
+        { test: /\.(vert|frag)$/, loader: 'raw' }
+      ]
+    },
+    amd: { jQuery: true },
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.env': {
+          NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+        }
+      })
+    ],
+    eslint: {
+      fix: true,
+      formatter: require('eslint-friendly-formatter')
+    }
+  }
+  if (!developmentMode) {
+    config.plugins.push(
+      new webpack.optimize.UglifyJsPlugin(),
+      new webpack.optimize.DedupePlugin(),
+      new webpack.NoErrorsPlugin()
+    )
+  }
   return gulp.src('')
-    .pipe(webpack({
-      watch: true,
-      entry: {
-        main: './src/main.js'
-      },
-      output: {
-        filename: '[name].js'
-      },
-      module: {
-        preLoaders: [
-          { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint' }
-        ],
-        loaders: [
-          { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel' },
-          { test: /\.png$/, loader: 'url?limit=5000' },
-          { test: /\.json$/, loader: 'json' },
-          { test: /\.(vert|frag)$/, loader: 'raw' }
-        ]
-      },
-      amd: { jQuery: true },
-      eslint: {
-        fix: true,
-        formatter: require('eslint-friendly-formatter')
+    .pipe(webpackStream(config, webpack, (err) => {
+      if (!err) {
+        browserSync.reload()
       }
     }))
-    .pipe(gulp.dest('public'))
-    .pipe(browserSync.stream())
+    .pipe(gulp.dest('./public'))
 })
 
 
+const paths = {pc: '', sp: 'sp'}
+
 gulp.task('jade', () => {
-  return gulp.src('./src/hoge.jade')
-    .pipe($.jade())
-    .pipe(gulp.dest('public'))
-    .pipe(browserSync.stream())
+  let merged = new mergeStream()
+  for (let key in paths) {
+    let s = gulp.src(`./src/${key}/page/*.jade`)
+      .pipe($.jade({pretty: developmentMode}))
+      .pipe(gulp.dest(`./public/${paths[key]}`))
+      .pipe(browserSync.stream())
+    merged.add(s)
+  }
+  return merged
 })
 
 
 gulp.task('stylus', () => {
-  return gulp.src('./src/aaaa.styl')
-    .pipe($.stylus())
-    .pipe($.autoprefixer())
-    .pipe(gulp.dest('public'))
-    .pipe(browserSync.stream())
+  let merged = new mergeStream()
+  for (let key in paths) {
+    let s = gulp.src(`./src/${key}/page/*.styl`)
+      .pipe($.stylus({compress: !developmentMode}))
+      .pipe($.autoprefixer())
+      .pipe(gulp.dest(`./public/${paths[key]}`))
+      .pipe(browserSync.stream())
+    merged.add(s)
+  }
+  return merged
 })
 
 
 gulp.task('watch', () => {
-  gulp.watch('src/*.jade', ['jade'])
-  gulp.watch('src/*.styl', ['stylus'])
+  gulp.watch('./src/**/*.jade', ['jade'])
+  gulp.watch('./src/**/*.styl', ['stylus'])
 })
 
 
@@ -70,4 +105,11 @@ gulp.task('browser-sync', () => {
 })
 
 
+gulp.task('release', () => {
+  developmentMode = false
+  process.env.NODE_ENV = 'production'
+})
+
+
 gulp.task('default', ['webpack', 'jade', 'stylus', 'watch', 'browser-sync'])
+gulp.task('build', ['release', 'webpack', 'jade', 'stylus'])
