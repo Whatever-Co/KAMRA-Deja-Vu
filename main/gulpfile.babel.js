@@ -21,16 +21,17 @@ gulp.task('webpack', () => {
       filename: '[name].js'
     },
     module: {
-      preLoaders: [
-        { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint' }
-      ],
+      // eslint-loader, import 文でエラー吐く...なんで..
+      // preLoaders: [
+      //   {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint-loader'}
+      // ],
       loaders: [
-        { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel' },
-        { test: /\.json$/, loader: 'json' },
-        { test: /\.(vert|frag)$/, loader: 'raw' }
+        {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel-loader'},
+        {test: /\.json$/, loader: 'json-loader'},
+        {test: /\.(vert|frag)$/, loader: 'raw-loader'}
       ]
     },
-    amd: { jQuery: true },
+    amd: {jQuery: true},
     plugins: [
       new webpack.DefinePlugin({
         'process.env': {
@@ -38,12 +39,14 @@ gulp.task('webpack', () => {
         }
       })
     ],
-    eslint: {
-      fix: true,
-      formatter: require('eslint-friendly-formatter')
-    }
+    // eslint: {
+    //   fix: true,
+    //   formatter: require('eslint-friendly-formatter')
+    // }
   }
-  if (!developmentMode) {
+  if (developmentMode) {
+    config.devtool = 'inline-source-map'
+  } else {
     config.plugins.push(
       new webpack.optimize.UglifyJsPlugin(),
       new webpack.optimize.DedupePlugin(),
@@ -51,11 +54,7 @@ gulp.task('webpack', () => {
     )
   }
   return gulp.src('')
-    .pipe(webpackStream(config, webpack, (err) => {
-      if (!err) {
-        browserSync.reload()
-      }
-    }))
+    .pipe(webpackStream(config))
     .pipe(gulp.dest('./public'))
 })
 
@@ -92,14 +91,15 @@ gulp.task('stylus', () => {
 gulp.task('watch', () => {
   gulp.watch('./src/**/*.jade', ['jade'])
   gulp.watch('./src/**/*.styl', ['stylus'])
+  gulp.watch('./public/**/*.js', browserSync.reload)
 })
 
 
 gulp.task('browser-sync', () => {
   browserSync.init({
-    host: 'localhost',
-    port: 3000,
-    server: { baseDir: ['./public'] },
+    server: {
+      baseDir: ['./public']
+    },
     open: false
   })
 })
