@@ -1,11 +1,6 @@
 /* global THREE */
-import $ from 'jquery'
 import 'OrbitControls'
 import dat from 'dat-gui'
-import {vec2, mat3} from 'gl-matrix'
-
-import Delaunay from 'delaunay-fast'
-import DeformableFace from './deformableface'
 
 import './main.sass'
 document.body.innerHTML = require('./main.jade')()
@@ -37,6 +32,7 @@ class App {
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer()
+    this.renderer.setClearColor(0x333333, 1)
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(this.renderer.domElement)
 
@@ -47,11 +43,10 @@ class App {
 
 
   initObjects() {
-    let geometry = new THREE.BoxGeometry(200, 200, 200)
     let material = new THREE.ShaderMaterial({
       uniforms: {
         map: {type: 't', value: null},
-        clipY: {type: 'f', value: 0}
+        clipY: {type: 'f', value: 0.0001}
       },
       vertexShader: require('./crosssection.vert'),
       fragmentShader: require('./crosssection.frag'),
@@ -60,16 +55,32 @@ class App {
     new THREE.TextureLoader().load('uvcheck.png', (texture) => {
       material.uniforms.map.value = texture
     })
+    /*
+    let geometry = new THREE.BoxGeometry(200, 200, 200)
     let mesh = new THREE.Mesh(geometry, material)
     this.scene.add(mesh)
+    */
 
-    let gui = new dat.GUI()
-    gui.add(material, 'wireframe')
-    gui.add(material.uniforms.clipY, 'value', -100.1, 100.1).name('Clip Y')
+    new THREE.JSONLoader().load('face.json', (geometry) => {
+      geometry.center()
+      // let material = new THREE.MeshBasicMaterial({wireframe: true})
+      let materials = new THREE.MultiMaterial([
+        material,
+        // new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.BackSide})
+        material
+      ])
+      let mesh = new THREE.Mesh(geometry, materials)
+      mesh.scale.set(200, 200, 200)
+      this.scene.add(mesh)
+
+      let gui = new dat.GUI()
+      gui.add(material, 'wireframe')
+      gui.add(material.uniforms.clipY, 'value', -1, 1).name('Clip Y')
+    })
   }
 
 
-  animate(t) {
+  animate() {
     requestAnimationFrame(this.animate)
 
     this.controls.update()
