@@ -22,6 +22,8 @@ class App {
 
     this.initStates()
     this.loadAssets()
+
+    this._frameCounter = $('<div>').attr({id: '_frame-counter'}).appendTo(document.body)
   }
 
 
@@ -80,7 +82,7 @@ class App {
     this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
     // console.log(this.camera.quaternion, this.keyframes.camera.property.quaternion.slice(0, 4))
-    this.camera.enabled = true
+    this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       let props = this.keyframes.camera.property
       let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
@@ -115,10 +117,11 @@ class App {
       this.webcam.visible = false
       this.face.prepareForMorph()
       this.face.matrixAutoUpdate = true
-      // this.startFrame = Ticker.currentFrame
+      this.camera.enabled = true
       this.captureController.enabled = false
       this.faceMorphController.enabled = true
       this.sound.play()
+      Ticker.setClock(this.sound)
     })
     this.webcam.start()
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
@@ -161,10 +164,11 @@ class App {
   }
 
 
-  animate() {
+  animate(currentFrame) {
     this.stats.begin()
 
-    const currentFrame = Math.floor(this.sound.position / 1000 * 24)
+    this._frameCounter.text(currentFrame)
+    console.log(currentFrame)
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
         controller.update(currentFrame)

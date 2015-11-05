@@ -21,11 +21,16 @@ class Ticker extends EventEmitter {
 
   update(t) {
     this.requestId = requestAnimationFrame(this.update)
-    let currentFrame = Math.floor(t / 1000 * 24)
-    if (currentFrame > this.currentFrame) {
+    let currentFrame = Math.floor((this.clock ? this.clock.position : t) / 1000 * 24)
+    if (currentFrame != this.currentFrame) {
       this.currentFrame = currentFrame
       this.emit('update', currentFrame)
     }
+  }
+
+
+  setClock(clock) {
+    this.clock = clock
   }
 
 }
