@@ -2,14 +2,16 @@
 
 import {vec2, vec3, mat3} from 'gl-matrix'
 import Delaunay from 'delaunay-fast'
+import TWEEN from 'tween.js'
 
+import Config from './config'
 import StandardFaceData from './standardfacedata'
 
 
 export default class DeformableFace extends THREE.Mesh {
 
 
-  constructor() {
+  constructor(keyframes) {
     let material = new THREE.ShaderMaterial({
       uniforms: {
         map: {type: 't', value: null}
@@ -21,10 +23,15 @@ export default class DeformableFace extends THREE.Mesh {
     material = new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})
     super(new THREE.BufferGeometry(), material)
 
+    this.keyframes = keyframes
+    this.enabled = false
+
     this.standardFaceData = new StandardFaceData()
     this.buildMesh()
 
-    this.add(new THREE.AxisHelper())
+    if (Config.DEV_MODE) {
+      this.add(new THREE.AxisHelper())
+    }
   }
 
 
@@ -107,9 +114,62 @@ export default class DeformableFace extends THREE.Mesh {
   }
 
 
+  applyMorph(vertices) {
+    let position = this.geometry.getAttribute('position')
+    for (let i = 0; i < vertices.length; i += 3) {
+      let r = this.getTriangleIndex([vertices[i], vertices[i + 1]], this.standardFacePoints)
+      if (!r) return
+      let [index, bc] = r
+      let p0 = this.capturedVertices[this.triangleIndices[index + 0]]
+      let p1 = this.capturedVertices[this.triangleIndices[index + 1]]
+      let p2 = this.capturedVertices[this.triangleIndices[index + 2]]
+      position.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
+      position.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
+      position.array[i + 2] = vertices[i + 2]
+    }
+    position.needsUpdate = true
+  }
+
+
+  getTriangleIndex(p, vertices) {
+    // console.log(p)
+    for (let i = 0; i < this.triangleIndices.length; i += 3) {
+      let uv = Delaunay.contains([vertices[this.triangleIndices[i]], vertices[this.triangleIndices[i + 1]], vertices[this.triangleIndices[i + 2]]], p)
+      if (uv) {
+        uv.unshift(1 - uv[0] - uv[1])
+        return [i, uv]
+      }
+    }
+  }
+
+
+  update(currentFrame) {
+    // curl part
+    let f = Math.max(this.keyframes.i_extra.in_frame, Math.min(this.keyframes.i_extra.out_frame, currentFrame))
+    let scaleZ = this.keyframes.i_extra.property.scale_z[f]
+
+    f = Math.max(this.keyframes.user.in_frame, Math.min(this.keyframes.user.out_frame, currentFrame))
+    let props = this.keyframes.user.property
+    this.applyMorph(props.face_vertices[f])
+
+    let i = f * 3
+    this.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
+    this.scale.set(props.scale[i] * 200, props.scale[i + 1] * 200, props.scale[i + 2] * 200 * scaleZ)
+    i = f * 4
+    this.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
+
+    // transition from captured position to keyframes'
+    if (f < 200) {
+      let blend = TWEEN.Easing.Cubic.InOut(1 - Math.max(0, Math.min(1, f / 200)))
+      this.position.lerp(this.initialTransform.position, blend)
+      this.scale.lerp(this.initialTransform.scale, blend)
+      this.quaternion.slerp(this.initialTransform.quaternion, blend)
+    }
+  }
 
 
 
+  /*
   load(basename) {
     return new Promise((resolve) => {
       let loader = new createjs.LoadQueue()
@@ -209,23 +269,6 @@ export default class DeformableFace extends THREE.Mesh {
   }
 
 
-  applyMorph(vertices) {
-    let position = this.geometry.getAttribute('position')
-    for (let i = 0; i < vertices.length; i += 3) {
-      let r = this.getTriangleIndex([vertices[i], vertices[i + 1]], this.standardFacePoints)
-      if (!r) return
-      let [index, bc] = r
-      let p0 = this.capturedVertices[this.triangleIndices[index + 0]]
-      let p1 = this.capturedVertices[this.triangleIndices[index + 1]]
-      let p2 = this.capturedVertices[this.triangleIndices[index + 2]]
-      position.array[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
-      position.array[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
-      position.array[i + 2] = vertices[i + 2]
-    }
-    position.needsUpdate = true
-  }
-
-
   getDeformedUV(featurePoint) {
     let displacement = featurePoint.map((c, i) => {
       let fp = this.getPosition(this.data.face.featurePoint[i])
@@ -256,18 +299,6 @@ export default class DeformableFace extends THREE.Mesh {
   }
 
 
-  getTriangleIndex(p, vertices) {
-    // console.log(p)
-    for (let i = 0; i < this.triangleIndices.length; i += 3) {
-      let uv = Delaunay.contains([vertices[this.triangleIndices[i]], vertices[this.triangleIndices[i + 1]], vertices[this.triangleIndices[i + 2]]], p)
-      if (uv) {
-        uv.unshift(1 - uv[0] - uv[1])
-        return [i, uv]
-      }
-    }
-  }
-
-
   getBounds2(vertices) {
     let min = [Number.MAX_VALUE, Number.MAX_VALUE]
     let max = [Number.MIN_VALUE, Number.MIN_VALUE]
@@ -277,5 +308,6 @@ export default class DeformableFace extends THREE.Mesh {
     })
     return {min, max, size: vec2.sub([], max, min), center: vec2.lerp([], min, max, 0.5)}
   }
+  */
 
 }

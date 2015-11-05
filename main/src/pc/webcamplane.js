@@ -2,6 +2,7 @@
 
 import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
+import TWEEN from 'tween.js'
 
 import Ticker from './ticker'
 import StandardFaceData from './standardfacedata'
@@ -207,7 +208,7 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.push(false)
     }
 
-    const WAIT_FOR_FRAMES = 48 // 2 secs
+    const WAIT_FOR_FRAMES = 10 // 2 secs
     if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
       this.scoreHistory.shift()
     }
@@ -253,6 +254,16 @@ export default class WebcamPlane extends THREE.Mesh {
     // this.tracker.draw(this.trackerCanvas)
 
     this.checkCaptureScore()
+  }
+
+
+  fadeOut() {
+    let p = {b: 1}
+    new TWEEN.Tween(p).to({b: 0}, 2000).onUpdate(() => {
+      this.material.color.setHSL(0, 0, p.b)
+    }).onComplete(() => {
+      this.visible = false
+    }).start()
   }
 
   

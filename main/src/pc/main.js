@@ -2,8 +2,9 @@
 
 import $ from 'jquery'
 import 'jquery.transit'
-import Stats from 'stats-js'
 import StateMachine from 'javascript-state-machine'
+import TWEEN from 'tween.js'
+import Stats from 'stats-js'
 
 import Config from './config'
 import Ticker from './ticker'
@@ -16,6 +17,8 @@ class App {
 
   constructor() {
     this.animate = this.animate.bind(this)
+
+    this.controllers = []
 
     this.initStates()
     this.loadAssets()
@@ -78,10 +81,9 @@ class App {
 
 
   initScene() {
-    let fov = this.keyframes.camera.property.fov[0]
-    this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
+    this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 1, 5000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
-    console.log(this.camera.quaternion, this.keyframes.camera.property.quaternion.slice(0, 4))
+
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       let props = this.keyframes.camera.property
@@ -93,6 +95,7 @@ class App {
       i = f * 4
       this.camera.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3])
     }
+    this.controllers.push(this.camera)
 
     this.scene = new THREE.Scene()
 
@@ -102,8 +105,6 @@ class App {
 
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
-
-    this.controllers = []
   }
 
 
@@ -114,12 +115,19 @@ class App {
     this.webcam.addEventListener('complete', () => {
       this.webcam.stop()
       this.webcam.applyTextureForFace(this.face)
-      this.webcam.visible = false
+      this.webcam.fadeOut()
       this.face.prepareForMorph()
       this.face.matrixAutoUpdate = true
+      {
+        let position = new THREE.Vector3()
+        let quaternion = new THREE.Quaternion()
+        let scale = new THREE.Vector3()
+        this.face.matrix.decompose(position, quaternion, scale)
+        this.face.initialTransform = {position, quaternion, scale}
+      }
       this.camera.enabled = true
       this.captureController.enabled = false
-      this.faceMorphController.enabled = true
+      this.face.enabled = true
       this.sound.play()
       Ticker.setClock(this.sound)
     })
@@ -128,9 +136,10 @@ class App {
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
 
-    this.face = new DeformableFace()
+    this.face = new DeformableFace(this.keyframes)
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
+    this.controllers.push(this.face)
 
     if (Config.DEV_MODE) {
       this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})))
@@ -139,8 +148,6 @@ class App {
 
 
   initControllers() {
-    this.controllers.push(this.camera)
-
     this.captureController = {
       enabled: true,
       update: () => {
@@ -152,32 +159,14 @@ class App {
       }
     }
     this.controllers.push(this.captureController)
-  
-    this.faceMorphController = {
-      enabled: false,
-      update: (currentFrame) => {
-        // curl part
-        let f = Math.max(this.keyframes.i_extra.in_frame, Math.min(this.keyframes.i_extra.out_frame, currentFrame))
-        let scaleZ = this.keyframes.i_extra.property.scale_z[f]
-
-        //
-        f = Math.max(this.keyframes.user.in_frame, Math.min(this.keyframes.user.out_frame, currentFrame))
-        let props = this.keyframes.user.property
-        this.face.applyMorph(props.face_vertices[f])
-        let i = f * 3
-        this.face.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
-        this.face.scale.set(props.scale[i] * 100, props.scale[i + 1] * 100, props.scale[i + 2] * 100 * scaleZ)
-        i = f * 4
-        this.face.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3])
-      }
-    }
-    this.controllers.push(this.faceMorphController)
   }
 
 
-  animate(currentFrame) {
-    this.stats.begin()
-    this._frameCounter.text(currentFrame)
+  animate(currentFrame, time) {
+    if (Config.DEV_MODE) {
+      this.stats.begin()
+      this._frameCounter.text(currentFrame)
+    }
 
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
@@ -185,9 +174,13 @@ class App {
       }
     })
 
+    TWEEN.update(time)
+
     this.renderer.render(this.scene, this.camera)
 
-    this.stats.end()
+    if (Config.DEV_MODE) {
+      this.stats.end()
+    }
   }
 
 

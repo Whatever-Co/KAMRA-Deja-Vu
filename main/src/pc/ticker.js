@@ -1,5 +1,6 @@
 import {EventEmitter} from 'events'
 
+
 class Ticker extends EventEmitter {
 
   constructor() {
@@ -24,7 +25,7 @@ class Ticker extends EventEmitter {
     let currentFrame = Math.floor((this.clock ? this.clock.position : t) / 1000 * 24)
     if (currentFrame != this.currentFrame) {
       this.currentFrame = currentFrame
-      this.emit('update', currentFrame)
+      this.emit('update', currentFrame, t)
     }
   }
 
