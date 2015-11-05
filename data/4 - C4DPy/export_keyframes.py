@@ -78,7 +78,7 @@ def addFrame(f):
 		faceVertices, eyemouthVertices = getFaceVertices(user)
 		userProp["position"].extend(toPosition(userWrapper.GetAbsPos()))
 		userProp["quaternion"].extend(toQuaternion(userWrapper.GetMg()))
-		userProp["scale"].append(toScale(userWrapper.GetAbsScale()))
+		userProp["scale"].extend(toScale(userWrapper.GetAbsScale()))
 		userProp["face_vertices"].append(faceVertices)
 		userProp["eyemouth_vertices"].append(eyemouthVertices)
 
@@ -100,6 +100,8 @@ def addFrame(f):
 		userProp["position"][-3] = 0
 		userProp["position"][-2] = 0
 		userProp["position"][-1] = 0
+		userProp["scale"][-3] = 1
+		userProp["scale"][-2] = 1
 		userProp["scale"][-1] = 1
 
 	#-------------------------
