@@ -28,6 +28,7 @@
     "merge-stream": "^1.0.0",
     "raw-loader": "^0.5.1",
     "stats-js": "^1.0.0-alpha1",
+    "tween.js": "^16.3.1",
     "webpack": "^1.12.2",
     "webpack-stream": "^2.1.1"
   },
