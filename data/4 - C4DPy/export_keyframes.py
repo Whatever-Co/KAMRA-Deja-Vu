@@ -86,7 +86,7 @@ def addFrame(f):
 	# part I
 	if f <= keyframes["i_extra"]["out_frame"]:
 		curl = doc.SearchObject("user_curl")
-		curlRot = doc.SearchObject("user_curl_root")
+		curlRot = doc.SearchObject("user_curl_rot")
 
 		prop = keyframes["i_extra"]["property"]
 		prop["curl_strength"].append(curl[c4d.DEFORMOBJECT_STRENGTH])
@@ -141,9 +141,6 @@ def addFrame(f):
 				prop["position"].extend([0, 0, 0])
 				prop["quaternion"].extend([0, 0, 0, 0])
 				prop["scale"].extend([1, 1, 1])
-
-
-
 
 def getFaceVertices(face):
 	# global morphData

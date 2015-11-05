@@ -1,8 +1,10 @@
 import c4d
 from c4d import gui
 import json
-import time, os, eulerangles, math
+import time, os, math
 from c4d.modules import mograph as mo
+
+from Quaternion import Quat
 
 #========================================
 # config
@@ -51,19 +53,27 @@ def toFaceVertex(point):
 threeMat = c4d.Matrix()
 threeMat.Scale(c4d.Vector(1, 1, -1))
 
-def toQuaternion(m):
+quat = Quat((0, 0, 0))
 
-    m = threeMat * m
-    v1, v2, v3 = m.v1, m.v2, m.v3
-    rotMat = [
+show = False
+
+def toQuaternion(mg):
+
+    # mg = threeMat * mg
+
+    v1, v2, v3 = mg.v1, mg.v2, mg.v3
+
+    quat = Quat([
         [v1.x, v1.y, v1.z],
         [v2.x, v2.y, v2.z],
         [v3.x, v3.y, v3.z]
-    ]
-    euler = eulerangles.mat2euler(rotMat)
-    quat = eulerangles.euler2quat(euler[0], euler[1], euler[2])
+    ])
+    q = quat.q
 
-    return [quat[0], quat[1], quat[2], quat[3]]
+    q[2] *= -1
+    # q[3] *= -1
+
+    return q
 
 
 def toScale(scale):
