@@ -78,7 +78,7 @@ export default class DeformableFace extends THREE.Mesh {
     for (let i = 0; i < position.length; i += 3) {
       this.standardFacePoints.push([position[i], position[i + 1]])
     }
-    console.table(this.getBounds2(this.standardFacePoints))
+    // console.table(this.getBounds2(this.standardFacePoints))
     this.standardFacePoints.push([1, 1])
     this.standardFacePoints.push([1, -1])
     this.standardFacePoints.push([-1, -1])

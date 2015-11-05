@@ -20,6 +20,7 @@
     "gulp-stylus": "^2.1.0",
     "gulp-util": "^3.0.7",
     "jade": "^1.11.0",
+    "javascript-state-machine": "^2.3.5",
     "jquery": "^2.1.4",
     "jquery.transit": "^0.9.12",
     "json-loader": "^0.5.3",
