@@ -7,6 +7,10 @@ import Ticker from './ticker'
 import StandardFaceData from './standardfacedata'
 
 
+const FACE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
+const PARTS_INDICES = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
+
+
 export default class WebcamPlane extends THREE.Mesh {
 
   constructor(camera) {
@@ -193,13 +197,11 @@ export default class WebcamPlane extends THREE.Mesh {
 
   checkCaptureScore() {
     if (this.featurePoint3D) {
-      const faceIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
-      const partsIndices = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
-      let {size, center} = this.getBoundsFor(this.featurePoint3D, faceIndices)
+      let {size, center} = this.getBoundsFor(this.featurePoint3D, FACE_INDICES)
       let len = vec2.len(size)
-      let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, partsIndices)
+      let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
       let isOK = len > 400 && Math.abs(center[0] - pCenter[0]) < 10 && this.tracker.getConvergence() < 50
-      $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
+      // $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
       this.scoreHistory.push(isOK)
     } else {
       this.scoreHistory.push(false)
