@@ -18,72 +18,21 @@
     "gulp-jade": "^1.1.0",
     "gulp-load-plugins": "^1.0.0",
     "gulp-stylus": "^2.1.0",
+    "gulp-util": "^3.0.7",
     "jade": "^1.11.0",
+    "javascript-state-machine": "^2.3.5",
     "jquery": "^2.1.4",
     "jquery.transit": "^0.9.12",
     "json-loader": "^0.5.3",
+    "machina": "^1.1.2",
+    "merge-stream": "^1.0.0",
     "raw-loader": "^0.5.1",
     "stats-js": "^1.0.0-alpha1",
     "webpack": "^1.12.2",
     "webpack-stream": "^2.1.1"
   },
   "scripts": {
-    "dev": "gulp",
-    "dev_": "webpack -d --devtool inline-source-map --progress --colors --watch",
-    "release": "webpack -p --progress --colors"
-  },
-  "eslintConfig": {
-    "rules": {
-      "indent": [
-        2,
-        2,
-        {
-          "SwitchCase": 1
-        }
-      ],
-      "quotes": [
-        2,
-        "single"
-      ],
-      "linebreak-style": [
-        2,
-        "unix"
-      ],
-      "semi": [
-        2,
-        "never"
-      ],
-      "arrow-parens": 1,
-      "arrow-spacing": 1,
-      "constructor-super": 2,
-      "generator-star-spacing": 2,
-      "no-class-assign": 2,
-      "no-const-assign": 2,
-      "no-dupe-class-members": 2,
-      "no-empty-pattern": 2,
-      "no-this-before-super": 2,
-      "no-var": 2,
-      "object-shorthand": 2,
-      "prefer-arrow-callback": 2,
-      "prefer-const": 0,
-      "prefer-reflect": 0,
-      "prefer-spread": 2,
-      "prefer-template": 2,
-      "require-yield": 2,
-      "no-console": 0,
-      "no-unused-vars": 1,
-      "no-empty": 1,
-      "no-unreachable": 1,
-      "no-debugger": 1
-    },
-    "env": {
-      "es6": true,
-      "browser": true,
-      "amd": true
-    },
-    "extends": "eslint:recommended",
-    "ecmaFeatures": {
-      "modules": true
-    }
+    "dev": "NODE_ENV=development gulp",
+    "build": "gulp build"
   }
 }
