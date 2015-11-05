@@ -38,7 +38,7 @@ gulp.task('webpack', () => {
           NODE_ENV: JSON.stringify(process.env.NODE_ENV)
         }
       })
-    ],
+    ]
     // eslint: {
     //   fix: true,
     //   formatter: require('eslint-friendly-formatter')
@@ -54,7 +54,16 @@ gulp.task('webpack', () => {
     )
   }
   return gulp.src('')
-    .pipe(webpackStream(config))
+    .pipe(webpackStream(config, null, (err, stats) => {
+      if (!err) {
+        $.util.log(stats.toString({
+          colors: $.util.colors.supportsColor,
+          chunks: !developmentMode,
+          chunkModules: !developmentMode
+        }))
+        browserSync.reload()
+      }
+    }))
     .pipe(gulp.dest('./public'))
 })
 
