@@ -1,5 +1,3 @@
-<<<<<<< b1cbfc76759a9cbea83c4eae91432a01fc1c5509
-=======
 /* global THREE */
 
 import $ from 'jquery'
@@ -67,6 +65,7 @@ class App {
   }
 
 
+
   initScene() {
     let fov = this.keyframes.camera.property.fov[0]
     this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
@@ -93,7 +92,6 @@ class App {
       this.webcam.applyTextureForFace(this.face)
       this.webcam.visible = false
       this.face.prepareForMorph()
-      // this.morphStart = performance.now()
       this.startFrame = Ticker.currentFrame
       this.captureController.enabled = false
       this.faceMorphController.enabled = true
@@ -120,8 +118,8 @@ class App {
   
     this.faceMorphController = {
       enabled: false,
-      update: (currentFrame) => {
-        let f = (currentFrame - this.startFrame) % 1000
+      update: (frameCount) => {
+        let f = (frameCount - this.startFrame) % 1843
         this.face.applyMorph(this.keyframes.user.property.face_vertices[f])
       }
     }
@@ -130,12 +128,12 @@ class App {
   }
 
 
-  animate(currentFrame) {
+  animate(frameCount) {
     this.stats.begin()
 
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
-        controller.update(currentFrame)
+        controller.update(frameCount)
       }
     })
 
@@ -157,4 +155,3 @@ class App {
 }
 
 new App()
->>>>>>> Use javascript-state-machine
