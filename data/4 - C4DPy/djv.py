@@ -15,7 +15,7 @@ eyemouthVertexIndex = 342
 eyemouthFaceIndex = 616
 
 audioInPoint = 180
-duration = 1844 #3821
+duration = 3821
 
 inFrame = {
     "I": 0,
@@ -36,6 +36,9 @@ fps = doc[c4d.DOCUMENT_FPS]
 projDir = os.path.normpath(doc.GetDocumentPath() + "/../")
 
 #========================================
+def search(name):
+    return doc.SearchObject(name)
+
 def toPosition(point):
 	return [
 		point.x,
