@@ -23,6 +23,8 @@ export default class DeformableFace extends THREE.Mesh {
 
     this.standardFaceData = new StandardFaceData()
     this.buildMesh()
+
+    this.add(new THREE.AxisHelper())
   }
 
 

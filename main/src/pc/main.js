@@ -70,6 +70,18 @@ class App {
     let fov = this.keyframes.camera.property.fov[0]
     this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
+    console.log(this.camera.quaternion, this.keyframes.camera.property.quaternion.slice(0, 4))
+    this.camera.enabled = true
+    this.camera.update = (currentFrame) => {
+      let props = this.keyframes.camera.property
+      let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
+      this.camera.fov = props.fov[f]
+      this.camera.updateProjectionMatrix()
+      let i = f * 3
+      this.camera.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
+      i = f * 4
+      this.camera.quaternion.set(props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3], props.quaternion[i + 0])
+    }
 
     this.scene = new THREE.Scene()
 
@@ -86,12 +98,15 @@ class App {
 
 
   initObjects() {
+    this.startFrame = 999999999
+
     this.webcam = new WebcamPlane(this.camera)
     this.webcam.addEventListener('complete', () => {
       this.webcam.stop()
       this.webcam.applyTextureForFace(this.face)
       this.webcam.visible = false
       this.face.prepareForMorph()
+      this.face.matrixAutoUpdate = true
       this.startFrame = Ticker.currentFrame
       this.captureController.enabled = false
       this.faceMorphController.enabled = true
@@ -104,6 +119,8 @@ class App {
     this.face = new DeformableFace()
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
+
+    this.face.add(new THREE.AxisHelper())
 
     this.captureController = {
       enabled: true,
@@ -118,22 +135,32 @@ class App {
   
     this.faceMorphController = {
       enabled: false,
-      update: (frameCount) => {
-        let f = (frameCount - this.startFrame) % 1843
-        this.face.applyMorph(this.keyframes.user.property.face_vertices[f])
+      update: (currentFrame) => {
+        let f = Math.max(this.keyframes.user.in_frame, Math.min(this.keyframes.user.out_frame, currentFrame))
+        let props = this.keyframes.user.property
+        this.face.applyMorph(props.face_vertices[f])
+        let i = f * 3
+        this.face.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
+        i = f * 4
+        this.face.quaternion.set(props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3], props.quaternion[i + 0])
+        let s = props.scale[f] * 100
+        this.face.scale.set(s, s, s)
       }
     }
 
-    this.controllers.push(this.captureController, this.faceMorphController)
+    this.controllers.push(this.camera, this.captureController, this.faceMorphController)
+
+    this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})))
   }
 
 
   animate(frameCount) {
     this.stats.begin()
 
+    const currentFrame = frameCount - this.startFrame
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
-        controller.update(frameCount)
+        controller.update(currentFrame)
       }
     })
 
