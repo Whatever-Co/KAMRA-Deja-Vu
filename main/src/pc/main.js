@@ -1,4 +1,4 @@
-/* global THREE */
+/* global THREE createjs */
 
 import $ from 'jquery'
 import 'jquery.transit'
@@ -47,9 +47,18 @@ class App {
 
 
   loadAssets() {
-    $.getJSON('data/keyframes.json').done((result) => {
-      this.keyframes = result
+    let loader = new createjs.LoadQueue()
+    loader.installPlugin(createjs.Sound)
+    loader.loadManifest([
+      {id: 'keyframes', src: 'data/keyframes.json'},
+      {id: 'music', src: 'data/Deja_vu_shortsize4_2.mp3'}
+    ])
+    loader.on('complete', () => {
+      this.keyframes = loader.getResult('keyframes')
       console.log(this.keyframes)
+
+      this.sound = createjs.Sound.createInstance('music')
+      this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
 
       this.initScene()
       this.initObjects()
@@ -70,7 +79,7 @@ class App {
     let fov = this.keyframes.camera.property.fov[0]
     this.camera = new THREE.PerspectiveCamera(fov, 16 / 9, 1, 5000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
-    console.log(this.camera.quaternion, this.keyframes.camera.property.quaternion.slice(0, 4))
+    // console.log(this.camera.quaternion, this.keyframes.camera.property.quaternion.slice(0, 4))
     this.camera.enabled = true
     this.camera.update = (currentFrame) => {
       let props = this.keyframes.camera.property
@@ -93,7 +102,6 @@ class App {
     this.onResize()
 
     this.controllers = []
-    this.previouslyEnabledControllers = []
   }
 
 
@@ -107,9 +115,10 @@ class App {
       this.webcam.visible = false
       this.face.prepareForMorph()
       this.face.matrixAutoUpdate = true
-      this.startFrame = Ticker.currentFrame
+      // this.startFrame = Ticker.currentFrame
       this.captureController.enabled = false
       this.faceMorphController.enabled = true
+      this.sound.play()
     })
     this.webcam.start()
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
@@ -119,8 +128,6 @@ class App {
     this.face = new DeformableFace()
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
-
-    this.face.add(new THREE.AxisHelper())
 
     this.captureController = {
       enabled: true,
@@ -154,10 +161,10 @@ class App {
   }
 
 
-  animate(frameCount) {
+  animate() {
     this.stats.begin()
 
-    const currentFrame = frameCount - this.startFrame
+    const currentFrame = Math.floor(this.sound.position / 1000 * 24)
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
         controller.update(currentFrame)
