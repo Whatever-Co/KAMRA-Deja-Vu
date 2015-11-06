@@ -159,8 +159,9 @@ export default class DeformableFace extends THREE.Mesh {
     this.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
 
     // transition from captured position to keyframes'
-    if (f < 200) {
-      let blend = TWEEN.Easing.Cubic.InOut(1 - Math.max(0, Math.min(1, f / 200)))
+    f = Math.max(this.keyframes.i_extra.in_frame, Math.min(this.keyframes.i_extra.out_frame, currentFrame))
+    let blend = 1 - this.keyframes.i_extra.property.interpolation[f]
+    if (blend > 0) {
       this.position.lerp(this.initialTransform.position, blend)
       this.scale.lerp(this.initialTransform.scale, blend)
       this.quaternion.slerp(this.initialTransform.quaternion, blend)

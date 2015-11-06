@@ -81,7 +81,7 @@ class App {
 
 
   initScene() {
-    this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 1, 5000)
+    this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
 
     this.camera.enabled = false
