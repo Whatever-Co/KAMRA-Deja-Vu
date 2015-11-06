@@ -32,6 +32,7 @@ userAlts = [
 
 slices = [search("user_slice.%d" % i) for i in xrange(5)]
 sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
+
 #========================================
 # keyframe format
 
