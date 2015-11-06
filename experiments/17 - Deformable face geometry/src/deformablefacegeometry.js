@@ -153,6 +153,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       this.standardFacePoints.push([-1, 1])
 
       this.triangleIndices = Delaunay.triangulate(this.standardFacePoints)
+      // console.log(JSON.stringify(this.triangleIndices))
     }
 
     {
@@ -212,6 +213,26 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       position[i + 0] = p0[0] * bc[0] + p1[0] * bc[1] + p2[0] * bc[2]
       position[i + 1] = p0[1] * bc[0] + p1[1] * bc[1] + p2[1] * bc[2]
       position[i + 2] = vertices[i + 2]
+    }
+    this.positionAttribute.needsUpdate = true
+  }
+
+
+  applyMorph2(weights) {
+    let position = this.positionAttribute.array
+    let n = position.length / 3
+    for (let i = 0; i < n; i++) {
+      let j = i * 7
+      let p0 = this.capturedVertices[weights[j + 0]]
+      let p1 = this.capturedVertices[weights[j + 1]]
+      let p2 = this.capturedVertices[weights[j + 2]]
+      let w0 = weights[j + 3]
+      let w1 = weights[j + 4]
+      let w2 = weights[j + 5]
+      let k = i * 3
+      position[k + 0] = p0[0] * w0 + p1[0] * w1 + p2[0] * w2
+      position[k + 1] = p0[1] * w0 + p1[1] * w1 + p2[1] * w2
+      position[k + 2] = weights[j + 6]
     }
     this.positionAttribute.needsUpdate = true
   }

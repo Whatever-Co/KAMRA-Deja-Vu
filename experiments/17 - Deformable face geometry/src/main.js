@@ -7,6 +7,8 @@ import 'OrbitControls'
 
 import Config from './config'
 import DeformableFaceGeometry from './deformablefacegeometry'
+import Delaunay from 'delaunay-fast'
+import StandardFaceData from './standardfacedata'
 
 import './main.sass'
 document.body.innerHTML = require('./main.jade')()
@@ -47,6 +49,7 @@ class App {
   initObjects() {
     let loader = new createjs.LoadQueue()
     loader.loadFile({id: 'keyframes', src: 'keyframes.json'})
+    // loader.loadFile({id: 'morph', src: 'morph.json'})
     let items = [
       'shutterstock_38800999',
       'shutterstock_56254417',
@@ -79,12 +82,6 @@ class App {
 
       for (let y = -2; y <= 2; y++) {
         for (let x = -4; x <= 4; x++) {
-          // let face = new THREE.Mesh(geometry, material)
-          // this.face.matrixAutoUpdate = false
-          // this.face.matrix.copy(geometry.matrixFeaturePoints)
-          // face.scale.set(150, 150, 150)
-          // face.position.set(x * 150, y * 200, 0)
-          // this.scene.add(face)
           let face = this.faces[(x + y * 5 + 100) % this.faces.length].clone()
           face.scale.set(150, 150, 150)
           face.position.set(x * 150, y * 200, 0)
@@ -92,10 +89,53 @@ class App {
         }
       }
 
-      // this.geometry = this.faces[0].geometry
-      // this.geometry.applyMorph(this.keyframes.user.property.face_vertices[700])
+      // let morph = loader.getResult('morph')
+      // console.log(morph)
+      let start = performance.now()
+      this.morphData = this.convertData()
+      console.log(performance.now() - start, 'ms')
+      console.log(this.morphData)
+
+      // this.faces[0].geometry.applyMorph(this.keyframes.user.property.face_vertices[700])
+      // this.faces[0].geometry.applyMorph2(morph[1000])
 
       this.start()
+    })
+  }
+
+
+  convertData() {
+    let standardFace = new StandardFaceData()
+
+    let standardFacePoints = []
+    let position = standardFace.data.face.position
+    for (let i = 0; i < position.length; i += 3) {
+      standardFacePoints.push([position[i], position[i + 1]])
+    }
+    standardFacePoints.push([1, 1])
+    standardFacePoints.push([1, -1])
+    standardFacePoints.push([-1, -1])
+    standardFacePoints.push([-1, 1])
+
+    let triangleIndices = Delaunay.triangulate(standardFacePoints)
+
+    const getTriangleIndex = (p, vertices) => {
+      for (let i = 0; i < triangleIndices.length; i += 3) {
+        let uv = Delaunay.contains([vertices[triangleIndices[i]], vertices[triangleIndices[i + 1]], vertices[triangleIndices[i + 2]]], p)
+        if (uv) {
+          uv.unshift(1 - uv[0] - uv[1])
+          return [i, uv]
+        }
+      }
+    }
+
+    return this.keyframes.user.property.face_vertices.map((vertices) => {
+      let weights = []
+      for (let i = 0; i < vertices.length; i += 3) {
+        let [index, coord] = getTriangleIndex([vertices[i], vertices[i + 1]], standardFacePoints)
+        weights.push(triangleIndices[index + 0], triangleIndices[index + 1], triangleIndices[index + 2], coord[0], coord[1], coord[2], vertices[i + 2])
+      }
+      return weights
     })
   }
 
@@ -110,14 +150,16 @@ class App {
   animate() {
     requestAnimationFrame(this.animate)
 
+    //*
     let currentFrame = Math.floor((performance.now() - this.startTime) / 1000 * 24) % 1661
     if (currentFrame != this.previousFrame) {
-      // this.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
       this.faces.forEach((face) => {
-        face.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
+        // face.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
+        face.geometry.applyMorph2(this.morphData[currentFrame])
       })
       this.previousFrame = currentFrame
     }
+    //*/
 
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
