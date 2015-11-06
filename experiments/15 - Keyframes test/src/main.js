@@ -13,7 +13,7 @@ document.body.innerHTML = require('./main.jade')()
 
 
 
-class App {
+class KeyframeTestApp {
 
   constructor() {
     this.animate = this.animate.bind(this)
@@ -130,6 +130,45 @@ class App {
 
 }
 
+class ModelApp {
 
+  constructor() {
+    this.animate = this.animate.bind(this)
 
-new App()
+    // init scene
+    this.camera = new THREE.PerspectiveCamera(45, 16 / 9, 1, 5000)
+    this.camera.position.z = 10
+
+    this.scene = new THREE.Scene()
+
+    this.renderer = new THREE.WebGLRenderer()
+    this.renderer.setSize(1280, 720)
+    document.body.appendChild(this.renderer.domElement)
+
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
+
+    // load models
+    let faceJson = require('../../../data/3 - JSON/face_hull.json')
+
+    let material = new THREE.MeshBasicMaterial({wireframe: true})
+
+    let faceGeometry = new THREE.JSONLoader().parse(faceJson).geometry
+    let faceMesh = new THREE.Mesh(faceGeometry, material)
+
+    this.scene.add(faceMesh)
+
+    Ticker.on('update', this.animate)
+    Ticker.start()
+  }
+
+  animate(t) {
+    this.controls.update()
+    this.renderer.render(this.scene, this.camera)
+
+  }
+
+}
+
+new ModelApp()
+
+// new KeyframeTestApp()
