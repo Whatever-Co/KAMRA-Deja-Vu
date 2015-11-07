@@ -1,5 +1,3 @@
-/*global module*/
-
 var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
 
 module.exports = {
@@ -24,7 +22,8 @@ module.exports = {
   plugins: [
     new BrowserSyncPlugin({
       server: { baseDir: ['./public'] },
-      open: false
+      open: false,
+      notify: false
     })
   ],
   eslint: {
