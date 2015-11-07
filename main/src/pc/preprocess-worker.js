@@ -4,7 +4,7 @@ importScripts('libs/three.js')
 import Delaunay from 'delaunay-fast'
 import QuadTree from 'simple-quadtree'
 
-import StandardFaceData from './standardfacedata'
+import StandardFaceData from './standard-face-data'
 
 
 const convertData = (vertices) => {

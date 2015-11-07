@@ -1,7 +1,7 @@
 /* global THREE */
 
 import {vec2, vec3, mat3} from 'gl-matrix'
-import StandardFaceData from './standardfacedata'
+import StandardFaceData from './standard-face-data'
 
 
 export default class DeformableFaceGeometry extends THREE.BufferGeometry {

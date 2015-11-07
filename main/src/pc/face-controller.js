@@ -3,7 +3,7 @@
 // import TWEEN from 'tween.js'
 
 import Config from './config'
-import DeformableFaceGeometry from './deformablefacegeometry'
+import DeformableFaceGeometry from './deformable-face-geometry'
 
 
 export default class FaceController extends THREE.Object3D {

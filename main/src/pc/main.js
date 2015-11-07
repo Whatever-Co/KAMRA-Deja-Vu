@@ -8,9 +8,9 @@ import Stats from 'stats-js'
 
 import Ticker from './ticker'
 import Config from './config'
-import PreprocessWorker from 'worker!./preprocessworker'
-import WebcamPlane from './webcamplane'
-import FaceController from './facecontroller'
+import PreprocessWorker from 'worker!./preprocess-worker'
+import WebcamPlane from './webcam-plane'
+import FaceController from './face-controller'
 
 
 

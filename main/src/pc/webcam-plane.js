@@ -5,7 +5,7 @@ import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 
 import Ticker from './ticker'
-import StandardFaceData from './standardfacedata'
+import StandardFaceData from './standard-face-data'
 
 
 const FACE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
