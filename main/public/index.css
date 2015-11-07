@@ -15,3 +15,16 @@ body {
   z-index: 100;
   font-size: 30px;
 }
+#_vcon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  border: 3px solid #333;
+  -webkit-transform-origin: right bottom;
+      -ms-transform-origin: right bottom;
+          transform-origin: right bottom;
+  -webkit-transform: scale(0.3, 0.3);
+      -ms-transform: scale(0.3, 0.3);
+          transform: scale(0.3, 0.3);
+}

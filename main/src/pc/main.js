@@ -13,6 +13,19 @@ import WebcamPlane from './webcam-plane'
 import FaceController from './face-controller'
 
 
+class VideoPlayer {
+  constructor(el) {
+    this.el = el
+  }
+  play() {
+    this.el.play()
+  }
+  get position() {
+    return this.el.currentTime
+  }
+}
+
+
 
 class App {
 
@@ -135,6 +148,10 @@ class App {
 
       this.sound.play()
       Ticker.setClock(this.sound)
+
+      let vcon = document.querySelector('#_vcon')
+      vcon.currentTime = 2 / 24
+      vcon.play()
     })
     this.webcam.start()
 
