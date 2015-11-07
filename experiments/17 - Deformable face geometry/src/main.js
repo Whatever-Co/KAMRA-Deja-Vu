@@ -159,7 +159,7 @@ class App {
     if (currentFrame != this.previousFrame) {
       this.faces.forEach((face) => {
         // face.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
-        face.geometry.applyMorph2(this.keyframes.user.property.morph[currentFrame])
+        face.geometry.applyMorph(this.keyframes.user.property.morph[currentFrame])
       })
       this.previousFrame = currentFrame
     }

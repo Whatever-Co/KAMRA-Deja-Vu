@@ -201,6 +201,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
   }
 
 
+  /*
   applyMorph(vertices) {
     let position = this.positionAttribute.array
     for (let i = 0; i < vertices.length; i += 3) {
@@ -216,9 +217,10 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
     }
     this.positionAttribute.needsUpdate = true
   }
+  */
 
 
-  applyMorph2(weights) {
+  applyMorph(weights) {
     let position = this.positionAttribute.array
     let n = position.length / 3
     for (let i = 0; i < n; i++) {

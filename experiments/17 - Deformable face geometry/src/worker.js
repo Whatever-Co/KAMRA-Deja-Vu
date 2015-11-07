@@ -73,6 +73,7 @@ const convertData = (vertices) => {
     console.error('not found')
   }
 
+  /*
   const getTriangleIndex_ = (p, vertices) => {
     for (let i = 0; i < triangleIndices.length; i += 3) {
       let uv = Delaunay.contains([vertices[triangleIndices[i]], vertices[triangleIndices[i + 1]], vertices[triangleIndices[i + 2]]], p)
@@ -82,6 +83,7 @@ const convertData = (vertices) => {
       }
     }
   }
+  */
 
   /**
   let p = [vertices[0][0], vertices[0][1]]
