@@ -38,11 +38,16 @@ gulp.task('webpack', () => {
           NODE_ENV: JSON.stringify(process.env.NODE_ENV)
         }
       })
-    ]
+    ],
     // eslint: {
     //   fix: true,
     //   formatter: require('eslint-friendly-formatter')
     // }
+    worker: {
+      output: {
+        filename: '[id].worker.js'
+      }
+    }
   }
   if (developmentMode) {
     config.devtool = 'inline-source-map'

@@ -1,6 +1,6 @@
 /* global THREE clm pModel */
 
-import $ from 'jquery'
+// import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 
@@ -215,27 +215,6 @@ export default class WebcamPlane extends THREE.Mesh {
     if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
       this.dispatchEvent({type: 'complete'})
     }
-  }
-
-
-  applyTextureForFace(face) {
-    let position = face.geometry.getAttribute('position')
-    let uv = face.geometry.getAttribute('uv')
-    const n = position.array.length / 3
-    let ray = new THREE.Ray(this.camera.position.clone())
-    let plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
-    const height = this.scale.y
-    const width = height / 9 * 16
-    for (let i = 0; i < n; i++) {
-      let p = new THREE.Vector3(position.array[i * 3], position.array[i * 3 + 1], position.array[i * 3 + 2])
-      face.localToWorld(p)
-      ray.direction.copy(p).sub(this.camera.position)
-      ray.intersectPlane(plane, p)
-      uv.array[i * 2 + 0] = (p.x + width / 2) / width
-      uv.array[i * 2 + 1] = (p.y + height / 2) / height
-    }
-    uv.needsUpdate = true
-    face.setTexture(this.texture)
   }
 
 

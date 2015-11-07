@@ -6,10 +6,11 @@ import StateMachine from 'javascript-state-machine'
 import TWEEN from 'tween.js'
 import Stats from 'stats-js'
 
-import Config from './config'
 import Ticker from './ticker'
+import Config from './config'
+import PreprocessWorker from 'worker!./preprocessworker'
 import WebcamPlane from './webcamplane'
-import DeformableFace from './deformableface'
+import FaceController from './facecontroller'
 
 
 
@@ -62,22 +63,34 @@ class App {
     ])
     loader.on('complete', () => {
       this.keyframes = loader.getResult('keyframes')
-      console.log(this.keyframes)
 
-      this.sound = createjs.Sound.createInstance('music-main')
-      this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
+      let worker = new PreprocessWorker()
+      let start = performance.now()
+      console.log('start', start)
+      this.keyframes = loader.getResult('keyframes')
+      let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
+      console.log('toarraybuffer', start)
+      worker.postMessage(vertices, vertices.map((a) => a.buffer))
+      worker.onmessage = (event) => {
+        console.log('finish', performance.now())
+        this.keyframes.user.property.morph = event.data
+        // this.keyframes = event.data
+        console.log(this.keyframes)
 
-      this.initScene()
-      this.initObjects()
-      this.initControllers()
+        this.sound = createjs.Sound.createInstance('music-main')
+        this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
 
-      Ticker.on('update', this.animate)
-      Ticker.start()
+        this.initScene()
+        this.initObjects()
+        this.initControllers()
 
-      this.statesMachine.loadComplete()
+        Ticker.on('update', this.animate)
+        Ticker.start()
+
+        this.statesMachine.loadComplete()
+      }
     })
   }
-
 
 
   initScene() {
@@ -109,37 +122,38 @@ class App {
 
 
   initObjects() {
-    this.startFrame = 999999999
-
     this.webcam = new WebcamPlane(this.camera)
-    this.webcam.addEventListener('complete', () => {
-      this.webcam.stop()
-      this.webcam.applyTextureForFace(this.face)
-      this.webcam.fadeOut()
-      this.face.prepareForMorph()
-      this.face.matrixAutoUpdate = true
-      {
-        let position = new THREE.Vector3()
-        let quaternion = new THREE.Quaternion()
-        let scale = new THREE.Vector3()
-        this.face.matrix.decompose(position, quaternion, scale)
-        this.face.initialTransform = {position, quaternion, scale}
-      }
-      this.camera.enabled = true
-      this.captureController.enabled = false
-      this.face.enabled = true
-      this.sound.play()
-      Ticker.setClock(this.sound)
-    })
-    this.webcam.start()
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
 
-    this.face = new DeformableFace(this.keyframes)
-    this.face.matrixAutoUpdate = false
+    this.webcam.addEventListener('complete', () => {
+      this.face.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, scale)
+      this.face.applyMainTexture(this.webcam.texture)
+      this.face.main.matrixAutoUpdate = true
+      {
+        let position = new THREE.Vector3()
+        let quaternion = new THREE.Quaternion()
+        let scale = new THREE.Vector3()
+        this.face.main.matrix.decompose(position, quaternion, scale)
+        this.face.initialTransform = {position, quaternion, scale}
+      }
+      this.webcam.stop()
+      this.webcam.fadeOut()
+
+      this.camera.enabled = true
+      this.captureController.enabled = false
+      this.face.enabled = true
+      this.controllers.push(this.face)
+
+      this.sound.play()
+      Ticker.setClock(this.sound)
+    })
+    this.webcam.start()
+
+    this.face = new FaceController(this.keyframes)
+    this.face.main.matrixAutoUpdate = false
     this.scene.add(this.face)
-    this.controllers.push(this.face)
 
     if (Config.DEV_MODE) {
       this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})))
@@ -152,9 +166,9 @@ class App {
       enabled: true,
       update: () => {
         if (this.webcam.normalizedFeaturePoints) {
-          this.face.deform(this.webcam.normalizedFeaturePoints)
-          this.face.matrix.copy(this.webcam.matrixFeaturePoints)
-          this.face.matrixWorldNeedsUpdate = true
+          this.face.main.geometry.deform(this.webcam.normalizedFeaturePoints)
+          this.face.main.matrix.copy(this.webcam.matrixFeaturePoints)
+          // this.face.main.matrixWorldNeedsUpdate = true
         }
       }
     }
