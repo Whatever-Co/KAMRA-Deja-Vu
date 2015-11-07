@@ -3,19 +3,16 @@
 import $ from 'jquery'
 import 'jquery.transit'
 import 'OrbitControls'
+import Delaunay from 'delaunay-fast'
 // import dat from 'dat-gui'
 
 import Config from './config'
-import DeformableFaceGeometry from './deformablefacegeometry'
-import Delaunay from 'delaunay-fast'
 import StandardFaceData from './standardfacedata'
+import DeformableFaceGeometry from './deformablefacegeometry'
+import Worker from 'worker!./worker'
 
 import './main.sass'
 document.body.innerHTML = require('./main.jade')()
-
-
-
-
 
 
 class App {
@@ -49,7 +46,6 @@ class App {
   initObjects() {
     let loader = new createjs.LoadQueue()
     loader.loadFile({id: 'keyframes', src: 'keyframes.json'})
-    // loader.loadFile({id: 'morph', src: 'morph.json'})
     let items = [
       'shutterstock_38800999',
       'shutterstock_56254417',
@@ -64,13 +60,10 @@ class App {
       loader.loadFile({id: `data${i}`, src: `media/${name}.json`})
       loader.loadFile({id: `image${i}`, src: `media/${name}.png`})
     })
-    loader.on('progress', (e) => {
-      console.log(e.loaded, e.total)
-    })
+    // loader.on('progress', (e) => {
+    //   console.log(e.loaded, e.total)
+    // })
     loader.on('complete', () => {
-      this.keyframes = loader.getResult('keyframes')
-      console.log(this.keyframes)
-
       this.faces = items.map((name, i) => {
         let featurePoints = loader.getResult(`data${i}`)
         let image = loader.getResult(`image${i}`)
@@ -78,7 +71,6 @@ class App {
         let material = new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(image)})
         return new THREE.Mesh(geometry, material)
       })
-
 
       for (let y = -2; y <= 2; y++) {
         for (let x = -4; x <= 4; x++) {
@@ -89,21 +81,32 @@ class App {
         }
       }
 
-      // let morph = loader.getResult('morph')
-      // console.log(morph)
+      let worker = new Worker()
+      worker.onmessage = (event) => {
+        console.log('finish', performance.now())
+        this.keyframes.user.property.morph = event.data
+        // this.keyframes = event.data
+        console.log(this.keyframes)
+        this.start()
+      }
       let start = performance.now()
-      this.morphData = this.convertData()
-      console.log(performance.now() - start, 'ms')
-      console.log(this.morphData)
+      console.log('start', start)
+      this.keyframes = loader.getResult('keyframes')
+      let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
+      console.log('toarraybuffer', start)
+      worker.postMessage(vertices, vertices.map((a) => a.buffer))
 
-      // this.faces[0].geometry.applyMorph(this.keyframes.user.property.face_vertices[700])
-      // this.faces[0].geometry.applyMorph2(morph[1000])
+      // let start = performance.now()
+      // this.morphData = this.convertData()
+      // console.log(performance.now() - start, 'ms')
+      // console.log(this.morphData)
 
-      this.start()
+      // this.start()
     })
   }
 
 
+  /*
   convertData() {
     let standardFace = new StandardFaceData()
 
@@ -138,6 +141,7 @@ class App {
       return weights
     })
   }
+  */
 
 
   start() {
@@ -155,7 +159,7 @@ class App {
     if (currentFrame != this.previousFrame) {
       this.faces.forEach((face) => {
         // face.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
-        face.geometry.applyMorph2(this.morphData[currentFrame])
+        face.geometry.applyMorph2(this.keyframes.user.property.morph[currentFrame])
       })
       this.previousFrame = currentFrame
     }
@@ -176,5 +180,6 @@ class App {
   }
 
 }
+
 
 new App()

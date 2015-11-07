@@ -13,17 +13,20 @@
     "eslint-loader": "^1.1.0",
     "exports-loader": "^0.6.2",
     "gl-matrix": "^2.3.1",
+    "install": "^0.2.6",
     "jade": "^1.11.0",
     "jade-loader": "^0.7.1",
     "jquery": "^2.1.4",
     "jquery.transit": "^0.9.12",
     "json-loader": "^0.5.3",
     "node-sass": "^3.4.0",
+    "npm": "^3.3.12",
     "raw-loader": "^0.5.1",
     "sass-loader": "^3.0.0",
     "style-loader": "^0.13.0",
     "tween.js": "^16.3.1",
-    "webpack": "^1.12.2"
+    "webpack": "^1.12.2",
+    "worker-loader": "^0.6.0"
   },
   "scripts": {
     "dev": "webpack -d --devtool inline-source-map --progress --colors --watch",
@@ -76,7 +79,8 @@
     "env": {
       "es6": true,
       "browser": true,
-      "amd": true
+      "amd": true,
+      "worker": true
     },
     "extends": "eslint:recommended",
     "ecmaFeatures": {

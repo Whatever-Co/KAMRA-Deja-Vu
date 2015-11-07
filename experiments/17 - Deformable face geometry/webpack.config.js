@@ -31,5 +31,10 @@ module.exports = {
     fix: true,
     formatter: require('eslint-friendly-formatter'),
     failOnError: true
+  },
+  worker: {
+    output: {
+      filename: '[id].worker.js'
+    }
   }
 };
