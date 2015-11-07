@@ -1,13 +1,5 @@
-/*global THREE*/
+/* global THREE */
 import 'OBJLoader'
-import {vec2, vec3, mat3} from 'gl-matrix'
-
-
-let toTypedArray = (type, array) => {
-  let typed = new type(array.length)
-  array.forEach((v, i) => typed[i] = v)
-  return typed
-}
 
 
 class Node {
@@ -39,85 +31,15 @@ export default class extends THREE.Mesh {
 
   constructor(tracker) {
     let geometry = new THREE.JSONLoader().parse(require('./data/face.json')).geometry
-    // let geometry = new THREE.BufferGeometry()
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true, transparent: true, opacity: 0.3})
-    // let material = new THREE.ShaderMaterial({
-    //   uniforms: {
-    //     map: { type: 't', value: null }
-    //   },
-    //   vertexShader: require('raw!./face.vert'),
-    //   fragmentShader: require('raw!./face.frag'),
-    //   side: THREE.DoubleSide
-    // })
     super(geometry, material)
 
     this.tracker = tracker
 
-    // this.initGeometry()
     this.initFeaturePoints()
-    // this.initTexture()
-    // this.initMesh()
     this.initEyeMouth()
-    this.deformVertices()
-  }
-
-
-  initGeometry() {
-    let obj = require('raw!./data/face.obj')
-    let position = []
-    let index = []
-    obj.split(/\n|\r/).forEach((line) => {
-      let tokens = line.split(' ')
-      switch (tokens[0]) {
-        case 'v':
-          position.push(parseFloat(tokens[1]), parseFloat(tokens[2]), parseFloat(tokens[3]))
-          break
-        case 'f':
-          index.push(parseInt(tokens[1]) - 1, parseInt(tokens[2]) - 1, parseInt(tokens[3]) - 1)
-          break
-      }
-    })
-    position = toTypedArray(Float32Array, position)
-    index = toTypedArray(Uint16Array, index)
-    this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
-    this.geometry.setIndex(new THREE.BufferAttribute(index, 1))
-
-    let vertexDistance = []
-    let setDistance = (a, b) => {
-      if (!vertexDistance[a]) {
-        vertexDistance[a] = []
-      }
-      if (vertexDistance[a][b]) {
-        return
-      }
-      let pa = [position[a * 3 + 0], position[a * 3 + 1], position[a * 3 + 2]]
-      let pb = [position[b * 3 + 0], position[b * 3 + 1], position[b * 3 + 2]]
-      vertexDistance[a][b] = vec3.dist(pa, pb)
-    }
-    for (let i = 0; i < index.length; i += 3) {
-      setDistance(index[i + 0], index[i + 1])
-      setDistance(index[i + 0], index[i + 2])
-      setDistance(index[i + 1], index[i + 0])
-      setDistance(index[i + 1], index[i + 2])
-      setDistance(index[i + 2], index[i + 0])
-      setDistance(index[i + 2], index[i + 1])
-    }
-
-    this.featurePoints = require('./data/fp.json').map((p, i) => {
-      let index = -1
-      if (i == 41 || vec3.length(p) > 0) {
-        let distance = Number.MAX_VALUE
-        for (let i = 0; i < position.length; i += 3) {
-          let d = vec3.distance(p, [position[i], position[i + 1], position[i + 2]])
-          if (d < distance) {
-            distance = d
-            index = i
-          }
-        }
-      }
-      return {vertexIndex: index}
-    })
-    // console.table(this.featurePoints)
+    this.initBack()
+    // this.deformVertices()
   }
 
 
@@ -284,191 +206,37 @@ export default class extends THREE.Mesh {
   }
 
 
-  initTexture() {
-    this.textureCanvas = document.createElement('canvas')
-    this.textureCanvas.id = 'texture'
-    this.textureCanvas.width = 512
-    this.textureCanvas.height = 512
-    this.textureContext = this.textureCanvas.getContext('2d')
-    require('ctx-get-transform')(this.textureContext)
-    this.textureContext.fillStyle = 'white'
-    this.textureContext.fillRect(0, 0, this.textureCanvas.width, this.textureCanvas.height)
-    // document.body.appendChild(this.textureCanvas);
-
-    this.texture = new THREE.Texture(this.textureCanvas)
-    this.texture.needsUpdate = true
-    // this.material.map = this.texture;
-    this.material.uniforms.map.value = this.texture
-
-
-    if (this.tracker.currentPosition) {
-      let min = [Number.MAX_VALUE, Number.MAX_VALUE]
-      let max = [Number.MIN_VALUE, Number.MIN_VALUE]
-      this.tracker.currentPosition.forEach((p) => {
-        let x = p[0]
-        let y = p[1]
-        if (x < min[0]) min[0] = x
-        if (x > max[0]) max[0] = x
-        if (y < min[1]) min[1] = y
-        if (y > max[1]) max[1] = y
-      })
-      let center = this.tracker.currentPosition[33]
-      let size = Math.max(center[0] - min[0], max[0] - center[0], center[1] - min[1], max[1] - center[1])
-      this.textureContext.save()
-      let scale = 256 * 0.95 / size
-      this.textureContext.translate(256, 256)
-      this.textureContext.scale(scale, scale)
-      this.textureContext.translate(-center[0], -center[1])
-      this.textureContext.drawImage(this.tracker.target, 0, 0)
-      let mtx = this.textureContext.getTransform()
-      // this.textureContext.drawImage(this.tracker.debugCanvas, 0, 0);
-      this.textureContext.restore()
-
-      let fpuv = []
-
-      this.textureContext.save()
-      this.textureContext.fillStyle = 'rgba(128, 255, 0, 0.5)'
-      this.tracker.currentPosition.forEach((p) => {
-        let q = vec2.transformMat3(vec2.create(), p, mtx)
-        fpuv.push([q[0] / 256 - 1, q[1] / 256 - 1])
-      })
-
-      {
-        this.textureContext.fillStyle = 'red'
-        let v1 = this.tracker.currentPosition[14]
-        let v0 = this.tracker.currentPosition[0]
-        let center = vec2.lerp(vec2.create(), v1, v0, 0.5)
-        let xAxis = vec2.sub(vec2.create(), v1, center)
-        let scale = vec2.len(xAxis)
-        let rotation = mat3.create()
-        mat3.rotate(rotation, rotation, Math.atan2(xAxis[1], xAxis[0]))
-        for (let i = 71; i < this.featurePoints.length; i++) {
-          let fp = this.featurePoints[i].initialPosition
-          let p = vec2.scale(vec2.create(), [fp.x, -fp.y], scale)
-          vec2.transformMat3(p, p, rotation)
-          vec2.add(p, p, center)
-          vec2.transformMat3(p, p, mtx)
-          // this.textureContext.fillRect(p[0] - 3, p[1] - 3, 6, 6);
-          fpuv.push([p[0] / 256 - 1, p[1] / 256 - 1])
-        }
-      }
-
-      this.featurePointUV = fpuv
-
-      this.textureContext.fillStyle = 'rgba(0, 0, 255, 0.5)'
-
-      let displacement = this.featurePoints.map((mesh, i) => {
-        if (!mesh) return
-        let node = this.nodes[mesh.vertexIndex]
-        return [fpuv[i][0] - node.position.x, -fpuv[i][1] - node.position.y]
-      })
-
-      let uvs = this.nodes.map((target) => {
-        let p = vec2.create()
-        if (target.weights.length == 1) {
-          let w = target.weights[0]
-          vec2.add(p, [target.position.x, target.position.y], vec2.scale([], displacement[w.i], w.w))
-        } else {
-          let a = vec2.create()
-          let b = 0
-          target.weights.forEach((w) => {
-            let dp = vec2.scale([], displacement[w.i], w.w)
-            let dist = 1.0 / (target.distanceToFP[w.i] * target.distanceToFP[w.i])
-            vec2.add(a, a, vec2.scale(dp, dp, dist))
-            b += w.w * dist
-          })
-          vec2.scale(a, a, 1 / b)
-          vec2.add(p, [target.position.x, target.position.y], a)
-        }
-        return [(p[0] * 256 + 256) / 512, (p[1] * 256 + 256) / 512]
-      })
-
-      this.geometry.faces.forEach((face, i) => {
-        let uv = this.geometry.faceVertexUvs[0][i]
-        uv[0].x = uvs[face.a][0]
-        uv[0].y = uvs[face.a][1]
-        uv[1].x = uvs[face.b][0]
-        uv[1].y = uvs[face.b][1]
-        uv[2].x = uvs[face.c][0]
-        uv[2].y = uvs[face.c][1]
-      })
-      this.geometry.uvsNeedUpdate = true
-
-      this.textureContext.restore()
-    }
-  }
-
-
-  initMesh() {
-    if (this.tracker.normalizedPosition) {
-      this.tracker.normalizedPosition.forEach((np, i) => {
-        let fp = this.featurePoints[i]
-        if (fp) {
-          // let scale = (500 - fp.localToWorld(new THREE.Vector3()).z) / 500 * 0.5;
-          let scale = (500 - fp.position.z * 150) / 500 * 0.5
-          // scale = 0.3;
-          // fp.position.x += (np[0] * scale - fp.position.x) * 0.3;
-          // fp.position.y += (-np[1] * scale - fp.position.y) * 0.3;
-          fp.position.x = np[0] * scale
-          fp.position.y = -np[1] * scale
-          // fp.position.z *= 2 * scale;
-        }
-      })
-
-      // console.log(this.featurePoints);
-      // [33, 41, 62, 34, 35, 36, 42, 37, 43, 38, 39, 40].forEach((i) => {
-      //   let fp = this.featurePoints[i];
-      //   fp.position.x += 0.2;
-      // });
-
-      let v1 = this.featurePoints[14].position.clone()
-      let v0 = this.featurePoints[0].position.clone()
-      let center = new THREE.Vector3().lerpVectors(v1, v0, 0.5)
-      let rotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), v1.clone().sub(center).normalize())
-      let scale = v1.clone().sub(center).length()
-      for (let i = 71; i < this.featurePoints.length; i++) {
-        let fp = this.featurePoints[i]
-        fp.position.copy(fp.initialPosition.clone().multiplyScalar(scale).applyQuaternion(rotation).add(center))
-      }
-    }
-  }
-
-
   initEyeMouth() {
-    // let faceUVs = []
-    // this.geometry.faces.forEach((face, i) => {
-    //   let uv = this.geometry.faceVertexUvs[0][i]
-    //   faceUVs[face.a] = uv[0]
-    //   faceUVs[face.b] = uv[1]
-    //   faceUVs[face.c] = uv[2]
-    // })
-
     let geometry = new THREE.JSONLoader().parse(require('./data/eyemouth.json')).geometry
 
-    let vertexIndices = geometry.vertices.map((v) => {
-      let dist = Number.MAX_VALUE
-      let index = -1
-      this.geometry.vertices.forEach((fv, i) => {
-        let d = fv.distanceToSquared(v)
-        if (d < dist) {
-          dist = d
-          index = i
-        }
-      })
+    let indices = geometry.vertices.map((v) => {
+      let index = this.findNearestIndex(this.geometry.vertices, v)
       v.copy(this.geometry.vertices[index])
+      // v.z += 0.1
       v.followVertex = index
       return index
     })
+    console.log(indices)
 
-    // geometry.faces.forEach((face, i) => {
-    //   geometry.faceVertexUvs[0][i] = [
-    //     faceUVs[vertexIndices[face.a]],
-    //     faceUVs[vertexIndices[face.b]],
-    //     faceUVs[vertexIndices[face.c]]
-    //   ]
-    // })
     this.eyemouth = new THREE.Mesh(geometry, this.material)
     this.add(this.eyemouth)
+  }
+
+
+  initBack() {
+    let geometry = new THREE.JSONLoader().parse(require('./data/back.json')).geometry
+
+    let indices = geometry.vertices.map((v) => {
+      let index = this.findNearestIndex(this.geometry.vertices, v)
+      v.copy(this.geometry.vertices[index])
+      // v.z -= 0.1
+      v.followVertex = index
+      return index
+    })
+    console.log(indices)
+
+    this.back = new THREE.Mesh(geometry, this.material)
+    this.add(this.back)
   }
 
 
@@ -481,7 +249,7 @@ export default class extends THREE.Mesh {
       return fp.position.clone().sub(node.position)
     })
 
-    this.nodes.forEach((node, i) => {
+    this.nodes.forEach((node) => {
       let a = new THREE.Vector3()
       let b = 0
       node.weights.forEach((w) => {
@@ -501,52 +269,12 @@ export default class extends THREE.Mesh {
   }
 
 
-  animate(t) {
-    // [56, 57, 58, 51, 52, 53, 54, 55, 4, 5, 6, 7, 8, 9, 10].forEach((i) => {
-    //   let p = this.featurePoints[i]
-    //   if (p) {
-    //     let node = this.nodes[p.vertexIndex]
-    //     p.position.y = node.position.y - (Math.sin(t * 0.005) + 1) * 0.05
-    //   }
-    // })
-
-    // [33, 41, 62, 34, 35, 36, 42, 37, 43, 38, 39, 40].forEach((i) => {
-    //   let p = this.featurePoints[i]
-    //   if (p) {
-    //     let node = this.nodes[p.vertexIndex]
-    //     p.position.x = node.position.x + Math.sin(t * 0.001) * 0.1
-    //   }
-    // })
-
-    // this.featurePoints.forEach((p) => {
-    //   if (p) {
-    //     let node = this.nodes[p.vertexIndex]
-    //     p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
-    //   }
-    // })
-
-    let scale = (Math.sin(t * 0.002) + 1) *3 + 0.2
-    this.featurePoints.forEach((p) => {
-      if (p) {
-        let node = this.nodes[p.vertexIndex]
-        // p.position.x = node.position.x + Math.sin(t * 0.001 + node.position.y * 3) * 0.2
-        p.position.copy(node.position)
-        p.position.multiplyScalar(scale)
-        p.scale.set(scale, scale, scale)
-      }
-    })
-    scale = 1 / scale * 200
-    this.scale.set(scale, scale, scale)
-
-    this.deformVertices()
-  }
-
-
   export() {
     return {
       face: this.exportFace(),
       rightEye: this.exportRightEye(),
       leftEye: this.exportLeftEye(),
+      back: this.exportBack()
       // mouth: this.exportMouth()
     }
   }
@@ -604,6 +332,20 @@ export default class extends THREE.Mesh {
       }
     }
     this.eyemouth.geometry.faces.forEach((f) => {
+      add(f.a)
+      add(f.b)
+      add(f.c)
+    })
+    return {index}
+  }
+
+
+  exportBack() {
+    let index = []
+    let add = (i) => {
+      index.push(this.back.geometry.vertices[i].followVertex)
+    }
+    this.back.geometry.faces.forEach((f) => {
       add(f.a)
       add(f.b)
       add(f.c)
