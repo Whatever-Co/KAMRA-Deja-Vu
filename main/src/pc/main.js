@@ -82,7 +82,6 @@ class App {
 
         this.initScene()
         this.initObjects()
-        this.initControllers()
 
         Ticker.on('update', this.animate)
         Ticker.start()
@@ -128,51 +127,24 @@ class App {
     this.scene.add(this.webcam)
 
     this.webcam.addEventListener('complete', () => {
-      this.face.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, scale)
-      this.face.applyMainTexture(this.webcam.texture)
-      this.face.main.matrixAutoUpdate = true
-      {
-        let position = new THREE.Vector3()
-        let quaternion = new THREE.Quaternion()
-        let scale = new THREE.Vector3()
-        this.face.main.matrix.decompose(position, quaternion, scale)
-        this.face.initialTransform = {position, quaternion, scale}
-      }
+      this.face.captureWebcam()
       this.webcam.stop()
       this.webcam.fadeOut()
 
       this.camera.enabled = true
-      this.captureController.enabled = false
-      this.face.enabled = true
-      this.controllers.push(this.face)
 
       this.sound.play()
       Ticker.setClock(this.sound)
     })
     this.webcam.start()
 
-    this.face = new FaceController(this.keyframes)
-    this.face.main.matrixAutoUpdate = false
+    this.face = new FaceController(this.keyframes, this.webcam)
     this.scene.add(this.face)
+    this.controllers.push(this.face)
 
     if (Config.DEV_MODE) {
-      this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3})))
+      this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
     }
-  }
-
-
-  initControllers() {
-    this.captureController = {
-      enabled: true,
-      update: () => {
-        if (this.webcam.normalizedFeaturePoints) {
-          this.face.main.geometry.deform(this.webcam.normalizedFeaturePoints)
-          this.face.main.matrix.copy(this.webcam.matrixFeaturePoints)
-          // this.face.main.matrixWorldNeedsUpdate = true
-        }
-      }
-    }
-    this.controllers.push(this.captureController)
   }
 
 

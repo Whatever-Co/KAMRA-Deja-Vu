@@ -1,1 +1,17 @@
-body{color:#fff;background-color:#000}#stats{position:absolute;left:0;top:0;z-index:100}#_frame-counter{position:absolute;left:5px;bottom:0;z-index:100;font-size:30px}
+body {
+  color: #fff;
+  background-color: #000;
+}
+#stats {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+#_frame-counter {
+  position: absolute;
+  left: 5px;
+  bottom: 0px;
+  z-index: 100;
+  font-size: 30px;
+}
