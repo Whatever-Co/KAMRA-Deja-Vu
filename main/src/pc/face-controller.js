@@ -5,6 +5,8 @@
 import Config from './config'
 import DeformableFaceGeometry from './deformable-face-geometry'
 
+const SCALE = 150
+
 
 export default class FaceController extends THREE.Object3D {
 
@@ -50,10 +52,11 @@ export default class FaceController extends THREE.Object3D {
 
     this.main.material = new THREE.ShaderMaterial({
       uniforms: {
-        map: {type: 't', value: this.webcam.texture.clone()}
+        map: {type: 't', value: this.webcam.texture.clone()},
+        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)}
       },
-      vertexShader: require('./shaders/face.vert'),
-      fragmentShader: require('./shaders/face.frag'),
+      vertexShader: require('./shaders/face-front.vert'),
+      fragmentShader: require('./shaders/face-front.frag'),
       side: THREE.DoubleSide
     })
 
@@ -76,6 +79,54 @@ export default class FaceController extends THREE.Object3D {
       face.geometry.uvAttribute.needsUpdate = true
       face.material = this.main.material
     })
+
+    {
+      let frontGeometry = this.main.geometry
+      let frontMaterial = this.main.material
+      frontGeometry.computeBoundingBox()
+
+      let backGeometry = new THREE.BufferGeometry()
+      backGeometry.setIndex(new THREE.Uint16Attribute(frontGeometry.standardFace.data.back.index, 1))
+      backGeometry.addAttribute('position', frontGeometry.positionAttribute)
+
+      let backMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+          clipRange: {type: 'v2', value: new THREE.Vector2()}
+        },
+        vertexShader: require('./shaders/face-back.vert'),
+        fragmentShader: require('./shaders/face-back.frag'),
+        side: THREE.BackSide
+      })
+
+      const minY = frontGeometry.boundingBox.min.y * SCALE
+      const maxY = frontGeometry.boundingBox.max.y * SCALE
+      const height = maxY - minY
+      const numSlices = 5
+      const sliceHeight = height / numSlices
+
+      this.mainSlices = []
+      for (let i = 0; i < numSlices; i++) {
+        let face = new THREE.Object3D()
+        face.visible = false
+        face.scale.set(SCALE, SCALE, SCALE)
+        face.position.z = -0.5 * SCALE
+        this.add(face)
+
+        let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
+        front.position.z = 0.5
+        let clipMin = minY + i * sliceHeight
+        let clipMax = minY + (i + 1) * sliceHeight
+        front.material.uniforms.clipRange.value.set(clipMin, clipMax)
+        face.add(front)
+
+        let back = new THREE.Mesh(backGeometry, backMaterial.clone())
+        back.position.z = 0.5
+        back.material.uniforms.clipRange.value.set(clipMin, clipMax)
+        face.add(back)
+
+        this.mainSlices.push(face)
+      }
+    }
 
     this.update = this._update.bind(this)
   }
@@ -101,7 +152,7 @@ export default class FaceController extends THREE.Object3D {
 
       let i = f * 3
       this.main.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
-      this.main.scale.set(props.scale[i] * 150, props.scale[i + 1] * 150, props.scale[i + 2] * 150 * scaleZ)
+      this.main.scale.set(props.scale[i] * SCALE, props.scale[i + 1] * SCALE, props.scale[i + 2] * SCALE * scaleZ)
       i = f * 4
       this.main.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
 
@@ -125,7 +176,7 @@ export default class FaceController extends THREE.Object3D {
           if (face.visible) {
             let j = f * 3
             face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
-            face.scale.set(props.scale[j] * 150, props.scale[j + 1] * 150, props.scale[j + 2] * 150)
+            face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
             j = f * 4
             face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3])
           }
@@ -143,10 +194,24 @@ export default class FaceController extends THREE.Object3D {
           if (face.visible) {
             let j = f * 3
             face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
-            face.scale.set(props.scale[j] * 150, props.scale[j + 1] * 150, props.scale[j + 2] * 150)
+            face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
             j = f * 4
             face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3])
           }
+        })
+      }
+    }
+
+    // slicing
+    {
+      if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
+        this.main.visible = false
+        let f = currentFrame - this.data.slice_row.in_frame
+        this.data.slice_row.property.forEach((props, i) => {
+          let slice = this.mainSlices[i]
+          slice.visible = true
+          slice.position.x = props.offset_x[f]
+          slice.rotation.y = props.rotation[f]
         })
       }
     }

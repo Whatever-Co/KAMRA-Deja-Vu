@@ -76,6 +76,7 @@ class App {
     ])
     loader.on('complete', () => {
       this.keyframes = loader.getResult('keyframes')
+      console.log(this.keyframes)
 
       let worker = new PreprocessWorker()
       let start = performance.now()
@@ -91,6 +92,7 @@ class App {
         console.log(this.keyframes)
 
         this.sound = createjs.Sound.createInstance('music-main')
+        this.sound.volume = 0.05
         this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
 
         this.initScene()
