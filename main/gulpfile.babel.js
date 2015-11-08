@@ -14,8 +14,9 @@ gulp.task('webpack', () => {
   let config = {
     watch: developmentMode,
     entry: {
-      main: './src/pc/main.js',
-      'sp/main': './src/sp/main.js'
+      bootstrap: './src/pc/bootstrap.js',
+      app: './src/pc/app.js'
+      // 'sp/main': './src/sp/main.js'
     },
     output: {
       filename: '[name].js'
@@ -37,7 +38,8 @@ gulp.task('webpack', () => {
         'process.env': {
           NODE_ENV: JSON.stringify(process.env.NODE_ENV)
         }
-      })
+      }),
+      new webpack.optimize.CommonsChunkPlugin('init.js')
     ],
     // eslint: {
     //   fix: true,

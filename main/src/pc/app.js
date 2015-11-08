@@ -13,19 +13,6 @@ import WebcamPlane from './webcam-plane'
 import FaceController from './face-controller'
 
 
-class VideoPlayer {
-  constructor(el) {
-    this.el = el
-  }
-  play() {
-    this.el.play()
-  }
-  get position() {
-    return this.el.currentTime
-  }
-}
-
-
 
 class App {
 
@@ -68,15 +55,10 @@ class App {
 
 
   loadAssets() {
-    let loader = new createjs.LoadQueue()
-    loader.installPlugin(createjs.Sound)
-    loader.loadManifest([
-      {id: 'keyframes', src: 'data/keyframes.json'},
-      {id: 'music-main', src: 'data/main.mp3'}
-    ])
-    loader.on('complete', () => {
+    require(['./asset-loader'], () => {
+      let loader = require('./asset-loader').default
       this.keyframes = loader.getResult('keyframes')
-      console.log(this.keyframes)
+      // console.log(this.keyframes)
 
       let worker = new PreprocessWorker()
       let start = performance.now()
@@ -88,8 +70,7 @@ class App {
       worker.onmessage = (event) => {
         console.log('finish', performance.now())
         this.keyframes.user.property.morph = event.data
-        // this.keyframes = event.data
-        console.log(this.keyframes)
+        // console.log(this.keyframes)
 
         this.sound = createjs.Sound.createInstance('music-main')
         this.sound.volume = 0.05
@@ -128,6 +109,7 @@ class App {
 
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+    this.renderer.setClearColor(0x071520)
     document.body.appendChild(this.renderer.domElement)
 
     window.addEventListener('resize', this.onResize.bind(this))
