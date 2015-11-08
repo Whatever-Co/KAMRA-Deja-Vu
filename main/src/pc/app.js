@@ -33,14 +33,13 @@ class App {
       initial: 'loadAssets',
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
-        {name: 'start', from: 'top', to: 'captureFace'},
-        {name: 'captured', from: 'captureFace', to: 'playing'},
+        {name: 'start', from: 'top', to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goTop', from: 'share', to: 'top'}
       ]
     })
 
-    this.stateMachine.onentercaptureFace = this.start.bind(this)
+    this.stateMachine.onenterplaying = this.start.bind(this)
 
     this.pageManager = new PageManager(this.stateMachine)
 
@@ -100,8 +99,12 @@ class App {
   start(useWebcam) {
     // music
     this.sound = createjs.Sound.createInstance('music-main')
-    this.sound.volume = 0.05
+    // this.sound.volume = 0.05
     this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
+    this.sound.on('complete', () => {
+      Ticker.setClock(null)
+      this.stateMachine.playCompleted()
+    })
 
     // camera controller
     this.camera.enabled = false
@@ -133,7 +136,6 @@ class App {
       this.sound.play()
       Ticker.setClock(this.sound)
 
-      /*
       if (Config.DEV_MODE) {
         let vcon = $('<video>').attr({
           id: '_vcon',
@@ -143,9 +145,8 @@ class App {
           muted: true
         }).appendTo('body')
         vcon.currentTime = 2 / 24
-        vcon.play()
+        vcon[0].play()
       }
-      */
     })
     this.webcam.start()
 

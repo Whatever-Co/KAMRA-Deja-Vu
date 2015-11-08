@@ -14,18 +14,30 @@ html.no-js
   body
   #canvas-clip
     canvas#main
-  //- video#_vcon(src='data/vcon_pv_1106-144778791.mp4', width=1080, height=720, muted=true)
   #page
     #loading
-      image(src='images/_/loading.png')
+      img(src='images/_/loading.png')
     #top
-      image.album_info(src='images/_/album_info.png')
+      image.album-info(src='images/_/album_info.png')
       image.navi(src='images/_/navi.png')
       .buttons
         button.with-webcam
-          image(src='images/_/with_webcam.png')
+          img(src='images/_/with_webcam.png')
         button.without-webcam
-          image(src='images/_/without_webcam.png')
+          img(src='images/_/without_webcam.png')
+    #share
+      .share-inner
+        button.button-top
+          img(src='images/button-top.png')
+        .share-buttons
+          img(src='images/share-this.png')
+          div
+            button.button-twitter
+              img(src='images/button-twitter.png')
+            button.button-facebook
+              img(src='images/button-facebook.png')
+        button.button-replay
+          img(src='images/button-replay.png')
   script(src='libs/preloadjs-0.6.1.min.js')
   script(src='libs/soundjs-0.6.1.min.js')
   //- script(src='init.js')

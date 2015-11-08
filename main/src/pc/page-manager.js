@@ -12,10 +12,12 @@ export default class PageManager extends EventEmitter {
 
 
   init() {
+    // loading
     this.stateMachine.onleaveloadAssets = () => {
       $('#loading').hide()
     }
 
+    // top
     this.stateMachine.onentertop = () => {
       $('#top').show()
     }
@@ -24,6 +26,15 @@ export default class PageManager extends EventEmitter {
     }
     $('.with-webcam').click(() => this.stateMachine.start(true))
     $('.without-webcam').click(() => this.stateMachine.start(false))
+
+    // share
+    this.stateMachine.onentershare = () => {
+      $('#share').show()
+    }
+    this.stateMachine.onleaveshare = () => {
+      $('#share').hide()
+    }
+    $('.button-top').click(() => this.stateMachine.goTop())
   }
 
 }

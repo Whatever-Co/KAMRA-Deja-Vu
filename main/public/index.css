@@ -1,1 +1,139 @@
-html,body{padding:0;mpargin:0}body{color:#fff;background-color:#071520}#canvas-clip{position:absolute;left:0;top:0;width:100%;height:100%;overflow:hidden}canvas#main{-webkit-transform-origin:left top;-ms-transform-origin:left top;transform-origin:left top}#page{position:absolute;left:0;top:0;width:100%;min-width:1000px;height:100%}#loading{width:100%;height:100%;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-ms-flex-pack:center;justify-content:center}#top{display:none;position:relative;width:100%;height:100%;}#top .album_info{position:absolute;left:50px;bottom:47px}#top .navi{position:absolute;right:50px;bottom:46px}#top .buttons{width:100%;position:absolute;bottom:180px;text-align:center;}#top .buttons button{background:none;border:none;outline:none;margin:0 30px}#stats{position:absolute;left:0;top:0;z-index:100}#_frame-counter{position:absolute;left:5px;bottom:0;z-index:100;font-size:30px}#_vcon{position:absolute;right:0;bottom:0;z-index:100;border:3px solid #333;-webkit-transform-origin:right bottom;-ms-transform-origin:right bottom;transform-origin:right bottom;-webkit-transform:scale(.3,.3);-ms-transform:scale(.3,.3);transform:scale(.3,.3)}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  padding: 0;
+  mpargin: 0;
+}
+body {
+  color: #fff;
+  background-color: #071520;
+}
+button {
+  background: none;
+  border: none;
+  outline: none;
+}
+#canvas-clip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+canvas#main {
+  -webkit-transform-origin: left top;
+      -ms-transform-origin: left top;
+          transform-origin: left top;
+}
+#page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  min-width: 1000px;
+  height: 100%;
+}
+#loading {
+  width: 100%;
+  height: 100%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+#top {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+#top .album-info {
+  position: absolute;
+  left: 50px;
+  bottom: 47px;
+}
+#top .navi {
+  position: absolute;
+  right: 50px;
+  bottom: 46px;
+}
+#top .buttons {
+  width: 100%;
+  position: absolute;
+  bottom: 180px;
+  text-align: center;
+}
+#top .buttons button {
+  margin: 0 30px;
+}
+#share {
+  display: none;
+  width: 100%;
+  height: 100%;
+  padding: 50px;
+}
+#share .share-inner {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-wrap: nowrap;
+      -ms-flex-wrap: nowrap;
+          flex-wrap: nowrap;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -webkit-box-align: end;
+  -webkit-align-items: flex-end;
+      -ms-flex-align: end;
+          align-items: flex-end;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 30px;
+  background: url("images/h-line.png") top repeat-x, url("images/h-line.png") bottom repeat-x, url("images/v-line.png") left repeat-y, url("images/v-line.png") right repeat-y;
+}
+#share .share-buttons {
+  text-align: center;
+}
+#share .share-buttons > img {
+  margin-bottom: 10px;
+}
+#stats {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+#_frame-counter {
+  position: absolute;
+  left: 5px;
+  bottom: 0px;
+  z-index: 100;
+  font-size: 30px;
+}
+#_vcon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  border: 3px solid #333;
+  -webkit-transform-origin: right bottom;
+      -ms-transform-origin: right bottom;
+          transform-origin: right bottom;
+  -webkit-transform: scale(0.3, 0.3);
+      -ms-transform: scale(0.3, 0.3);
+          transform: scale(0.3, 0.3);
+}
