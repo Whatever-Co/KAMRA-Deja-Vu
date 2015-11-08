@@ -1,6 +1,60 @@
+html, body
+  padding 0
+  mpargin 0
+  
 body
   color white
   background-color #071520
+
+#canvas-clip
+  position absolute
+  left 0
+  top 0
+  width 100%
+  height 100%
+  overflow hidden
+  
+canvas#main
+  transform-origin left top
+
+#page
+  position absolute
+  left 0
+  top 0
+  width 100%
+  min-width 1000px
+  height 100%
+
+#loading
+  width 100%
+  height 100%
+  display flex
+  align-items center
+  justify-content center
+
+#top
+  display none
+  position relative
+  width 100%
+  height 100%
+  .album_info
+    position absolute
+    left 50px
+    bottom 50px - 3
+  .navi
+    position absolute
+    right 50px
+    bottom 50px - 4
+  .buttons
+    width 100%
+    position absolute
+    bottom 180px
+    text-align center
+    button
+      background none
+      border none
+      outline none
+      margin 0 30px
 
 #stats
   position absolute

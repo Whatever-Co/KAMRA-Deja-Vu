@@ -8,6 +8,7 @@ import Stats from 'stats-js'
 
 import Ticker from './ticker'
 import Config from './config'
+import PageManager from './page-manager'
 import PreprocessWorker from 'worker!./preprocess-worker'
 import WebcamPlane from './webcam-plane'
 import FaceController from './face-controller'
@@ -22,43 +23,35 @@ class App {
     this.controllers = []
 
     this.initStates()
-    this.loadAssets()
-
-    if (Config.DEV_MODE) {
-      this.stats = new Stats()
-      document.body.appendChild(this.stats.domElement)
-
-      this._frameCounter = $('<div>').attr({id: '_frame-counter'}).appendTo(document.body)
-    }
+    this.initAssets()
+    this.initWebGL()
   }
 
 
   initStates() {
-    this.statesMachine = StateMachine.create({
+    this.stateMachine = StateMachine.create({
       initial: 'loadAssets',
       events: [
-        {name: 'loadComplete', from: 'loadAssets', to: 'entrance'},
-        {name: 'start', from: 'entrance', to: 'captureFace'},
+        {name: 'loadComplete', from: 'loadAssets', to: 'top'},
+        {name: 'start', from: 'top', to: 'captureFace'},
         {name: 'captured', from: 'captureFace', to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
-        {name: 'goEntrance', from: 'share', to: 'entrance'}
+        {name: 'goTop', from: 'share', to: 'top'}
       ]
     })
 
-    this.statesMachine.ontop = () => {
-      this.statesMachine.start()
-    }
-    // this.statesMachine.oncaptureFace = () => {
-    //   console.log('oncaptureFace')
-    // }
+    this.stateMachine.onentercaptureFace = this.start.bind(this)
+
+    this.pageManager = new PageManager(this.stateMachine)
+
+    // this.stateMachine.loadComplete()
   }
 
 
-  loadAssets() {
+  initAssets() {
     require(['./asset-loader'], () => {
       let loader = require('./asset-loader').default
       this.keyframes = loader.getResult('keyframes')
-      // console.log(this.keyframes)
 
       let worker = new PreprocessWorker()
       let start = performance.now()
@@ -70,28 +63,48 @@ class App {
       worker.onmessage = (event) => {
         console.log('finish', performance.now())
         this.keyframes.user.property.morph = event.data
-        // console.log(this.keyframes)
 
-        this.sound = createjs.Sound.createInstance('music-main')
-        this.sound.volume = 0.05
-        this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
-
-        this.initScene()
-        this.initObjects()
-
-        Ticker.on('update', this.animate)
-        Ticker.start()
-
-        this.statesMachine.loadComplete()
+        this.stateMachine.loadComplete()
       }
     })
   }
 
 
-  initScene() {
+  initWebGL() {
     this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
 
+    this.scene = new THREE.Scene()
+
+    this.renderer = new THREE.WebGLRenderer({canvas: document.querySelector('canvas#main')})
+    this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+    this.renderer.setClearColor(0x071520, 1)
+    this.renderer.clear()
+
+    window.addEventListener('resize', this.onResize.bind(this))
+    this.onResize()
+
+    if (Config.DEV_MODE) {
+      this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
+
+      this.stats = new Stats()
+      document.body.appendChild(this.stats.domElement)
+
+      this._frameCounter = $('<div>').attr({id: '_frame-counter'}).appendTo(document.body)
+    }
+
+    Ticker.on('update', this.animate)
+    Ticker.start()
+  }
+
+
+  start(useWebcam) {
+    // music
+    this.sound = createjs.Sound.createInstance('music-main')
+    this.sound.volume = 0.05
+    this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
+
+    // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       let props = this.keyframes.camera.property
@@ -105,19 +118,7 @@ class App {
     }
     this.controllers.push(this.camera)
 
-    this.scene = new THREE.Scene()
-
-    this.renderer = new THREE.WebGLRenderer()
-    this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
-    this.renderer.setClearColor(0x071520)
-    document.body.appendChild(this.renderer.domElement)
-
-    window.addEventListener('resize', this.onResize.bind(this))
-    this.onResize()
-  }
-
-
-  initObjects() {
+    // webcam
     this.webcam = new WebcamPlane(this.camera)
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
     this.webcam.scale.set(scale, scale, scale)
@@ -133,19 +134,26 @@ class App {
       this.sound.play()
       Ticker.setClock(this.sound)
 
-      let vcon = document.querySelector('#_vcon')
-      vcon.currentTime = 2 / 24
-      vcon.play()
+      /*
+      if (Config.DEV_MODE) {
+        let vcon = $('<video>').attr({
+          id: '_vcon',
+          src: 'data/vcon_pv_1106-144778791.mp4',
+          width: 1080,
+          height: 720,
+          muted: true
+        }).appendTo('body')
+        vcon.currentTime = 2 / 24
+        vcon.play()
+      }
+      */
     })
     this.webcam.start()
 
+    // face
     this.face = new FaceController(this.keyframes, this.webcam)
     this.scene.add(this.face)
     this.controllers.push(this.face)
-
-    if (Config.DEV_MODE) {
-      this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
-    }
   }
 
 

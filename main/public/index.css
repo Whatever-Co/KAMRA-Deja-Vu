@@ -1,6 +1,76 @@
+html,
+body {
+  padding: 0;
+  mpargin: 0;
+}
 body {
   color: #fff;
   background-color: #071520;
+}
+#canvas-clip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+canvas#main {
+  -webkit-transform-origin: left top;
+      -ms-transform-origin: left top;
+          transform-origin: left top;
+}
+#page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  min-width: 1000px;
+  height: 100%;
+}
+#loading {
+  width: 100%;
+  height: 100%;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+#top {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+#top .album_info {
+  position: absolute;
+  left: 50px;
+  bottom: 47px;
+}
+#top .navi {
+  position: absolute;
+  right: 50px;
+  bottom: 46px;
+}
+#top .buttons {
+  width: 100%;
+  position: absolute;
+  bottom: 180px;
+  text-align: center;
+}
+#top .buttons button {
+  background: none;
+  border: none;
+  outline: none;
+  margin: 0 30px;
 }
 #stats {
   position: absolute;

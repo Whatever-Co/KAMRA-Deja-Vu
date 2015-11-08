@@ -12,6 +12,6 @@ loader.loadManifest([
   {id: 'keyframes', src: 'data/keyframes.json'},
   {id: 'music-main', src: 'data/main.mp3'},
   {src: 'app.js'}
-  ], false)
+], false)
 
 export default loader

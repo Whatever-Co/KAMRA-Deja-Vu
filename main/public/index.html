@@ -1,20 +1,40 @@
 <!DOCTYPE html>
 <html class="no-js">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>KAMRA - Deja Vu - Artifitial Intelligence</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <link rel="stylesheet" href="normalize.css">
-    <link rel="stylesheet" href="index.css">
-  </head>
-  <body>
-    <video id="_vcon" src="data/vcon_pv_1106-144778791.mp4" width="1080" height="720" muted></video>
-    <script src="libs/preloadjs-0.6.1.min.js"></script>
-    <script src="libs/soundjs-0.6.1.min.js"></script>
-    <script src="init.js"></script>
-    <script src="bootstrap.js"></script>
-  </body>
+  <head></head>
+  <noscript>
+    <meta http-equiv="refresh" content="0; URL=sp/">
+  </noscript>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>KAMRA - Deja Vu - Artifitial Intelligence</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="normalize.css">
+  <link rel="stylesheet" href="index.css">
+  <body></body>
+  <div id="canvas-clip">
+    <canvas id="main"></canvas>
+  </div>
+  <div id="page">
+    <div id="loading">
+      <image src="images/_/loading.png"></image>
+    </div>
+    <div id="top">
+      <image src="images/_/album_info.png" class="album_info"></image>
+      <image src="images/_/navi.png" class="navi"></image>
+      <div class="buttons">
+        <button class="with-webcam">
+          <image src="images/_/with_webcam.png"></image>
+        </button>
+        <button class="without-webcam">
+          <image src="images/_/without_webcam.png"></image>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="libs/preloadjs-0.6.1.min.js"></script>
+  <script src="libs/soundjs-0.6.1.min.js"></script>
+  <script src="init.js"></script>
+  <script src="bootstrap.js"></script>
 </html>

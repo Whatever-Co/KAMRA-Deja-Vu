@@ -1,17 +1,32 @@
 doctype html
 html.no-js
   head
-    meta(charset='utf-8')
-    meta(http-equiv='x-ua-compatible', content='ie=edge')
-    title KAMRA - Deja Vu - Artifitial Intelligence
-    meta(name='description', content='')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
-    link(rel='apple-touch-icon', href='apple-touch-icon.png')
-    link(rel='stylesheet', href='normalize.css')
-    link(rel='stylesheet', href='index.css')
+  noscript
+    meta(http-equiv='refresh' content='0; URL=sp/')
+  meta(charset='utf-8')
+  meta(http-equiv='x-ua-compatible', content='ie=edge')
+  title KAMRA - Deja Vu - Artifitial Intelligence
+  meta(name='description', content='')
+  meta(name='viewport', content='width=device-width, initial-scale=1')
+  link(rel='apple-touch-icon', href='apple-touch-icon.png')
+  link(rel='stylesheet', href='normalize.css')
+  link(rel='stylesheet', href='index.css')
   body
-    video#_vcon(src='data/vcon_pv_1106-144778791.mp4', width=1080, height=720, muted=true)
-    script(src='libs/preloadjs-0.6.1.min.js')
-    script(src='libs/soundjs-0.6.1.min.js')
-    script(src='init.js')
-    script(src='bootstrap.js')
+  #canvas-clip
+    canvas#main
+  //- video#_vcon(src='data/vcon_pv_1106-144778791.mp4', width=1080, height=720, muted=true)
+  #page
+    #loading
+      image(src='images/_/loading.png')
+    #top
+      image.album_info(src='images/_/album_info.png')
+      image.navi(src='images/_/navi.png')
+      .buttons
+        button.with-webcam
+          image(src='images/_/with_webcam.png')
+        button.without-webcam
+          image(src='images/_/without_webcam.png')
+  script(src='libs/preloadjs-0.6.1.min.js')
+  script(src='libs/soundjs-0.6.1.min.js')
+  script(src='init.js')
+  script(src='bootstrap.js')
