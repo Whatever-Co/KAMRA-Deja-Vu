@@ -38,8 +38,8 @@ gulp.task('webpack', () => {
         'process.env': {
           NODE_ENV: JSON.stringify(process.env.NODE_ENV)
         }
-      }),
-      new webpack.optimize.CommonsChunkPlugin('init.js')
+      })
+      // new webpack.optimize.CommonsChunkPlugin('init.js')
     ],
     // eslint: {
     //   fix: true,

@@ -1,17 +1,1 @@
-webpackJsonp([2,4],[
-/* 0 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	__webpack_require__.e/* require */(3, function(__webpack_require__) { var __WEBPACK_AMD_REQUIRE_ARRAY__ = [__webpack_require__(30)]; (function () {
-	  var loader = __webpack_require__(30).default;
-	  loader.on('progress', function (event) {
-	    console.log(Math.round(event.progress / event.total * 100));
-	  });
-	  loader.load();
-	}.apply(null, __WEBPACK_AMD_REQUIRE_ARRAY__));});
-
-/***/ }
-]);
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly8vYm9vdHN0cmFwLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7OztBQUFBLHVFQUFRLHFDQUFDLHVCQUFnQixDQUFDLEdBQUUsWUFBTTtBQUNoQyxPQUFJLE1BQU0sR0FBRyxtQkFBTyxDQUFDLEVBQWdCLENBQUMsQ0FBQyxPQUFPO0FBQzlDLFNBQU0sQ0FBQyxFQUFFLENBQUMsVUFBVSxFQUFFLFVBQUMsS0FBSyxFQUFLO0FBQy9CLFlBQU8sQ0FBQyxHQUFHLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBRSxLQUFLLENBQUMsUUFBUSxHQUFHLEtBQUssQ0FBQyxLQUFLLEdBQUksR0FBRyxDQUFDLENBQUM7SUFDOUQsQ0FBQztBQUNGLFNBQU0sQ0FBQyxJQUFJLEVBQUU7K0NBQ2QsRUFBQyxDIiwiZmlsZSI6ImJvb3RzdHJhcC5qcyIsInNvdXJjZXNDb250ZW50IjpbInJlcXVpcmUoWycuL2Fzc2V0LWxvYWRlciddLCAoKSA9PiB7XG4gIGxldCBsb2FkZXIgPSByZXF1aXJlKCcuL2Fzc2V0LWxvYWRlcicpLmRlZmF1bHRcbiAgbG9hZGVyLm9uKCdwcm9ncmVzcycsIChldmVudCkgPT4ge1xuICAgIGNvbnNvbGUubG9nKE1hdGgucm91bmQoKGV2ZW50LnByb2dyZXNzIC8gZXZlbnQudG90YWwpICogMTAwKSlcbiAgfSlcbiAgbG9hZGVyLmxvYWQoKVxufSlcblxuXG5cbi8qKiBXRUJQQUNLIEZPT1RFUiAqKlxuICoqIGJvb3RzdHJhcC5qc1xuICoqLyJdLCJzb3VyY2VSb290IjoiIn0=
+!function(e){function t(s){if(r[s])return r[s].exports;var a=r[s]={exports:{},id:s,loaded:!1};return e[s].call(a.exports,a,a.exports,t),a.loaded=!0,a.exports}var r={};return t.m=e,t.c=r,t.p="",t(0)}({0:function(e,t,r){"use strict";function s(e){return e&&e.__esModule?e:{"default":e}}var a=r(30),o=s(a);o["default"].on("progress",function(e){console.log(Math.round(e.progress/e.total*100))}),o["default"].load(),window.__djv_loader=o["default"]},8:function(e,t,r){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t["default"]={DEV_MODE:!1,RENDER_WIDTH:1920,RENDER_HEIGHT:1080}},30:function(e,t,r){"use strict";function s(e){return e&&e.__esModule?e:{"default":e}}Object.defineProperty(t,"__esModule",{value:!0});var a=r(8),o=s(a),n=new createjs.LoadQueue;n.installPlugin(createjs.Sound);var u=o["default"].DEV_MODE?".min":"";n.loadManifest([{src:"libs/clmtrackr"+u+".js"},{src:"libs/model_pca_20_svm.js"},{src:"libs/three"+u+".js"},{id:"keyframes",src:"data/keyframes.json"},{id:"music-main",src:"data/main.mp3"},{src:"app.js"}],!1),t["default"]=n}});

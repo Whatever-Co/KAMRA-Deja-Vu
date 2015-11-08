@@ -1,5 +1,5 @@
 self.THREE = {}
-importScripts('libs/three.js')
+importScripts('libs/three.min.js')
 
 import Delaunay from 'delaunay-fast'
 import QuadTree from 'simple-quadtree'

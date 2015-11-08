@@ -49,24 +49,23 @@ class App {
 
 
   initAssets() {
-    require(['./asset-loader'], () => {
-      let loader = require('./asset-loader').default
-      this.keyframes = loader.getResult('keyframes')
+    let loader = window.__djv_loader
 
-      let worker = new PreprocessWorker()
-      let start = performance.now()
-      console.log('start', start)
-      this.keyframes = loader.getResult('keyframes')
-      let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
-      console.log('toarraybuffer', start)
-      worker.postMessage(vertices, vertices.map((a) => a.buffer))
-      worker.onmessage = (event) => {
-        console.log('finish', performance.now())
-        this.keyframes.user.property.morph = event.data
+    this.keyframes = loader.getResult('keyframes')
 
-        this.stateMachine.loadComplete()
-      }
-    })
+    let worker = new PreprocessWorker()
+    let start = performance.now()
+    console.log('start', start)
+    this.keyframes = loader.getResult('keyframes')
+    let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
+    console.log('toarraybuffer', start)
+    worker.postMessage(vertices, vertices.map((a) => a.buffer))
+    worker.onmessage = (event) => {
+      console.log('finish', performance.now())
+      this.keyframes.user.property.morph = event.data
+
+      this.stateMachine.loadComplete()
+    }
   }
 
 
