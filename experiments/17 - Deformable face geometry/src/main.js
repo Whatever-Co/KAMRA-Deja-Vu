@@ -2,12 +2,21 @@
 
 import $ from 'jquery'
 import 'jquery.transit'
+import dat from 'dat-gui'
+import Stats from 'stats-js'
+
+import 'shaders/CopyShader'
+import 'shaders/BokehShader'
+import 'shaders/FXAAShader'
+import 'shaders/VignetteShader'
+import 'postprocessing/EffectComposer'
+import 'postprocessing/ShaderPass'
+import 'postprocessing/RenderPass'
+import 'postprocessing/MaskPass'
+import 'postprocessing/BokehPass'
 import 'OrbitControls'
-import Delaunay from 'delaunay-fast'
-// import dat from 'dat-gui'
 
 import Config from './config'
-import StandardFaceData from './standardfacedata'
 import DeformableFaceGeometry from './deformablefacegeometry'
 import Worker from 'worker!./worker'
 
@@ -20,8 +29,12 @@ class App {
   constructor() {
     this.animate = this.animate.bind(this)
 
+    this.stats = new Stats()
+    document.body.appendChild(this.stats.domElement)
+
     this.initScene()
     this.initObjects()
+    this.initPostprocessing()
   }
 
 
@@ -40,10 +53,23 @@ class App {
 
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
+
+    // let gui = new dat.GUI()
+    // gui.add(this.bokeh.uniforms.focus, 'value', 0.0, 3.0, 0.025).name('Focus')
+    // gui.add(this.bokeh.uniforms.aperture, 'value', 0.001, 0.2, 0.001).name('Aparuter')
+    // gui.add(this.bokeh.uniforms.maxblur, 'value', 0.0, 3.0, 0.025).name('Max blur')
   }
 
 
   initObjects() {
+    // {
+    //   this.scene.add(new THREE.Mesh(
+    //     new THREE.SphereGeometry(200),
+    //     new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, wireframeLinewidth: 5, transparent: true, opacity: 0.2})
+    //     ))
+    // }
+
+
     let loader = new createjs.LoadQueue()
     loader.loadFile({id: 'keyframes', src: 'keyframes.json'})
     let items = [
@@ -87,7 +113,9 @@ class App {
         this.keyframes.user.property.morph = event.data
         // this.keyframes = event.data
         console.log(this.keyframes)
-        this.start()
+        // this.start()
+        this.morphDataReady = true
+        this.startTime = performance.now()
       }
       let start = performance.now()
       console.log('start', start)
@@ -101,8 +129,109 @@ class App {
       // console.log(performance.now() - start, 'ms')
       // console.log(this.morphData)
 
-      // this.start()
+      this.start()
     })
+  }
+
+
+  initPostprocessing() {
+    let gui = new dat.GUI()
+
+    this.composer = new THREE.EffectComposer(this.renderer)
+    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
+    // {
+    //   this.bokeh = new THREE.BokehPass(this.scene, this.camera, {
+    //     focus: 1.0,
+    //     aparture: 0.000025,
+    //     maxblur: 1.0,
+    //     width: Config.RENDER_WIDTH,
+    //     height: Config.RENDER_HEIGHT
+    //   })
+    //   this.composer.addPass(this.bokeh)
+    // }
+    {
+      let lutPass = new THREE.ShaderPass({
+        uniforms: {
+          tDiffuse: {type: 't', value: null},
+          tLut: {type: 't', value: null}
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D tDiffuse;
+          uniform sampler2D tLut;
+
+          varying vec2 vUv;
+
+          vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
+              #ifndef LUT_NO_CLAMP
+                  textureColor = clamp(textureColor, 0.0, 1.0);
+              #endif
+
+              mediump float blueColor = textureColor.b * 63.0;
+
+              mediump vec2 quad1;
+              quad1.y = floor(floor(blueColor) / 8.0);
+              quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+              mediump vec2 quad2;
+              quad2.y = floor(ceil(blueColor) / 8.0);
+              quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+              highp vec2 texPos1;
+              texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+              texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+              #ifdef LUT_FLIP_Y
+                  texPos1.y = 1.0-texPos1.y;
+              #endif
+
+              highp vec2 texPos2;
+              texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+              texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+              #ifdef LUT_FLIP_Y
+                  texPos2.y = 1.0-texPos2.y;
+              #endif
+
+              lowp vec4 newColor1 = texture2D(lookupTable, texPos1);
+              lowp vec4 newColor2 = texture2D(lookupTable, texPos2);
+
+              lowp vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+              return newColor;
+          }
+
+          void main() {
+            gl_FragColor = lookup(texture2D(tDiffuse, vUv), tLut);
+          }
+        `
+      })
+      let loader = new THREE.TextureLoader()
+      loader.load('lookup_selective_color.png', (texture) => {
+        texture.magFilter = texture.minFilter = THREE.NearestFilter
+        texture.generateMipmaps = false
+        texture.flipY = false
+        lutPass.uniforms.tLut.value = texture
+      })
+      this.composer.addPass(lutPass)
+    }
+    {
+      let effect = new THREE.ShaderPass(THREE.VignetteShader)
+      effect.uniforms.darkness.value = 1.4
+      this.composer.addPass(effect)
+      gui.add(effect.uniforms.darkness, 'value', 0.0, 2.0, 0.01).name('Darkness')
+    }
+    {
+      let effect = new THREE.ShaderPass(THREE.FXAAShader)
+      effect.uniforms.resolution.value.set(1 / Config.RENDER_WIDTH, 1 / Config.RENDER_HEIGHT)
+      this.composer.addPass(effect)
+    }
+    this.composer.passes[this.composer.passes.length - 1].renderToScreen = true
   }
 
 
@@ -145,7 +274,6 @@ class App {
 
 
   start() {
-    this.startTime = performance.now()
     this.previousFrame = -1
     this.animate()
   }
@@ -154,19 +282,22 @@ class App {
   animate() {
     requestAnimationFrame(this.animate)
 
-    //*
     let currentFrame = Math.floor((performance.now() - this.startTime) / 1000 * 24) % 1661
     if (currentFrame != this.previousFrame) {
-      this.faces.forEach((face) => {
-        // face.geometry.applyMorph(this.keyframes.user.property.face_vertices[currentFrame])
-        face.geometry.applyMorph(this.keyframes.user.property.morph[currentFrame])
-      })
-      this.previousFrame = currentFrame
-    }
-    //*/
+      this.stats.begin()
 
-    this.controls.update()
-    this.renderer.render(this.scene, this.camera)
+      if (this.morphDataReady) {
+        this.faces.forEach((face) => {
+          face.geometry.applyMorph(this.keyframes.user.property.morph[currentFrame])
+        })
+      }
+
+      this.controls.update()
+      this.composer.render()
+
+      this.previousFrame = currentFrame
+      this.stats.end()
+    }
   }
 
 
