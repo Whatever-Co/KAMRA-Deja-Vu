@@ -214,7 +214,6 @@ def plot_mosaic_color(paths):
         # color = (find_nearest_color(imgArr[:4], templates))
         break
 
-
 if __name__ == '__main__':
     paths = glob.glob('source/*.png')
 
