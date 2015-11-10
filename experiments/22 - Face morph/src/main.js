@@ -63,13 +63,13 @@ export default class App {
       this.faces = items.map((name, i) => {
         let featurePoints = loader.getResult(`data${i}`)
         let image = loader.getResult(`image${i}`)
-        return {
-          geometry: new DeformableFaceGeometry(featurePoints, 512, 512, 400, this.camera.position.z),
-          texture: new THREE.CanvasTexture(image)
-        }
+        return new THREE.Mesh(
+          new DeformableFaceGeometry(featurePoints, 512, 512, 400, this.camera.position.z),
+          new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(image)})
+        )
       })
 
-      this.blender = new FaceBlender(this.faces[0].geometry, this.faces[0].texture, this.faces[1].geometry, this.faces[1].texture)
+      this.blender = new FaceBlender(this.faces[0], this.faces[1])
       this.scene.add(this.blender)
 
       this.current = 1
@@ -81,10 +81,20 @@ export default class App {
 
 
   change() {
-    let n = this.current
-    this.blender.setFace1(this.faces[n].geometry, this.faces[n].texture)
-    n = this.current = ~~(Math.random() * this.faces.length)
-    this.blender.setFace2(this.faces[n].geometry, this.faces[n].texture)
+    let prev = this.current
+    this.blender.setFace1(this.faces[prev])
+
+    while (prev == this.current) {
+      this.current = ~~(Math.random() * this.faces.length)
+    }
+    let face2 = this.faces[this.current]
+    face2.position.set(THREE.Math.randFloat(-1, 1), THREE.Math.randFloat(-0.5, 0.5), THREE.Math.randFloat(0, -2))
+    face2.rotation.set(THREE.Math.randFloat(-1, 1), THREE.Math.randFloat(-1, 1), THREE.Math.randFloat(-1, 1))
+    let s = THREE.Math.randFloat(0.5, 1.5)
+    face2.scale.set(s, s, s)
+    face2.updateMatrixWorld()
+    this.blender.setFace2(face2)
+
     this.blender.blend = 0
     new TWEEN.Tween(this.blender).to({blend: 1}, 200 + Math.random() * 2000).delay(500).easing(TWEEN.Easing.Cubic.InOut).start().onComplete(this.change.bind(this))
   }

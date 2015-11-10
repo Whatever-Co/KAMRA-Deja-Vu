@@ -3,7 +3,7 @@
 
 export default class FaceBlender extends THREE.Mesh {
 
-  constructor(geometry1, texture1, geometry2, texture2) {
+  constructor(face1, face2, blend = 0) {
     super(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
       vertexShader: `
         uniform float blend;
@@ -30,27 +30,32 @@ export default class FaceBlender extends THREE.Mesh {
       uniforms: {
         map1: {type: 't', value: null},
         map2: {type: 't', value: null},
-        blend: {type: 'f', value: 0}
-      }
+        blend: {type: 'f', value: blend}
+      },
+      side: THREE.DoubleSide
     }))
 
-    this.geometry.setIndex(geometry1.index)
-    this.setFace1(geometry1, texture1)
-    this.setFace2(geometry2, texture2)
+    this.geometry.setIndex(face1.geometry.index)
+    this.setFace1(face1)
+    this.setFace2(face2)
+
+    this.matrixAutoUpdate = false
   }
 
 
-  setFace1(geometry, texture) {
-    this.geometry.addAttribute('position', geometry.positionAttribute)
-    this.geometry.addAttribute('uv', geometry.uvAttribute)
-    this.material.uniforms.map1.value = texture
+  setFace1(face) {
+    this.face1 = face
+    this.geometry.addAttribute('position', face.geometry.positionAttribute)
+    this.geometry.addAttribute('uv', face.geometry.uvAttribute)
+    this.material.uniforms.map1.value = face.material.map
   }
 
 
-  setFace2(geometry, texture) {
-    this.geometry.addAttribute('position2', geometry.positionAttribute)
-    this.geometry.addAttribute('uv2', geometry.uvAttribute)
-    this.material.uniforms.map2.value = texture
+  setFace2(face) {
+    this.face2 = face
+    this.geometry.addAttribute('position2', face.geometry.positionAttribute)
+    this.geometry.addAttribute('uv2', face.geometry.uvAttribute)
+    this.material.uniforms.map2.value = face.material.map
   }
 
 
@@ -61,6 +66,20 @@ export default class FaceBlender extends THREE.Mesh {
 
   set blend(value) {
     this.material.uniforms.blend.value = value
+
+    let position = new THREE.Vector3()
+    let quat = new THREE.Quaternion()
+    let scale = new THREE.Vector3()
+    this.face1.matrix.decompose(position, quat, scale)
+    let position2 = new THREE.Vector3()
+    let quat2 = new THREE.Quaternion()
+    let scale2 = new THREE.Vector3()
+    this.face2.matrix.decompose(position2, quat2, scale2)
+
+    position.lerp(position2, value)
+    quat.slerp(quat2, value)
+    scale.lerp(scale2, value)
+    this.matrix.compose(position, quat, scale)
   }
 
 }
