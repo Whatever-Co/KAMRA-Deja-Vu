@@ -9,6 +9,7 @@ import cv2
 import matplotlib.animation
 from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
+import subprocess
 
 
 def pixelate(image, size=20):
@@ -172,6 +173,9 @@ def plot_average_color(paths):
         exportPath = os.path.join('average', os.path.basename(path))
         cv2.imwrite(exportPath, img)
 
+    cmd = 'montage average/*.png -tile 8x -geometry 50x25+0+0 average/export.jpg'
+    result = subprocess.call(cmd, shell=True)
+
 
 def plot_dictance_color(paths):
     templates = images_to_average_colors(paths)
@@ -185,10 +189,13 @@ def plot_dictance_color(paths):
         plot_image_distance(imgArr, templates, 'tmp.png', useHsv)
         figImg = cv2.imread('tmp.png', cv2.IMREAD_UNCHANGED)
         # Resize and export
-        img = cv2.resize(img, (512, 600))
+        img = cv2.resize(img, (600, 600))
         exportPath = os.path.join('plot', os.path.basename(path))
         cv2.imwrite(exportPath,
                     cv2.hconcat([img, figImg]))
+
+    cmd = 'montage plot/*.png -tile 8x -geometry 800x300+0+0 plot/export.jpg'
+    result = subprocess.call(cmd, shell=True)
 
 
 def convert_bgr2hsv_1d(colors):
@@ -218,5 +225,5 @@ if __name__ == '__main__':
     paths = glob.glob('source/*.png')
 
     # plot_average_color(paths)
-    # plot_dictance_color(paths)
-    plot_mosaic_color(paths)
+    plot_dictance_color(paths)
+    # plot_mosaic_color(paths)
