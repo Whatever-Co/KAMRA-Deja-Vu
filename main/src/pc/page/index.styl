@@ -84,6 +84,30 @@ canvas#main
       margin-bottom 10px
 
 
+.overlay
+  position absolute
+  left 0
+  top 0
+  width 100%
+  height 100%
+  z-index 10000
+  pointer-events none
+
+.noise1
+  background url(images/noise1.png)
+  z-index 10001
+
+.noise2
+  background url(images/noise2.png)
+  mix-blend-mode multiply
+  // opacity 0.5
+  z-index 10000
+
+
+
+
+// debug
+
 #stats
   position absolute
   left 0

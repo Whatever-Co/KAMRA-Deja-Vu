@@ -1,44 +1,48 @@
 doctype html
 html.no-js
   head
-  noscript
-    meta(http-equiv='refresh' content='0; URL=sp/')
-  meta(charset='utf-8')
-  meta(http-equiv='x-ua-compatible', content='ie=edge')
-  title KAMRA - Deja Vu - Artifitial Intelligence
-  meta(name='description', content='')
-  meta(name='viewport', content='width=device-width, initial-scale=1')
-  link(rel='apple-touch-icon', href='apple-touch-icon.png')
-  link(rel='stylesheet', href='normalize.css')
-  link(rel='stylesheet', href='index.css')
+    noscript
+      meta(http-equiv='refresh' content='0; URL=sp/')
+    meta(charset='utf-8')
+    meta(http-equiv='x-ua-compatible', content='ie=edge')
+    title KAMRA - Deja Vu - Artifitial Intelligence
+    meta(name='description', content='')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='apple-touch-icon', href='apple-touch-icon.png')
+    link(rel='stylesheet', href='normalize.css')
+    link(rel='stylesheet', href='index.css')
+
   body
-  #canvas-clip
-    canvas#main
-  #page
-    #loading
-      img(src='images/_/loading.png')
-    #top
-      image.album-info(src='images/_/album_info.png')
-      image.navi(src='images/_/navi.png')
-      .buttons
-        button.with-webcam
-          img(src='images/_/with_webcam.png')
-        button.without-webcam
-          img(src='images/_/without_webcam.png')
-    #share
-      .share-inner
-        button.button-top
-          img(src='images/button-top.png')
-        .share-buttons
-          img(src='images/share-this.png')
-          div
-            button.button-twitter
-              img(src='images/button-twitter.png')
-            button.button-facebook
-              img(src='images/button-facebook.png')
-        button.button-replay
-          img(src='images/button-replay.png')
-  script(src='libs/preloadjs-0.6.1.min.js')
-  script(src='libs/soundjs-0.6.1.min.js')
-  //- script(src='init.js')
-  script(src='bootstrap.js')
+    #canvas-clip
+      canvas#main
+    #page
+      #loading
+        img(src='images/_/loading.png')
+      #top
+        image.album-info(src='images/_/album_info.png')
+        image.navi(src='images/_/navi.png')
+        .buttons
+          button.with-webcam
+            img(src='images/_/with_webcam.png')
+          button.without-webcam
+            img(src='images/_/without_webcam.png')
+      #share
+        .share-inner
+          button.button-top
+            img(src='images/button-top.png')
+          .share-buttons
+            img(src='images/share-this.png')
+            div
+              button.button-twitter
+                img(src='images/button-twitter.png')
+              button.button-facebook
+                img(src='images/button-facebook.png')
+          button.button-replay
+            img(src='images/button-replay.png')
+
+    .noise1.overlay
+    .noise1.overlay
+
+    script(src='libs/preloadjs-0.6.1.min.js')
+    script(src='libs/soundjs-0.6.1.min.js')
+    script(src='bootstrap.js')
