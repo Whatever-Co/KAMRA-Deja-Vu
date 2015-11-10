@@ -5,7 +5,7 @@ html, body
   padding: 0
   overflow: hidden
   color: #666
-  background-color: #ccc
+  background-color: #02131f
   font: 20px sans-serif
 
 #stats
@@ -13,3 +13,22 @@ html, body
   left: 0
   top: 0
   z-index: 100
+
+.overlay
+  position: absolute
+  left: 0
+  top: 0
+  width: 100%
+  height: 100%
+  z-index: 100
+  pointer-events: none
+
+.noise1
+  background: url(noise1.png)
+  z-index: 10001
+
+.noise2
+  background: url(noise2.png)
+  mix-blend-mode: multiply
+  opacity: 0.5
+  z-index: 10000

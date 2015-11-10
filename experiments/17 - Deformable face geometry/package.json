@@ -12,6 +12,7 @@
     "eslint-friendly-formatter": "^1.2.2",
     "eslint-loader": "^1.1.0",
     "exports-loader": "^0.6.2",
+    "file-loader": "^0.8.4",
     "gl-matrix": "^2.3.1",
     "install": "^0.2.6",
     "jade": "^1.11.0",
