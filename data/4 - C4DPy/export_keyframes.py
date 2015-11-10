@@ -19,7 +19,7 @@ childrenMat = [doc.SearchMaterial("stranger.%d" % i) for i in xrange(8)]
 
 childrenFrac = search("children_frac")
 
-webcamMat = doc.SearchMaterial("webcam")
+webcamMat = doc.SearchMaterial("webcam.begin")
 webcamFadeShader = webcamMat[c4d.MATERIAL_ALPHA_SHADER]
 
 userAltsRoot = [
@@ -38,6 +38,15 @@ userAlts = [
 slices = [search("user_slice.%d" % i) for i in xrange(5)]
 sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
 
+
+fallingCloner = search("falling_cloner")
+fallingCloneCount = mo.GeGetMoData(fallingCloner).GetCount()
+
+mosaicFace = search("mosaic_face")
+mosaicTime = search("mosaic_time")
+
+webcamLast = search("webcam_last")
+
 #========================================
 # keyframe format
 
@@ -48,12 +57,13 @@ keyframes = {
 		"property": {
 			"position": [],
 			"quaternion": [],
-			"fov": []
+			"fov": [],
+			"focus_distance": []
 		}
 	},
 	"user": {
 		"in_frame": 0,
-		"out_frame": 1661,
+		"out_frame": duration-1,
 		"property": {
 			"position": [],
 			"quaternion": [],
@@ -143,7 +153,6 @@ keyframes = {
 		"out_frame": 2119,
 		"property": [
 			{
-				"stranger_id": "stranger_%02d" % sliceStrangerOrder[i],
 				"position_x": (i-4) * 200,
 				"enabled": []
 			}
@@ -157,21 +166,106 @@ keyframes = {
 		"property": {
 			"scale_z": []
 		}
+	},
+
+	#----------
+	# Falling
+	
+	"falling_children_mesh": {
+		"in_frame": inFrame["D"],
+		"out_frame": inFrame["O1"]-1,
+		"property": [
+			{
+				"face_vertices": [],
+				"eyemouth_vertices": []
+			} for i in xrange(1)
+		]
+	},
+
+	"falling_children": {
+		"in_frame": inFrame["D"],
+		"out_frame": inFrame["O1"]-1,
+		"property": [
+			{
+				"position": [],
+				"quaternion": []
+			} for i in xrange(fallingCloneCount)
+		]
+	},
+
+	#----------
+	# B
+
+	"mosaic": {
+		"in_frame": 2700,
+		"out_frame": inFrame["O2"]-1,
+		"property": {
+			"time": []
+		}
+	},
+
+	"o2_extra": {
+		"in_frame": inFrame["O2"],
+		"out_frame": duration-1,
+		"property": {
+			"webcam_fade": [],
+			"interpolation": []
+		}
 	}
 }
 
 #========================================
 # config format
 
-config = {
-	"user_children": [
-		{
-			"enabled_in_frame": None,
-			"stranger_in_frame": None
-		} for i in xrange(8)
-	]
-}
+config = None
 
+def initConfig():
+	global config
+
+	config = {
+		"tracer": {
+			"indices": [77, 82, 92, 95, 177, 245, 250, 260, 263],
+			"duration": 10
+		},
+		"user_children": [
+			{
+				"enabled_in_frame": None,
+				"stranger_in_frame": None
+			} for i in xrange(8)
+		],
+		"mosaic_face": {
+			"position": toPosition(mosaicFace.GetAbsPos()),
+			"scale": toScale(mosaicFace.GetAbsScale()),
+		}
+	}
+
+def appendVertices(prop, name, vertices):
+
+	length = len(prop[name])
+
+	pf = -1
+	while True:
+		if length + pf < 0:
+			prop[name].append(vertices)
+			return
+
+		elif prop[name][pf] != None:
+			break
+		pf -= 1
+
+	prevVertices = prop[name][pf]
+	changed = False
+	
+	for i in xrange(len(vertices)):
+		if vertices[i] != prevVertices[i]:
+			changed = True
+			break
+
+	if changed:
+		prop[name].append(vertices)
+	else:
+		# print "NO CHANGE"
+		prop[name].append(None)
 
 
 #========================================
@@ -180,19 +274,24 @@ def addFrame(f):
 
 	# print "processing.. %04d/%04d" % (f, duration)
 
+	# c4d.StatusSetText("processing.. %04d/%04d" % (f, duration))
+
 	cameraProp = keyframes["camera"]["property"]
 	cameraProp["position"].extend(toPosition(cam.GetAbsPos()))
 	cameraProp["quaternion"].extend(toQuaternion(cam.GetMg()))
 	cameraProp["fov"].append(math.degrees(cam[c4d.CAMERAOBJECT_FOV_VERTICAL]))
+	cameraProp["focus_distance"].append(cam[c4d.CAMERAOBJECT_TARGETDISTANCE])
 
 	if f <= keyframes["user"]["out_frame"]:
 		userProp = keyframes["user"]["property"]
 		faceVertices, eyemouthVertices = getFaceVertices(user)
+
 		userProp["position"].extend(toPosition(userWrapper.GetAbsPos()))
 		userProp["quaternion"].extend(toQuaternion(userWrapper.GetMg()))
 		userProp["scale"].extend(toScale(userWrapper.GetAbsScale()))
-		userProp["face_vertices"].append(faceVertices)
-		userProp["eyemouth_vertices"].append(eyemouthVertices)
+
+		appendVertices(userProp, "face_vertices", faceVertices)
+		appendVertices(userProp, "eyemouth_vertices", eyemouthVertices)
 
 	#-------------------------
 
@@ -244,16 +343,13 @@ def addFrame(f):
 			if enabled:
 				faceVertices, eyemouthVertices = getFaceVertices(childPoly)
 
-				if childrenFracEnabled:
-					prop["position"].extend(toPosition(c))
-				else:
-					prop["position"].extend(toPosition(child.GetAbsPos()))
-					prop["quaternion"].extend(toQuaternion(child.GetMg()))
-					prop["scale"].extend(toScale(child.GetAbsScale()))
+				prop["position"].extend(toPosition(child.GetAbsPos()))
+				prop["quaternion"].extend(toQuaternion(child.GetMg()))
+				prop["scale"].extend(toScale(child.GetAbsScale()))
 
-
-				prop["face_vertices"].append(faceVertices)
-				prop["eyemouth_vertices"].append(eyemouthVertices)
+				# print prop["face_vertices"]
+				appendVertices(prop, "face_vertices", faceVertices)
+				appendVertices(prop, "eyemouth_vertices", eyemouthVertices)
 
 				if conf["enabled_in_frame"] == None:
 					conf["enabled_in_frame"] = f
@@ -285,8 +381,8 @@ def addFrame(f):
 				prop["position"].extend(toPosition(userAltOff.GetAbsPos()))
 				prop["quaternion"].extend(toQuaternion(userAltOff.GetMg()))
 				prop["scale"].extend(toScale(userAltOff.GetAbsScale()))
-				prop["face_vertices"].append(faceVertices)
-				prop["eyemouth_vertices"].append(eyemouthVertices)
+				appendVertices(prop, "face_vertices", faceVertices)
+				appendVertices(prop, "eyemouth_vertices", eyemouthVertices)
 
 			else:
 				prop["position"].extend([0, 0, 0])
@@ -328,6 +424,46 @@ def addFrame(f):
 		prop = keyframes["b_extra"]["property"]
 		prop["scale_z"].append(userWrapper[c4d.ID_USERDATA,2])
 
+
+	#-------------------------
+	# Falling
+
+	if keyframes["falling_children_mesh"]["in_frame"] <= f <= keyframes["falling_children_mesh"]["out_frame"]:
+		prop = keyframes["falling_children_mesh"]["property"]
+
+		faceVertices, eyemouthVertices = getFaceVertices(user)
+
+		for p in prop:
+				appendVertices(p, "face_vertices", faceVertices)
+				appendVertices(p, "eyemouth_vertices", eyemouthVertices)
+
+		# children
+		prop = keyframes["falling_children"]["property"]
+		matrices = mo.GeGetMoData(fallingCloner).GetArray(c4d.MODATA_MATRIX)
+
+		for i in xrange(fallingCloneCount):
+			p = prop[i]
+			m = matrices[i]
+
+			p["position"].extend(toPosition(m.off))
+			p["quaternion"].extend(toQuaternion(m))
+
+	#-------------------------
+	# Mosaic
+
+	if keyframes["mosaic"]["in_frame"] <= f <= keyframes["mosaic"]["out_frame"]:
+		prop = keyframes["mosaic"]["property"]
+		prop["time"].append(1 - mosaicTime[c4d.MGGROUPEFFECTOR_STRENGTH])
+
+	#-------------------------
+	# Part O2
+
+	if keyframes["o2_extra"]["in_frame"] <= f <= keyframes["o2_extra"]["out_frame"]:
+		prop = keyframes["o2_extra"]["property"]
+		prop["webcam_fade"].append(webcamLast[c4d.ID_USERDATA,1])
+		prop["interpolation"].append(webcamLast[c4d.ID_USERDATA,2])
+
+
 def getFaceVertices(face):
 	# global morphData
 
@@ -350,6 +486,8 @@ def getFaceVertices(face):
 def main():
 
 	setFrame(0)
+
+	initConfig()
 
 	f = 0
 	for f in range(0, duration):
