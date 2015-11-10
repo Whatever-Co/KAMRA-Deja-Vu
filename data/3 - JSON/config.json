@@ -1,0 +1,36 @@
+{
+    "user_children": [
+        {
+            "enabled_in_frame": 839,
+            "stranger_in_frame": 1686
+        },
+        {
+            "enabled_in_frame": 890,
+            "stranger_in_frame": 1703
+        },
+        {
+            "enabled_in_frame": 942,
+            "stranger_in_frame": 1717
+        },
+        {
+            "enabled_in_frame": 994,
+            "stranger_in_frame": 1692
+        },
+        {
+            "enabled_in_frame": 1051,
+            "stranger_in_frame": 1690
+        },
+        {
+            "enabled_in_frame": 1100,
+            "stranger_in_frame": 1698
+        },
+        {
+            "enabled_in_frame": 1154,
+            "stranger_in_frame": 1678
+        },
+        {
+            "enabled_in_frame": 1203,
+            "stranger_in_frame": 1707
+        }
+    ]
+}
