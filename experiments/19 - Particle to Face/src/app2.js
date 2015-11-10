@@ -12,6 +12,7 @@ import Ticker from './ticker'
 import WebcamPlane from './webcam-plane'
 import DeformableFaceGeometry from './deformable-face-geometry'
 import FaceParticle from './face-particle'
+import FaceBlender from './face-blender'
 
 import './main.sass'
 
@@ -51,32 +52,88 @@ export default class App {
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
     this.webcam.start()
-    this.webcam.visible = false
+    // this.webcam.visible = false
 
     this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
-    // this.face.matrixAutoUpdate = false
+    this.face.matrixAutoUpdate = false
     this.face.scale.set(300, 300, 300)
-    this.face.updateMatrixWorld()
+    // this.face.updateMatrixWorld()
     this.scene.add(this.face)
 
-    scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
-    this.particles = new FaceParticle(scale, this.face)
-    this.scene.add(this.particles)
+    this._updateObjects = () => {
+      if (this.webcam.normalizedFeaturePoints) {
+        this.face.geometry.deform(this.webcam.normalizedFeaturePoints)
+        this.face.matrix.copy(this.webcam.matrixFeaturePoints)
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.keyCode == 32 && this.webcam.normalizedFeaturePoints) {
+        // this.webcam.stop()
+        this.webcam.pause()
+        this.webcam.fadeOut()
+        // this.webcam.visible = false
+        this.face.material = new THREE.MeshBasicMaterial({map: this.webcam.texture.clone(), transparent: true, opacity: 0})
+        this.face.renderOrder = 1
+        this.face.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, 1700)
+        this.face.position.set(0, 0, 0)
+        this.face.rotation.set(0, 0, 0)
+        this.face.scale.set(300, 300, 300)
+        this.face.updateMatrix()
+        this.face.updateMatrixWorld(true)
+        new TWEEN.Tween(this.face.material).to({opacity: 1}, 1000).delay(15000).start().onComplete(() => {
+          setTimeout(this.onParticleEnd.bind(this), 3000)
+        })
+
+        scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
+        this.particles = new FaceParticle(scale, this.face)
+        this.scene.add(this.particles)
+        this.particles.update()
+        this.particles.start()
+
+        this._updateObjects = null
+      }
+    })
+  }
+
+
+  onParticleEnd() {
+    this.webcam.visible = true
+    // this.webcam.start()
+    this.webcam.resume()
+    this.webcam.fadeIn()
+
+    this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({map: this.webcam.texture, transparent: true}))
+    this.face2.scale.set(300, 300, 300)
+    this.face2.visible = false
+    this.scene.add(this.face2)
+    this.face2.matrixAutoUpdate = false
+  
+    this.face.visible = false
+
+    this._updateObjects = () => {
+      if (this.webcam.normalizedFeaturePoints) {
+        // this.face2.geometry.deform(this.webcam.normalizedFeaturePoints)
+        this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, 1700)
+        this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+      }
+    }
+
+
+    this.blender = new FaceBlender(this.face, this.face2)
+    this.scene.add(this.blender)
+    new TWEEN.Tween(this.blender).to({blend: 1}, 5000).easing(TWEEN.Easing.Exponential.InOut).start().onComplete(() => {
+      this.blender.visible = false
+      this.face2.visible = true
+    })
   }
 
 
   update(currentFrame, time) {
     TWEEN.update(time)
 
-    if (this.webcam.normalizedFeaturePoints) {
-      if (!this.face.material.map) {
-        this.face.material.map = this.webcam.texture
-        this.face.material.needsUpdate = true
-      }
-      this.face.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, 1700)
-      // this.face.geometry.deform(this.webcam.normalizedFeaturePoints)
-      // this.face.matrix.copy(this.webcam.matrixFeaturePoints)
-      this.particles.update()
+    if (this._updateObjects) {
+      this._updateObjects(currentFrame, time)
     }
 
     this.controls.update()

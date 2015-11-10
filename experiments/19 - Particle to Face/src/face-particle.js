@@ -83,7 +83,8 @@ export default class FaceParticle extends THREE.Points {
       defines: {
         DATA_WIDTH: DATA_WIDTH.toFixed(1),
         DATA_HEIGHT: DATA_HEIGHT.toFixed(1)
-      }
+      },
+      transparent: true
     }))
 
     this.face = face
@@ -147,17 +148,18 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
 
-    this._gui = new dat.GUI()
-    this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 30).setValue(0).name('Time')
-    this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 0, 100).name('Size')
-    this._gui.add(this, 'start').name('Start')
+    // this._gui = new dat.GUI()
+    // this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 30).setValue(0).name('Time')
+    // this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 0, 100).name('Size')
+    // this._gui.add(this, 'start').name('Start')
   }
 
 
   start() {
     let p = {t: 0}
     new TWEEN.Tween(p).to({t: 30}, 30000).onUpdate(() => {
-      this._guiTime.setValue(p.t)
+      this.material.uniforms.time.value = p.t
+      // this._guiTime.setValue(p.t)
     }).start()
   }
 

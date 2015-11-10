@@ -9,7 +9,7 @@ attribute vec3 triangleIndices;
 attribute vec3 weight;
 attribute float delay;
 
-varying vec3 vColor;
+varying vec4 vColor;
 
 #pragma glslify: range = require(glsl-range)
 #pragma glslify: easeOutSine = require(glsl-easings/sine-out)
@@ -61,5 +61,6 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(mix(position, dest.xyz, easeInOutCubic(t)), 1.0);
   gl_PointSize = getCurrentSize(max(0.0, time - delay)) * (scale / abs(mvPosition.z));
   gl_Position = projectionMatrix * mvPosition;
-  vColor = texture2D(faceTexture, getUV()).xyz;
+  vColor = texture2D(faceTexture, getUV());
+  // vColor.a = clamp(range(17.0, 15.0, time - delay), 0.0, 1.0);
 }

@@ -17,9 +17,12 @@ export default class WebcamPlane extends THREE.Mesh {
   constructor(camera) {
     super(
       new THREE.PlaneBufferGeometry(16 / 9, 1, 1, 1),
-      new THREE.MeshBasicMaterial({color: 0xffffff, depthWrite: false, transparent: true, opacity: 0.3})
+      new THREE.MeshBasicMaterial({color: 0xffffff, depthWrite: false, transparent: true})
     )
 
+    this.renderOrder = -100
+
+    this.onLoadedMetadata = this.onLoadedMetadata.bind(this)
     this.update = this.update.bind(this)
 
     this.camera = camera
@@ -48,6 +51,7 @@ export default class WebcamPlane extends THREE.Mesh {
     this.matrixFeaturePoints = new THREE.Matrix4()
 
     this.scoreHistory = []
+    this.pausing = false
   }
 
 
@@ -66,6 +70,16 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
 
+  pause() {
+    this.pausing = true
+  }
+
+
+  resume() {
+    this.pausing = false
+  }
+
+
   stop() {
     if (this.stream) {
       this.stream.getVideoTracks()[0].stop()
@@ -78,7 +92,7 @@ export default class WebcamPlane extends THREE.Mesh {
   onSuccess(stream) {
     this.stream = stream
     this.video.src = window.URL.createObjectURL(stream)
-    this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
+    this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()
   }
 
@@ -91,6 +105,7 @@ export default class WebcamPlane extends THREE.Mesh {
 
   onLoadedMetadata() {
     console.log({width: this.video.videoWidth, height: this.video.videoHeight})
+    this.video.removeEventListener('loadedmetadata', this.onLoadedMetadata)
 
     this.tracker = new clm.tracker({useWebGL: true})
     this.tracker.init(pModel)
@@ -219,6 +234,10 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   update() {
+    if (this.pausing) {
+      return
+    }
+
     let h = this.video.videoWidth / 16 * 9
     let y = (this.video.videoHeight - h) / 2
     this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
@@ -239,9 +258,19 @@ export default class WebcamPlane extends THREE.Mesh {
   fadeOut() {
     let p = {b: 1}
     new TWEEN.Tween(p).to({b: 0}, 2000).onUpdate(() => {
-      this.material.color.setHSL(0, 0, p.b)
+      // this.material.color.setHSL(0, 0, p.b)
+      this.material.opacity = p.b
     }).onComplete(() => {
       this.visible = false
+    }).start()
+  }
+
+
+  fadeIn() {
+    let p = {b: 0}
+    this.visible = true
+    new TWEEN.Tween(p).to({b: 1}, 2000).onUpdate(() => {
+      this.material.opacity = p.b
     }).start()
   }
 
