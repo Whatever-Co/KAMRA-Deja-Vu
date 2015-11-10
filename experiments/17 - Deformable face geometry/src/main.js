@@ -6,7 +6,7 @@ import dat from 'dat-gui'
 import Stats from 'stats-js'
 
 import 'shaders/CopyShader'
-import 'shaders/BokehShader'
+import 'shaders/BokehShader2'
 import 'shaders/FXAAShader'
 import 'shaders/VignetteShader'
 import 'postprocessing/EffectComposer'
@@ -40,13 +40,15 @@ class App {
 
   initScene() {
     this.camera = new THREE.PerspectiveCamera(16.8145, Config.RENDER_WIDTH / Config.RENDER_HEIGHT, 10, 10000)
-    this.camera.position.set(0, 0, 2435.782592)
+    this.camera.position.set(2000, 0, 1000)
+    this.camera.lookAt(new THREE.Vector3())
 
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setClearColor(0x333333)
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+    this.renderer.sortObjects = false
     document.body.appendChild(this.renderer.domElement)
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
@@ -54,11 +56,46 @@ class App {
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
 
+    window.addEventListener('click', (e) => {
+      let raycaster = new THREE.Raycaster()
+      raycaster.setFromCamera(new THREE.Vector2(), this.camera)
+      let intersects = raycaster.intersectObjects(this.scene.children, true)
+      if (intersects.length > 0) {
+        // let targetDistance = intersects[0].distance
+        // distance += (targetDistance - distance) * 0.03
+        let sdistance = this.smoothstep(this.camera.near, this.camera.far, intersects[0].distance)
+        let ldistance = this.linearize(1 -  sdistance)
+        console.log(intersects[0].distance, sdistance, ldistance)
+        this.postprocessing.bokeh_uniforms.focalDepth.value = ldistance
+        // effectController['focalDepth'] = ldistance;
+      }
+    })
+
     // let gui = new dat.GUI()
     // gui.add(this.bokeh.uniforms.focus, 'value', 0.0, 3.0, 0.025).name('Focus')
     // gui.add(this.bokeh.uniforms.aperture, 'value', 0.001, 0.2, 0.001).name('Aparuter')
     // gui.add(this.bokeh.uniforms.maxblur, 'value', 0.0, 3.0, 0.025).name('Max blur')
   }
+
+
+  linearize(depth) {
+    let zfar = this.camera.far
+    let znear = this.camera.near
+    return -zfar * znear / (depth * (zfar - znear) - zfar)
+  }
+
+
+  smoothstep(near, far, depth) {
+    let x = this.saturate( (depth - near) / (far - near))
+    return x * x * (3- 2*x)
+  }
+
+
+  saturate(x) {
+    return Math.max(0, Math.min(1, x))
+  }
+
+
 
 
   initObjects() {
@@ -137,18 +174,118 @@ class App {
   initPostprocessing() {
     let gui = new dat.GUI()
 
+    {
+      this.depthMaterial = new THREE.MeshDepthMaterial()
+
+      this.postprocessing = {}
+      this.postprocessing.scene = new THREE.Scene()
+
+      this.postprocessing.camera = new THREE.OrthographicCamera(Config.RENDER_WIDTH / - 2, Config.RENDER_WIDTH / 2,  Config.RENDER_HEIGHT / 2, Config.RENDER_HEIGHT / - 2, -10000, 10000)
+      this.postprocessing.camera.position.z = 100
+
+      this.postprocessing.scene.add(this.postprocessing.camera)
+
+      let pars = {minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat}
+      this.postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget(Config.RENDER_WIDTH, Config.RENDER_HEIGHT, pars )
+      this.postprocessing.rtTextureColor = new THREE.WebGLRenderTarget(Config.RENDER_WIDTH, Config.RENDER_HEIGHT, pars )
+
+      this.postprocessing.bokeh_uniforms = THREE.UniformsUtils.clone(THREE.BokehShader.uniforms)
+      this.postprocessing.bokeh_uniforms.tColor.value = this.postprocessing.rtTextureColor
+      this.postprocessing.bokeh_uniforms.tDepth.value = this.postprocessing.rtTextureDepth
+      this.postprocessing.bokeh_uniforms.textureWidth.value =Config.RENDER_WIDTH
+      this.postprocessing.bokeh_uniforms.textureHeight.value = Config.RENDER_HEIGHT
+      this.postprocessing.bokeh_uniforms.focusCoords.value.set(0, 0)
+      this.postprocessing.bokeh_uniforms.threshold.value = 1.0
+      this.postprocessing.bokeh_uniforms.znear.value = this.camera.near
+      this.postprocessing.bokeh_uniforms.zfar.value = this.camera.far
+      this.postprocessing.materialBokeh = new THREE.ShaderMaterial({
+        uniforms: this.postprocessing.bokeh_uniforms,
+        vertexShader: THREE.BokehShader.vertexShader,
+        fragmentShader: THREE.BokehShader.fragmentShader,
+        defines: {
+          RINGS: 3,
+          SAMPLES: 4
+        }
+      })
+
+      this.postprocessing.quad = new THREE.Mesh(new THREE.PlaneBufferGeometry(Config.RENDER_WIDTH, Config.RENDER_HEIGHT ), this.postprocessing.materialBokeh)
+      this.postprocessing.quad.position.z = - 500
+      this.postprocessing.scene.add(this.postprocessing.quad)
+
+      let effectController  = {
+        shaderFocus: false,
+
+        fstop: 2.2,
+        maxblur: 1.0,
+
+        showFocus: false,
+        focalDepth: 2.8,
+        manualdof: false,
+        vignetting: false,
+        // depthblur: false,
+
+        // threshold: 1.0,
+        // gain: 2.0,
+        // bias: 0.5,
+        // fringe: 0.7,
+
+        // focalLength: 35,
+        noise: true,
+        pentagon: false,
+
+        dithering: 0.0001
+      }
+
+      let matChanger = () => {
+        for (let e in effectController) {
+          if (e in effectController) {
+            this.postprocessing.bokeh_uniforms[e].value = effectController[e]
+          }
+        }
+
+        this.postprocessing.enabled = effectController.enabled
+        this.postprocessing.bokeh_uniforms['znear'].value = this.camera.near
+        this.postprocessing.bokeh_uniforms['zfar'].value = this.camera.far
+        // this.camera.setLens(effectController.focalLength)
+      }
+
+      // gui.add(effectController, 'enabled').onChange(matChanger)
+      // gui.add(effectController, 'jsDepthCalculation').onChange(matChanger)
+      gui.add(effectController, 'shaderFocus').onChange(matChanger)
+      // gui.add(effectController, 'focalDepth', 0.0, 3000.0).listen().onChange(matChanger)
+
+      gui.add(effectController, 'fstop', 0.1, 22, 0.001).onChange(matChanger)
+      gui.add(effectController, 'maxblur', 0.0, 5.0, 0.025).onChange(matChanger)
+
+      gui.add(effectController, 'showFocus').onChange(matChanger)
+      gui.add(effectController, 'manualdof').onChange(matChanger)
+      gui.add(effectController, 'vignetting').onChange(matChanger)
+
+      // gui.add(effectController, 'depthblur').onChange(matChanger)
+
+      // gui.add(effectController, 'threshold', 0, 1, 0.001).onChange(matChanger)
+      // gui.add(effectController, 'gain', 0, 100, 0.001).onChange(matChanger)
+      // gui.add(effectController, 'bias', 0,3, 0.001).onChange(matChanger)
+      // gui.add(effectController, 'fringe', 0, 5, 0.001).onChange(matChanger)
+
+      // gui.add(effectController, 'focalLength', 16, 80, 0.001).onChange(matChanger)
+
+      gui.add(effectController, 'noise').onChange(matChanger)
+
+      gui.add(effectController, 'dithering', 0, 0.001, 0.0001).onChange(matChanger)
+
+      gui.add(effectController, 'pentagon').onChange(matChanger)
+
+      // gui.add(shaderSettings, 'rings', 1, 8).step(1).onChange(shaderUpdate)
+      // gui.add(shaderSettings, 'samples', 1, 13).step(1).onChange(shaderUpdate)
+
+      // matChanger()
+    }
+
     this.composer = new THREE.EffectComposer(this.renderer)
-    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
-    // {
-    //   this.bokeh = new THREE.BokehPass(this.scene, this.camera, {
-    //     focus: 1.0,
-    //     aparture: 0.000025,
-    //     maxblur: 1.0,
-    //     width: Config.RENDER_WIDTH,
-    //     height: Config.RENDER_HEIGHT
-    //   })
-    //   this.composer.addPass(this.bokeh)
-    // }
+    // this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
+    this.composer.addPass(new THREE.RenderPass(this.postprocessing.scene, this.postprocessing.camera))
+
     {
       let lutPass = new THREE.ShaderPass({
         uniforms: {
@@ -224,7 +361,7 @@ class App {
       let effect = new THREE.ShaderPass(THREE.VignetteShader)
       effect.uniforms.darkness.value = 1.4
       this.composer.addPass(effect)
-      gui.add(effect.uniforms.darkness, 'value', 0.0, 2.0, 0.01).name('Darkness')
+      // gui.add(effect.uniforms.darkness, 'value', 0.0, 2.0, 0.01).name('Darkness')
     }
     {
       let effect = new THREE.ShaderPass(THREE.FXAAShader)
@@ -293,6 +430,19 @@ class App {
       }
 
       this.controls.update()
+
+      this.renderer.clear()
+
+      // Render scene into texture
+      this.scene.overrideMaterial = null
+      this.renderer.render(this.scene, this.camera, this.postprocessing.rtTextureColor, true)
+
+      // Render depth into texture
+      this.scene.overrideMaterial = this.depthMaterial
+      this.renderer.render(this.scene, this.camera, this.postprocessing.rtTextureDepth, true)
+
+      // Render bokeh composite
+      // this.renderer.render(this.postprocessing.scene, this.postprocessing.camera)
       this.composer.render()
 
       this.previousFrame = currentFrame
