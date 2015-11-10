@@ -447,9 +447,9 @@ class App {
       // this.renderer.render(this.postprocessing.scene, this.postprocessing.camera)
       this.composer.render()
 
-      $('.noise1,.noise2').each((i, el) => {
-        $(el).css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
-      })
+      // $('.noise1,.noise2').each((i, el) => {
+      //   $(el).css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+      // })
 
       this.previousFrame = currentFrame
       this.stats.end()
