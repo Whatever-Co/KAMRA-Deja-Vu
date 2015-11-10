@@ -54,7 +54,9 @@ export default class App {
     this.webcam.visible = false
 
     this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
-    this.face.matrixAutoUpdate = false
+    // this.face.matrixAutoUpdate = false
+    this.face.scale.set(300, 300, 300)
+    this.face.updateMatrixWorld()
     this.scene.add(this.face)
 
     scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
@@ -73,7 +75,7 @@ export default class App {
       }
       this.face.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, 1700)
       // this.face.geometry.deform(this.webcam.normalizedFeaturePoints)
-      this.face.matrix.copy(this.webcam.matrixFeaturePoints)
+      // this.face.matrix.copy(this.webcam.matrixFeaturePoints)
       this.particles.update()
     }
 

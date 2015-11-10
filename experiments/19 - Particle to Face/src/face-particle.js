@@ -66,42 +66,47 @@ class RandomFaceSelector {
 export default class FaceParticle extends THREE.Points {
 
   constructor(scale, face) {
+    const DATA_WIDTH = 32
+    const DATA_HEIGHT = 32
+
     super(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
       vertexShader: require('./shaders/face-particle.vert'),
       fragmentShader: require('./shaders/face-particle.frag'),
       uniforms: {
         time: {type: 'f', value: 0},
-        size: {type: 'f', value: 100},
+        // size: {type: 'f', value: 0},
         scale: {type: 'f', value: scale},
         faceMatrix: {type: 'm4', value: face.matrixWorld},
         facePosition: {type: 't', value: null},
         faceTexture: {type: 't', value: null}
+      },
+      defines: {
+        DATA_WIDTH: DATA_WIDTH.toFixed(1),
+        DATA_HEIGHT: DATA_HEIGHT.toFixed(1)
       }
     }))
 
     this.face = face
 
-    let data = new Float32Array(32 * 32 * 3)
-    this.dataTexture = new THREE.DataTexture(new Float32Array(32 * 32 * 3), 32, 32, THREE.RGBFormat, THREE.FloatType)
+    this.dataTexture = new THREE.DataTexture(new Float32Array(DATA_WIDTH * DATA_HEIGHT * 3), DATA_WIDTH, DATA_HEIGHT, THREE.RGBFormat, THREE.FloatType)
     this.material.uniforms.facePosition.value = this.dataTexture
+
+    let fp = this.face.geometry.positionAttribute.array
+    let getPosition = (index) => {
+      let i = index * 3
+      return new THREE.Vector3(fp[i], fp[i + 1], fp[i + 2]).applyMatrix4(face.matrixWorld)
+    }
+
+    let zero = new THREE.Vector3(0, 0, -0.5).applyMatrix4(face.matrixWorld)
 
     let amount = 10000
     let position = new Float32Array(amount * 3)
     let triangleIndices = new Float32Array(amount * 3)
     let weight = new Float32Array(amount * 3)
-    let radius = 3000
+    let delay = new Float32Array(amount)
     let randomFaceSelector = new RandomFaceSelector(this.face.geometry)
     let faceIndices = this.face.geometry.index.array
     for (let i = 0; i < position.length; i += 3) {
-      let z = Math.random() * 2 - 1
-      let th = Math.random() * Math.PI * 2
-      let r = Math.sqrt(1 - z * z)
-      let x = r * Math.cos(th)
-      let y = r * Math.sin(th)
-      position[i] = x * radius
-      position[i + 1] = y * radius
-      position[i + 2] = z * radius
-      
       let faceIndex = randomFaceSelector.get()
       let j0 = faceIndices[faceIndex * 3]
       let j1 = faceIndices[faceIndex * 3 + 1]
@@ -112,7 +117,7 @@ export default class FaceParticle extends THREE.Points {
 
       let a = Math.random()
       let b = Math.random()
-      if ((a + b) > 1) {
+      if (a + b > 1) {
         a = 1 - a
         b = 1 - b
       }
@@ -120,24 +125,39 @@ export default class FaceParticle extends THREE.Points {
       weight[i] = a
       weight[i + 1] = b
       weight[i + 2] = c
+
+      let p = getPosition(j0).multiplyScalar(a)
+      p.add(getPosition(j1).multiplyScalar(b))
+      p.add(getPosition(j2).multiplyScalar(c))
+      p.sub(zero)
+      if (Math.random() < 0.5) {
+        p.z *= -1
+      }
+      let r = 1000 + Math.random() * 2000
+      p.setLength(r).add(zero)
+      position[i] = p.x
+      position[i + 1] = p.y
+      position[i + 2] = p.z
+
+      delay[i / 3] = Math.random() * 3
     }
 
     this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
     this.geometry.addAttribute('triangleIndices', new THREE.BufferAttribute(triangleIndices, 3))
     this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
+    this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
 
     this._gui = new dat.GUI()
-    this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 1).setValue(0).name('Time')
-    this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 1, 100).name('Size')
+    this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 30).setValue(0).name('Time')
+    this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 0, 100).name('Size')
     this._gui.add(this, 'start').name('Start')
   }
 
 
   start() {
-    let p = {t: 0, s: 100}
-    new TWEEN.Tween(p).to({t: 1, s: 5}, 5000).easing(TWEEN.Easing.Cubic.Out).onUpdate(() => {
+    let p = {t: 0}
+    new TWEEN.Tween(p).to({t: 30}, 30000).onUpdate(() => {
       this._guiTime.setValue(p.t)
-      this._guiSize.setValue(p.s)
     }).start()
   }
 

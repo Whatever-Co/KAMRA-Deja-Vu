@@ -13,20 +13,20 @@ module.exports = {
   },
   module: {
     preLoaders: [
-      { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint' }
+      {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'eslint'}
     ],
     loaders: [
-      { test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel' },
-      { test: /\.sass$/, loaders: ['style', 'css', 'autoprefixer', 'sass?indentedSyntax'] },
-      { test: /\.jade$/, loader: 'jade?self' },
-      { test: /\.json$/, loader: 'json' },
-      { test: /\.(vert|frag)$/, loader: 'raw' }
+      {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel'},
+      {test: /\.sass$/, loaders: ['style', 'css', 'autoprefixer', 'sass?indentedSyntax']},
+      {test: /\.jade$/, loader: 'jade?self'},
+      {test: /\.json$/, loader: 'json'},
+      {test: /\.(vert|frag)$/, loaders: ['raw', 'glslify']}
     ]
   },
   amd: { jQuery: true },
   plugins: [
     new BrowserSyncPlugin({
-      server: { baseDir: ['./public'] },
+      server: { baseDir: ['./public']},
       open: false
     })
   ],
