@@ -65,7 +65,7 @@ class RandomFaceSelector {
 
 export default class FaceParticle extends THREE.Points {
 
-  constructor(scale, face) {
+  constructor(scale, face, sprite, lut) {
     const DATA_WIDTH = 32
     const DATA_HEIGHT = 32
 
@@ -74,11 +74,12 @@ export default class FaceParticle extends THREE.Points {
       fragmentShader: require('./shaders/face-particle.frag'),
       uniforms: {
         time: {type: 'f', value: 0},
-        // size: {type: 'f', value: 0},
         scale: {type: 'f', value: scale},
         faceMatrix: {type: 'm4', value: face.matrixWorld},
         facePosition: {type: 't', value: null},
-        faceTexture: {type: 't', value: null}
+        faceTexture: {type: 't', value: null},
+        faceSprite: {type: 't', value: sprite},
+        faceLUT: {type: 't', value: lut}
       },
       defines: {
         DATA_WIDTH: DATA_WIDTH.toFixed(1),

@@ -20,11 +20,18 @@ import './main.sass'
 export default class App {
 
   constructor() {
-    this.initScene()
-    this.initObjects()
-
-    Ticker.on('update', this.update.bind(this))
-    Ticker.start()
+    this.loader = require('./asset-loader')
+    this.loader.on('progress', (event) => {
+      console.log(Math.round((event.progress / event.total) * 100))
+    })
+    this.loader.on('complete', (event) => {
+      // console.log(this.loader.getResult('keyframes'))
+      this.initScene()
+      this.initObjects()
+      Ticker.on('update', this.update.bind(this))
+      Ticker.start()
+    })
+    this.loader.load()
   }
 
 
@@ -81,12 +88,15 @@ export default class App {
         this.face.scale.set(300, 300, 300)
         this.face.updateMatrix()
         this.face.updateMatrixWorld(true)
-        new TWEEN.Tween(this.face.material).to({opacity: 1}, 1000).delay(15000).start().onComplete(() => {
+        new TWEEN.Tween(this.face.material).to({opacity: 1}, 2000).delay(15000).start().onComplete(() => {
           setTimeout(this.onParticleEnd.bind(this), 3000)
         })
 
         scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
-        this.particles = new FaceParticle(scale, this.face)
+        let sprite = new THREE.CanvasTexture(this.loader.getResult('particle-sprite'))
+        let lut = new THREE.CanvasTexture(this.loader.getResult('particle-lut'))
+        lut.minFilter = lut.maxFilter = THREE.NearestFilter
+        this.particles = new FaceParticle(scale, this.face, sprite, lut)
         this.scene.add(this.particles)
         this.particles.update()
         this.particles.start()

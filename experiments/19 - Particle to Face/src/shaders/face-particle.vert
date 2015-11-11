@@ -4,12 +4,15 @@ uniform float time;
 uniform mat4 faceMatrix;
 uniform sampler2D facePosition;
 uniform sampler2D faceTexture;
+uniform sampler2D faceLUT;
 
 attribute vec3 triangleIndices;
 attribute vec3 weight;
 attribute float delay;
 
 varying vec4 vColor;
+varying vec2 vFaceIndex;
+varying float vBlend;
 
 #pragma glslify: range = require(glsl-range)
 #pragma glslify: easeOutSine = require(glsl-easings/sine-out)
@@ -32,6 +35,20 @@ vec2 getu(float index) {
 
 vec2 getUV() {
   return getu(triangleIndices.x) * weight.x + getu(triangleIndices.y) * weight.y + getu(triangleIndices.z) * weight.z;
+}
+
+
+vec2 getSpriteUVLUT(vec3 c) {
+  float x = (c.r + floor(mod(c.b * 16.0, 16.0))) / 16.0;
+  float y = c.g;
+  vec2 index = texture2D(faceLUT, vec2(x, y)).xy * 16.0;
+  // R is index x
+  // G is index y
+  index.y += 1.0;
+  index.x = floor(index.x);
+  index.y = floor(index.y);
+  index = index / 16.0;
+  return vec2(index.x, 1.0 - index.y);
 }
 
 
@@ -62,5 +79,6 @@ void main() {
   gl_PointSize = getCurrentSize(max(0.0, time - delay)) * (scale / abs(mvPosition.z));
   gl_Position = projectionMatrix * mvPosition;
   vColor = texture2D(faceTexture, getUV());
-  // vColor.a = clamp(range(17.0, 15.0, time - delay), 0.0, 1.0);
+  vFaceIndex = getSpriteUVLUT(vColor.xyz);
+  vBlend = easeOutSine(clamp(range(13.0, 20.0, time), 0.0, 1.0));
 }
