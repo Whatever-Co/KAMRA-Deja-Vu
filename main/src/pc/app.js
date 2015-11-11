@@ -121,7 +121,7 @@ class App {
     this.controllers.push(this.camera)
 
     // webcam
-    this.webcam = new WebcamPlane(this.camera)
+    this.webcam = new WebcamPlane(this.keyframes, this.camera)
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
@@ -148,6 +148,7 @@ class App {
         vcon[0].play()
       }
     })
+    this.controllers.push(this.webcam)
     this.webcam.start()
 
     // face
