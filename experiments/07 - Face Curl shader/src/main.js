@@ -7,6 +7,8 @@ require('babel/polyfill');
 require('./main.sass');
 document.body.innerHTML = require('./body.jade')();
 
+import {mat4, vec3} from 'gl-matrix';
+
 
 const THREE = require('three');
 window.THREE = THREE; // export to global
@@ -42,10 +44,11 @@ async function main() {
     side: THREE.DoubleSide,
     uniforms: {
       texture: {type: 't', value: texture},
-      rate: {type: 'f', value:0},
-      zScale: {type: 'f', value:0.0},
+      rate: {type: 'f', value:0.5},
+      scaleZ: {type: 'f', value:0.0},
       radius: {type: 'f', value:0.2},
-      rotationZ: {type: 'f', value:2.6}
+      curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
+      curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
     }
   });
 
@@ -53,14 +56,22 @@ async function main() {
   let mesh = new THREE.Mesh( geometry, material);
   scene.add(mesh);
 
+  let param = {
+    rotasionZ:0.5,
+    offsetX:0,
+    offsetY:0
+  };
+
   //==============
   // dat GUI
   let gui = new dat.GUI();
   gui.add(material, 'wireframe');
   gui.add(material.uniforms.rate, 'value', 0.0, 1.0).name('rate');
-  gui.add(material.uniforms.zScale, 'value', 0.0, 1.2).name('zScale');
+  gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.2).name('zScale');
   gui.add(material.uniforms.radius, 'value', 0.1, 1.0).name('radius');
-  gui.add(material.uniforms.rotationZ, 'value', 0.0, 3.14).name('rotationZ');
+  gui.add(param, 'rotasionZ', 0.0, 3.14);
+  gui.add(param, 'offsetX', -1.0, 1.0);
+  gui.add(param, 'offsetY', -1.0, 1.0);
 
   //==============
   // Events
@@ -75,6 +86,17 @@ async function main() {
   const loop = true;
   while(loop) {
     await requestAnimationFrameAsync();
+
+    // update matrix
+    let mat = new THREE.Matrix4();
+    mat.makeTranslation(param.offsetX, param.offsetY, 0);
+    mat.makeRotationZ(param.rotasionZ);
+    //mat.makeScale(0.1, 1.0, 10.0);
+    let invMat = new THREE.Matrix4().getInverse(mat);
+
+    material.uniforms.curlPushMatrix.value = mat;
+    material.uniforms.curlPopMatrix.value = invMat;
+
     renderer.render(scene, camera);
     controls.update();
   }

@@ -158,8 +158,16 @@ export default class FaceController extends THREE.Object3D {
       this.main.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
 
       // transition from captured position to keyframes'
+      // TODO : ぺろーん/*/**/*/
       f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
       let blend = 1 - this.data.i_extra.property.interpolation[f]
+      let curl = {
+        strength: this.data.i_extra.property.curl_strength[f],
+        rotation: this.data.i_extra.property.curl_rotation[f],
+        offset: this.data.i_extra.property.curl_offset[f],
+        scale_z: this.data.i_extra.property.scale_z[f]
+      }
+      console.log(curl)
       if (blend > 0) {
         this.main.position.lerp(this.initialTransform.position, blend)
         this.main.scale.lerp(this.initialTransform.scale, blend)
