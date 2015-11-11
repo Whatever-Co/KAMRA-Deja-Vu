@@ -10,6 +10,7 @@ import matplotlib.animation
 from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
 import subprocess
+from PIL import Image
 
 
 def pixelate(image, size=20):
@@ -52,32 +53,44 @@ def get_validity_pixels(img):
     return arr
 
 
-def find_nearest_color(color, templates):
-    '''Find nearest color in template colors'''
-
+def find_nearest_color_index(color, templates):
     distances = ((templates - color)**2).sum(axis=1)
     ndx = distances.argsort()
     # pprint.pprint(zip(templates[ndx[:10]], distances[ndx[:10]]))
-    nearestColor = templates[ndx[0]]
+    return ndx[0]
+
+
+def zip_nearest_color(color, templates):
+    '''Find nearest color in template colors'''
+    index = find_nearest_color_index(colors, templates)
+    nearestColor = templates[index]
     return zip(color, nearestColor)
 
 
-def plot_color_mapping(colors, templates):
+def plot_color_mapping(colors, templates, useHsv=True):
     colorMaps = []
     for color in colors:
-        colorMap = find_nearest_color(color, templates)
+        colorMap = zip_nearest_color(color, templates)
         colorMaps.append(colorMap)
 
     # Draw figures
     fig = pyplot.figure()
 
     ax = Axes3D(fig)
-    ax.set_xlabel("Hue")
-    ax.set_ylabel("Saturation")
-    ax.set_zlabel("Brightness")
-    ax.set_xlim(0, 255)
-    ax.set_ylim(0, 255)
-    ax.set_zlim(0, 255)
+    if useHsv:
+        ax.set_xlabel("Hue")
+        ax.set_ylabel("Saturation")
+        ax.set_zlabel("Brightness")
+        ax.set_xlim(0, 180)
+        ax.set_ylim(0, 255)
+        ax.set_zlim(0, 255)
+    else:
+        ax.set_xlabel("Blue")
+        ax.set_ylabel("Green")
+        ax.set_zlabel("Red")
+        ax.set_xlim(0, 255)
+        ax.set_ylim(0, 255)
+        ax.set_zlim(0, 255)
 
     def init():
         ax.scatter(  # webcamera face
@@ -110,7 +123,7 @@ def plot_color_mapping(colors, templates):
         interval=1,
         blit=True
     )
-    writer = matplotlib.animation.FFMpegWriter(fps=30)
+    writer = matplotlib.animation.FFMpegWriter(fps=60)
     anim.save("color_map.mp4", writer=writer)
     # pyplot.show()
     return colorMaps
@@ -218,12 +231,81 @@ def plot_mosaic_color(paths):
         imgArr = imgArr.astype(np.float64)  # to float
         # plot_color_mapping(imgArr[:10], templates)
         plot_color_mapping(imgArr, templates)
-        # color = (find_nearest_color(imgArr[:4], templates))
+        # color = (zip_nearest_color(imgArr[:4], templates))
         break
+
+
+def make_lut():
+    colors = []
+    for y in range(0, 16):
+        rows = []
+        for x in range(0, 256):
+            rows.append([
+                (x / 16) * 16,  # blue
+                y * 16,  # green
+                (x % 16) * 16  # red
+            ])
+        colors.append(rows)
+
+    image = np.array(colors)
+    cv2.imwrite('lut/lut.png', image)
+    return image
+
+
+def make_spritesheet(paths, cols, size, savePath):
+    len(paths)
+    sprite = Image.new("RGBA", (cols * size, cols * size))
+    print(paths)
+    for i, path in enumerate(paths):
+        img = Image.open(path)
+        sprite.paste(img, (i % cols * size, i / cols * size))
+    sprite.save(savePath)
+    return sprite
+
+
+def convert_lut(paths):
+    '''
+    一番近い色空間のやつの、
+    肌色 3DLUT
+    と
+    スプライトシートのIndex指定のLUT
+    を生成する
+    '''
+
+    # get template
+    templates = images_to_average_colors(paths)
+    templates = templates[:, 0:3]  # BGRA to BGR
+    templates = templates.astype(np.float64)  # to float
+
+    # get lookup table
+    img = make_lut()
+    imgArr = img.reshape(1, img.shape[0] * img.shape[1], img.shape[2])
+    imgArr = imgArr[0]  # strip
+    imgArr = imgArr.astype(np.float64)  # to float
+
+    # make maps
+    face_lut = img.copy()
+    idx_lut = img.copy()
+    for y, row in enumerate(face_lut):
+        for x, col in enumerate(row):
+            print(col)
+            index = find_nearest_color_index(col, templates)
+            face_lut[y][x] = templates[index]
+            # R : index x
+            # G : index y
+            print("X:{0}, Y:{1}".format(index % 16, index / 16))
+            idx_lut[y][x] = (0, index / 16 * 16, index % 16 * 16)
+
+    cv2.imwrite('lut/lut_face.png', face_lut)
+    cv2.imwrite('lut/lut_index.png', idx_lut)
+    print(idx_lut)
 
 if __name__ == '__main__':
     paths = glob.glob('source/*.png')
 
     # plot_average_color(paths)
-    plot_dictance_color(paths)
+    # plot_dictance_color(paths)
     # plot_mosaic_color(paths)
+
+    # make_spritesheet(paths, 16, 512, 'lut/sprite512.png')
+    convert_lut(paths)
