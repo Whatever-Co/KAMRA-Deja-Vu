@@ -18,6 +18,7 @@ vec4 lookup() {
 
 void main() {
   vec4 c = lookup();
+  if (c.a < 0.1) discard;
 
   float depth = gl_FragCoord.z / gl_FragCoord.w;
 
