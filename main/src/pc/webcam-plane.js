@@ -259,6 +259,7 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   fadeOut() {
+    // TODO : user keyframes.json
     let p = {rate: 0.4, brightness: 1}
     new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
       this.material.uniforms.rate.value = p.rate
