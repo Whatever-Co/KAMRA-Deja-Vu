@@ -3,6 +3,7 @@ from c4d import gui
 import json
 import time, os, math
 from c4d.modules import mograph as mo
+import gzip
 
 from Quaternion import Quat
 

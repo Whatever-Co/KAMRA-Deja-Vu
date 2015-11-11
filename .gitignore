@@ -10,3 +10,6 @@ Thumbs.db
 
 **/*.log
 **/*.blend?
+
+# data
+"data/3 - JSON/keyframes.json"

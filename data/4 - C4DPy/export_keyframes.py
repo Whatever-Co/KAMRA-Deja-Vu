@@ -4,7 +4,12 @@ from djv import *
 # config
 
 destKeyframeFile = projDir + "/0b/data/3 - JSON/keyframes.json"
+destKeyframeGz = projDir + "/0b/data/3 - JSON/keyframes.json.gz"
 destConfigFile = projDir + "/0b/data/3 - JSON/config.json"
+
+keyframeDupPath = [
+	"/b/experiments/22 - JSON Checker/public/data"
+]
 
 # user face
 cam = doc.SearchObject("Camera")
@@ -35,6 +40,11 @@ userAlts = [
 	search("user_alt1")
 ]
 
+particlesCloner = search("user_particles")
+particlesVanish = search("user_particles_vanish")
+particlesCount = mo.GeGetMoData(particlesCloner).GetCount()
+particlesIns = search("user_particles_ins")
+
 slices = [search("user_slice.%d" % i) for i in xrange(5)]
 sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
 
@@ -42,7 +52,6 @@ sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
 fallingCloner = search("falling_cloner")
 fallingCloneCount = mo.GeGetMoData(fallingCloner).GetCount()
 
-mosaicFace = search("mosaic_face")
 mosaicTime = search("mosaic_time")
 
 webcamLast = search("webcam_last")
@@ -97,7 +106,6 @@ keyframes = {
 		"out_frame": 1766,
 		"property": [
 			{
-				"enabled": [],
 				"position": [],
 				"quaternion": [],
 				"scale": [],
@@ -132,6 +140,23 @@ keyframes = {
 			}
 		]
 
+	},
+
+	#----------
+	# Particles
+
+	"user_particles": {
+		"in_frame": inFrame["A3"],
+		"out_frame": 1700,
+		"property": [
+			{
+				"enabled": [],
+				"position": [],
+				"scale": [],
+				"quaternion": [],
+				"mesh_index": []
+			} for i in xrange(particlesCount)
+		]
 	},
 
 	#----------
@@ -222,6 +247,18 @@ config = None
 def initConfig():
 	global config
 
+	mosaicFace = search("mosaic_face")
+
+	mosaicRandUniform = search("mosaic_rand_uniform")
+	mosaicRandZ = search("mosaic_rand_z")
+
+	mosaicRandX = mosaicRandUniform[c4d.ID_MG_BASEEFFECTOR_POSITION,c4d.VECTOR_X]
+	mosaicRandY = mosaicRandUniform[c4d.ID_MG_BASEEFFECTOR_POSITION,c4d.VECTOR_Y]
+
+	mosaicRandZamp = float(-mosaicRandZ[c4d.ID_MG_BASEEFFECTOR_POSITION,c4d.VECTOR_Z])
+	mosaicRandZmin = mosaicRandZamp * mosaicRandZ[c4d.ID_MG_BASEEFFECTOR_MINSTRENGTH]
+	mosaicRandZmax = mosaicRandZamp * mosaicRandZ[c4d.ID_MG_BASEEFFECTOR_MAXSTRENGTH]
+
 	config = {
 		"tracer": {
 			"indices": [77, 82, 92, 95, 177, 245, 250, 260, 263],
@@ -233,39 +270,62 @@ def initConfig():
 				"stranger_in_frame": None
 			} for i in xrange(8)
 		],
+		"user_particles_mesh": [],
 		"mosaic_face": {
 			"position": toPosition(mosaicFace.GetAbsPos()),
 			"scale": toScale(mosaicFace.GetAbsScale()),
+			"random_x_min": -mosaicRandX,
+			"random_x_max": mosaicRandX,
+			"random_y_min": -mosaicRandY,
+			"random_y_max": mosaicRandY,
+			"random_z_min": -mosaicRandZmin,
+			"random_z_max": -mosaicRandZmax
 		}
 	}
 
+	# user_particles_mesh
+	particleMeshes = search("user_particles_mesh_container").GetChildren()
+	conf = config["user_particles_mesh"]
+
+	for mesh in particleMeshes:
+
+		faceVertices, eyemouthVertices = getFaceVertices(user)
+
+		conf.append({
+			"face_vertices": faceVertices,
+			"eyemouth_vertices": eyemouthVertices
+		})
+
+
 def appendVertices(prop, name, vertices):
 
-	length = len(prop[name])
+	prop[name].append(vertices)
 
-	pf = -1
-	while True:
-		if length + pf < 0:
-			prop[name].append(vertices)
-			return
+	# length = len(prop[name])
 
-		elif prop[name][pf] != None:
-			break
-		pf -= 1
+	# pf = -1
+	# while True:
+	# 	if length + pf < 0:
+	# 		prop[name].append(vertices)
+	# 		return
 
-	prevVertices = prop[name][pf]
-	changed = False
+	# 	elif prop[name][pf] != None:
+	# 		break
+	# 	pf -= 1
+
+	# prevVertices = prop[name][pf]
+	# # changed = False
 	
-	for i in xrange(len(vertices)):
-		if vertices[i] != prevVertices[i]:
-			changed = True
-			break
+	# # for i in xrange(len(vertices)):
+	# # 	if vertices[i] != prevVertices[i]:
+	# # 		changed = True
+	# # 		break
 
-	if changed:
-		prop[name].append(vertices)
-	else:
-		# print "NO CHANGE"
-		prop[name].append(None)
+	# if prevVertices != vertices:
+	# 	prop[name].append(vertices)
+	# else:
+	# 	# print "NO CHANGE"
+	# 	prop[name].append(None)
 
 
 #========================================
@@ -391,6 +451,31 @@ def addFrame(f):
 				prop["face_vertices"].append(None)
 				prop["eyemouth_vertices"].append(None)
 
+	if keyframes["user_particles"]["in_frame"] <= f <= keyframes["user_particles"]["out_frame"]:
+
+		md = mo.GeGetMoData(particlesCloner)
+		matrices = md.GetArray(c4d.MODATA_MATRIX)
+
+		enabled = particlesVanish[c4d.ID_MG_BASEEFFECTOR_STRENGTH] < 1.0
+		scale = [particlesCloner[c4d.ID_MG_TRANSFORM_SCALE,c4d.VECTOR_X] for i in xrange(3)]
+		meshIndex = int(particlesIns[c4d.INSTANCEOBJECT_LINK].GetName())
+
+		for i in xrange(particlesCount):
+			prop = keyframes["user_particles"]["property"][i]
+			m = matrices[i]
+
+			prop["enabled"].append(enabled)
+			prop["mesh_index"].append(meshIndex)
+
+			if enabled:
+				prop["position"].extend(toPosition(m.off))
+				prop["scale"].extend(scale)
+				prop["quaternion"].extend(toQuaternion(m))
+			else:
+				prop["position"].extend([0, 0, 0])
+				prop["quaternion"].extend([0, 0, 0, 1])
+				prop["scale"].extend([0, 0, 0])
+
 	#-------------------------
 	# part B
 
@@ -486,7 +571,6 @@ def getFaceVertices(face):
 def main():
 
 	setFrame(0)
-
 	initConfig()
 
 	f = 0
@@ -499,6 +583,10 @@ def main():
 
 	with open(destKeyframeFile, 'w') as outFile:
 		json.dump(keyframes, outFile, separators=(',',':'))
+
+	with open(destKeyframeFile, 'rb') as inFile:
+		with gzip.open(destKeyframeGz, 'wb') as outFile:
+			outFile.writelines(inFile)
 
 	with open(destConfigFile, 'w') as outFile:
 		json.dump(config, outFile, separators=(',',':'))
