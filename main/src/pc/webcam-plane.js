@@ -16,8 +16,21 @@ export default class WebcamPlane extends THREE.Mesh {
 
   constructor(camera) {
     super(
-      new THREE.PlaneBufferGeometry(16 / 9, 1, 1, 1),
-      new THREE.MeshBasicMaterial({color: 0xffffff, depthWrite: false})
+      new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
+      new THREE.ShaderMaterial({
+        vertexShader:require('./shaders/webcam-plane.vert'),
+        fragmentShader:require('./shaders/webcam-plane.frag'),
+        depthWrite: false,
+        uniforms: {
+          texture: {type: 't', value: null},
+          rate: {type: 'f', value:0.4},
+          brightness: {type: 'f', value:1},
+          frame: {type: 'f', value:0},
+          center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+          waveForce: {type: 'f', value:0.02},
+          zoomForce: {type: 'f', value:0.3}
+        }
+      })
     )
 
     this.update = this.update.bind(this)
@@ -33,7 +46,7 @@ export default class WebcamPlane extends THREE.Mesh {
     this.textureContext.translate(1024, 0)
     this.textureContext.scale(-1, 1)
     this.texture = new THREE.CanvasTexture(this.textureCanvas)
-    this.material.map = this.texture
+    this.material.uniforms.texture.value = this.texture
     // document.body.appendChild(this.textureCanvas)
 
     this.trackerCanvas = document.createElement('canvas')
@@ -204,6 +217,13 @@ export default class WebcamPlane extends THREE.Mesh {
       let isOK = len > 400 && Math.abs(center[0] - pCenter[0]) < 10 && this.tracker.getConvergence() < 50
       // $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
       this.scoreHistory.push(isOK)
+
+
+      let centerRate = [this.trackerCanvas.width*2, this.trackerCanvas.height*2]
+      vec2.divide(centerRate, center, centerRate)
+      vec2.add(centerRate, [0.5,0.5], centerRate)
+      console.log(centerRate)
+      this.material.uniforms.center.value = new THREE.Vector2(centerRate[0], centerRate[1])
     } else {
       this.scoreHistory.push(false)
     }
@@ -218,7 +238,7 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
 
-  update() {
+  update(currentFrame) {
     let h = this.video.videoWidth / 16 * 9
     let y = (this.video.videoHeight - h) / 2
     this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
@@ -233,13 +253,16 @@ export default class WebcamPlane extends THREE.Mesh {
     // this.tracker.draw(this.trackerCanvas)
 
     this.checkCaptureScore()
+
+    this.material.uniforms.frame.value = currentFrame
   }
 
 
   fadeOut() {
-    let p = {b: 1}
-    new TWEEN.Tween(p).to({b: 0}, 2000).onUpdate(() => {
-      this.material.color.setHSL(0, 0, p.b)
+    let p = {rate: 0.4, brightness: 1}
+    new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
+      this.material.uniforms.rate.value = p.rate
+      this.material.uniforms.brightness.value = p.brightness
     }).onComplete(() => {
       this.visible = false
     }).start()
