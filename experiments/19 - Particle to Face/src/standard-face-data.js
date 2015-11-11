@@ -7,12 +7,10 @@ export default class StandardFaceData {
 
   constructor() {
     this.data = require('./data/face2.json')
-    console.log(this.data)
 
     let index = this.data.face.index.concat(this.data.rightEye.index, this.data.leftEye.index)
     this.index = new THREE.Uint16Attribute(index, 1)
     this.position = new THREE.Float32Attribute(this.data.face.position, 3)
-    console.log(this.position)
 
     this.bounds = this.getBounds()
     this.size = vec2.len(this.bounds.size)

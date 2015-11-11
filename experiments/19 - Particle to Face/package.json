@@ -12,6 +12,10 @@
     "eslint-friendly-formatter": "^1.2.2",
     "eslint-loader": "^1.1.0",
     "gl-matrix": "^2.3.1",
+    "glsl-easings": "^1.0.0",
+    "glsl-range": "^1.0.0",
+    "glslify-hex": "^2.0.1",
+    "glslify-loader": "^1.0.2",
     "jade": "^1.11.0",
     "jade-loader": "^0.7.1",
     "jquery": "^2.1.4",
@@ -84,5 +88,10 @@
     "ecmaFeatures": {
       "modules": true
     }
+  },
+  "glslify": {
+    "transform": [
+      "glslify-hex"
+    ]
   }
 }

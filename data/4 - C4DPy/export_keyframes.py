@@ -3,7 +3,8 @@ from djv import *
 #========================================
 # config
 
-destFile = projDir + "/0b/data/3 - JSON/keyframes.json"
+destKeyframeFile = projDir + "/0b/data/3 - JSON/keyframes.json"
+destConfigFile = projDir + "/0b/data/3 - JSON/config.json"
 
 # user face
 cam = doc.SearchObject("Camera")
@@ -15,6 +16,11 @@ userMorph = user.GetTag(c4d.Tposemorph)
 children = [doc.SearchObject("child.%d" % i) for i in xrange(8)]
 childrenPoly = [child.GetChildren()[0] for child in children]
 childrenMat = [doc.SearchMaterial("stranger.%d" % i) for i in xrange(8)]
+
+childrenFrac = search("children_frac")
+
+webcamMat = doc.SearchMaterial("webcam")
+webcamFadeShader = webcamMat[c4d.MATERIAL_ALPHA_SHADER]
 
 userAltsRoot = [
 	search("user_alt0_root"),
@@ -28,7 +34,6 @@ userAlts = [
 	search("user_alt0"),
 	search("user_alt1")
 ]
-
 
 slices = [search("user_slice.%d" % i) for i in xrange(5)]
 sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
@@ -69,7 +74,8 @@ keyframes = {
 			"curl_rotation": [],
 			"curl_offset": [],
 			"interpolation": [],
-			"scale_z": []
+			"scale_z": [],
+			"webcam_fade": []
 		}
 	},
 
@@ -80,6 +86,14 @@ keyframes = {
 		"in_frame": inFrame["A2"],
 		"out_frame": 1766,
 		"property": [
+			{
+				"enabled": [],
+				"position": [],
+				"quaternion": [],
+				"scale": [],
+				"face_vertices": [],
+				"eyemouth_vertices": [],
+			} for i in xrange(8)
 		]
 	},
 
@@ -144,9 +158,18 @@ keyframes = {
 			"scale_z": []
 		}
 	}
+}
 
+#========================================
+# config format
 
-
+config = {
+	"user_children": [
+		{
+			"enabled_in_frame": None,
+			"stranger_in_frame": None
+		} for i in xrange(8)
+	]
 }
 
 
@@ -172,7 +195,7 @@ def addFrame(f):
 		userProp["eyemouth_vertices"].append(eyemouthVertices)
 
 	#-------------------------
-	# part I
+
 	if f <= keyframes["i_extra"]["out_frame"]:
 		curl = doc.SearchObject("user_curl")
 		curlRot = doc.SearchObject("user_curl_rot")
@@ -183,6 +206,7 @@ def addFrame(f):
 		prop["curl_offset"].append(curl.GetRelPos().y)
 		prop["interpolation"].append(userWrapper[c4d.ID_USERDATA,3])
 		prop["scale_z"].append(userWrapper[c4d.ID_USERDATA,2])
+		prop["webcam_fade"].append(webcamFadeShader[c4d.COLORSHADER_BRIGHTNESS])
 
 		# ignore user matrix
 		userProp = keyframes["user"]["property"]
@@ -194,48 +218,52 @@ def addFrame(f):
 		userProp["scale"][-1] = 1
 
 	#-------------------------
-	# part A2 - A3
-
-	if f == keyframes["user_children"]["in_frame"]:
-
-		print "init user_children"
-
-		prop = keyframes["user_children"]["property"]
-
-		for i in xrange(8):
-			prop.append({
-				"enabled": [],
-				"weight": {
-					"emo-spherize": []
-				},
-				"position": [],
-				"quaternion": [],
-				"scale": [],
-				"stranger_id": "stranger_%02d" % i,
-				"stranger_weight": []
-			})
+	childrenFracEnabled = childrenFrac[c4d.ID_BASEOBJECT_GENERATOR_FLAG] == 1
 
 	if keyframes["user_children"]["in_frame"] <= f <= keyframes["user_children"]["out_frame"]:
+
+		matrices = None
+
+		if childrenFracEnabled:
+			md = mo.GeGetMoData(childrenFrac)
+			matrices = md.GetData(c4d.MODATA_MATRIX)
 
 		for i, child in enumerate(children):
 			childPoly = childrenPoly[i]
 			childMorph = childPoly.GetTag(c4d.Tposemorph)
 			childMat = childrenMat[i]
+
 			prop = keyframes["user_children"]["property"][i]
+			conf = config["user_children"][i]
+
 			enabled = childPoly[c4d.ID_BASEOBJECT_VISIBILITY_EDITOR] == 2
 
-			prop["enabled"].append(enabled)
-			prop["weight"]["emo-spherize"].append(childMorph[4000,4301])
-			prop["stranger_weight"].append(childMat[c4d.MATERIAL_LUMINANCE_BRIGHTNESS])
+			if conf["stranger_in_frame"] == None and childMat[c4d.MATERIAL_LUMINANCE_BRIGHTNESS] > 0:
+				conf["stranger_in_frame"] = f
 
 			if enabled:
-				prop["position"].extend(toPosition(child.GetAbsPos()))
-				prop["quaternion"].extend(toQuaternion(child.GetMg()))
-				prop["scale"].extend(toScale(child.GetAbsScale()))
+				faceVertices, eyemouthVertices = getFaceVertices(childPoly)
+
+				if childrenFracEnabled:
+					prop["position"].extend(toPosition(c))
+				else:
+					prop["position"].extend(toPosition(child.GetAbsPos()))
+					prop["quaternion"].extend(toQuaternion(child.GetMg()))
+					prop["scale"].extend(toScale(child.GetAbsScale()))
+
+
+				prop["face_vertices"].append(faceVertices)
+				prop["eyemouth_vertices"].append(eyemouthVertices)
+
+				if conf["enabled_in_frame"] == None:
+					conf["enabled_in_frame"] = f
+
 			else:
 				prop["position"].extend([0, 0, 0])
 				prop["quaternion"].extend([0, 0, 0, 1])
 				prop["scale"].extend([1, 1, 1])
+				prop["face_vertices"].append(None)
+				prop["eyemouth_vertices"].append(None)
 
 	#-------------------------
 	# part A3
@@ -331,8 +359,11 @@ def main():
 		if escPressed():
 			break
 
-	with open(destFile, 'w') as outFile:
+	with open(destKeyframeFile, 'w') as outFile:
 		json.dump(keyframes, outFile, separators=(',',':'))
+
+	with open(destConfigFile, 'w') as outFile:
+		json.dump(config, outFile, separators=(',',':'))
 
 	print "Done (%04d/%04d)" % (f, duration)
 	
