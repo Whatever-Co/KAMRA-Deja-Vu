@@ -36,6 +36,7 @@ export default class FaceController extends THREE.Object3D {
       this.add(small)
       this.smalls.push(small)
     }
+    this.smallsEnabled = require('./data/config.json')
 
     this.update = this._followWebcam.bind(this)
 
@@ -178,7 +179,7 @@ export default class FaceController extends THREE.Object3D {
             face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
             face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
             j = f * 4
-            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3])
+            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3]).normalize()
           }
         })
       }
@@ -190,13 +191,14 @@ export default class FaceController extends THREE.Object3D {
         let f = currentFrame - this.data.user_children.in_frame
         this.data.user_children.property.forEach((props, i) => {
           let face = this.smalls[i]
-          face.visible = props.enabled[f]
+          face.visible = this.smallsEnabled.user_children[i].enabled_in_frame <= currentFrame
           if (face.visible) {
             let j = f * 3
             face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
+            // console.log(f, j, props.scale.slice(j, j + 3))
             face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
             j = f * 4
-            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3])
+            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3]).normalize()
           }
         })
       }

@@ -116,7 +116,7 @@ class App {
       let i = f * 3
       this.camera.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
       i = f * 4
-      this.camera.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3])
+      this.camera.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
     }
     this.controllers.push(this.camera)
 
@@ -139,8 +139,8 @@ class App {
       if (Config.DEV_MODE) {
         let vcon = $('<video>').attr({
           id: '_vcon',
-          src: 'data/vcon_pv_1106-144778791.mp4',
-          width: 1080,
+          src: 'data/438726972.mp4',
+          width: 1280,
           height: 720,
           muted: true
         }).appendTo('body')
