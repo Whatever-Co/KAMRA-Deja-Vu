@@ -1,11 +1,14 @@
 import c4d
-from c4d import gui
+from c4d import gui, utils
 import json
 import time, os, math
 from c4d.modules import mograph as mo
 import gzip
 
-from Quaternion import Quat
+# from Quaternion import Quat
+
+import numpy as np
+import quaternions
 
 #========================================
 # config
@@ -40,6 +43,20 @@ projDir = os.path.normpath(doc.GetDocumentPath() + "/../")
 def search(name):
     return doc.SearchObject(name)
 
+
+# zInvMat = c4d.Matrix()
+# zInvMat.Scale(c4d.Vector(1.0, 1.0, -1.0))
+
+def toMatrix(mg):
+    v1, v2, v3, off = mg.v1, mg.v2, mg.v3, mg.off
+
+    return [
+        v1.x, v1.y, -v1.z,
+        v2.x, v2.y, -v2.z,
+        v3.x, v3.y, -v3.z,
+        off.x, off.y, -off.z,
+    ]
+
 def toPosition(point):
 	return [
 		point.x,
@@ -54,30 +71,21 @@ def toFaceVertex(point):
         point.z * scale * -1
     ]
 
-threeMat = c4d.Matrix()
-threeMat.Scale(c4d.Vector(1, 1, -1))
-
-quat = Quat((0, 0, 0))
-
-show = False
-
 def toQuaternion(mg):
 
-    # mg = threeMat * mg
+    mg.Normalize()
 
     v1, v2, v3 = mg.v1, mg.v2, mg.v3
 
-    quat = Quat([
+    mat = np.array([
         [v1.x, v1.y, v1.z],
         [v2.x, v2.y, v2.z],
         [v3.x, v3.y, v3.z]
     ])
-    q = quat.q
 
-    q[2] *= -1
-    # q[3] *= -1
+    q = quaternions.mat2quat(mat)
 
-    return q
+    return [q[1], q[2], -q[3], q[0]]
 
 
 def toScale(scale):
@@ -105,3 +113,6 @@ def redraw():
     c4d.DrawViews(c4d.DA_ONLY_ACTIVE_VIEW|c4d.DA_NO_THREAD|c4d.DA_NO_REDUCTION|c4d.DA_STATICBREAK)
     c4d.GeSyncMessage(c4d.EVMSG_TIMECHANGED)
     c4d.EventAdd(c4d.EVENT_ANIMATE|c4d.EVENT_FORCEREDRAW)
+
+if __name__=='__main__':
+    main()

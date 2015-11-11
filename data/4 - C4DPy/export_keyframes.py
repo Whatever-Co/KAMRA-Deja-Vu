@@ -1,4 +1,5 @@
 from djv import *
+import shutil
 
 #========================================
 # config
@@ -8,7 +9,7 @@ destKeyframeGz = projDir + "/0b/data/3 - JSON/keyframes.json.gz"
 destConfigFile = projDir + "/0b/data/3 - JSON/config.json"
 
 keyframeDupPath = [
-	"/b/experiments/22 - JSON Checker/public/data"
+	projDir + "/0b/main/public/data/keyframes.json.gz"
 ]
 
 # user face
@@ -16,6 +17,7 @@ cam = doc.SearchObject("Camera")
 
 user = doc.SearchObject("user")
 userWrapper = doc.SearchObject("user_wrapper")
+userOff = search("user_main_off")
 userMorph = user.GetTag(c4d.Tposemorph)
 
 children = [doc.SearchObject("child.%d" % i) for i in xrange(8)]
@@ -64,6 +66,7 @@ keyframes = {
 		"in_frame": 0,
 		"out_frame": duration-1,
 		"property": {
+			"matrix": [],
 			"position": [],
 			"quaternion": [],
 			"fov": [],
@@ -120,7 +123,7 @@ keyframes = {
 
 	"user_alt": {
 		"in_frame": 1380,
-		"out_frame": 1470,
+		"out_frame": 1620,
 		"property": [
 			{
 				"enabled": [],
@@ -337,7 +340,7 @@ def addFrame(f):
 	# c4d.StatusSetText("processing.. %04d/%04d" % (f, duration))
 
 	cameraProp = keyframes["camera"]["property"]
-	cameraProp["position"].extend(toPosition(cam.GetAbsPos()))
+	cameraProp["position"].extend(toPosition(cam.GetMg().off))
 	cameraProp["quaternion"].extend(toQuaternion(cam.GetMg()))
 	cameraProp["fov"].append(math.degrees(cam[c4d.CAMERAOBJECT_FOV_VERTICAL]))
 	cameraProp["focus_distance"].append(cam[c4d.CAMERAOBJECT_TARGETDISTANCE])
@@ -346,9 +349,9 @@ def addFrame(f):
 		userProp = keyframes["user"]["property"]
 		faceVertices, eyemouthVertices = getFaceVertices(user)
 
-		userProp["position"].extend(toPosition(userWrapper.GetAbsPos()))
-		userProp["quaternion"].extend(toQuaternion(userWrapper.GetMg()))
-		userProp["scale"].extend(toScale(userWrapper.GetAbsScale()))
+		userProp["position"].extend(toPosition(userOff.GetMg().off))
+		userProp["quaternion"].extend(toQuaternion(userOff.GetMg()))
+		userProp["scale"].extend(toScale(userOff.GetAbsScale()))
 
 		appendVertices(userProp, "face_vertices", faceVertices)
 		appendVertices(userProp, "eyemouth_vertices", eyemouthVertices)
@@ -382,6 +385,7 @@ def addFrame(f):
 	if keyframes["user_children"]["in_frame"] <= f <= keyframes["user_children"]["out_frame"]:
 
 		matrices = None
+
 
 		if childrenFracEnabled:
 			md = mo.GeGetMoData(childrenFrac)
@@ -421,10 +425,13 @@ def addFrame(f):
 				prop["face_vertices"].append(None)
 				prop["eyemouth_vertices"].append(None)
 
+
 	#-------------------------
 	# part A3
 
 	if keyframes["user_alt"]["in_frame"] <= f <= keyframes["user_alt"]["out_frame"]:
+
+		# print "%d" % f
 
 		for i in xrange(2):
 			userAlt = userAlts[i]
@@ -438,7 +445,11 @@ def addFrame(f):
 			if enabled:
 				faceVertices, eyemouthVertices = getFaceVertices(userAlt)
 
-				prop["position"].extend(toPosition(userAltOff.GetAbsPos()))
+				# if i == 0:
+				# 	print "[%d]" % i
+				# 	print toPosition(userAlt.GetMg().off)
+
+				prop["position"].extend(toPosition(userAltOff.GetMg().off))
 				prop["quaternion"].extend(toQuaternion(userAltOff.GetMg()))
 				prop["scale"].extend(toScale(userAltOff.GetAbsScale()))
 				appendVertices(prop, "face_vertices", faceVertices)
@@ -450,6 +461,9 @@ def addFrame(f):
 				prop["scale"].extend([1, 1, 1])
 				prop["face_vertices"].append(None)
 				prop["eyemouth_vertices"].append(None)
+
+
+			
 
 	if keyframes["user_particles"]["in_frame"] <= f <= keyframes["user_particles"]["out_frame"]:
 
@@ -573,6 +587,8 @@ def main():
 	setFrame(0)
 	initConfig()
 
+	# duration = 1640
+
 	f = 0
 	for f in range(0, duration):
 		setFrame(f)
@@ -587,6 +603,12 @@ def main():
 	with open(destKeyframeFile, 'rb') as inFile:
 		with gzip.open(destKeyframeGz, 'wb') as outFile:
 			outFile.writelines(inFile)
+
+	with open(destKeyframeGz, 'r') as srcFile:
+		for path in keyframeDupPath:
+			with open(path, 'w') as destFile:
+				shutil.copyfileobj(srcFile, destFile)
+
 
 	with open(destConfigFile, 'w') as outFile:
 		json.dump(config, outFile, separators=(',',':'))
