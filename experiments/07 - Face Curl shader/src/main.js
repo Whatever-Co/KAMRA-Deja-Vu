@@ -58,8 +58,7 @@ async function main() {
 
   let param = {
     rotasionZ:0.5,
-    offsetX:0,
-    offsetY:0
+    offsetX:0.0
   };
 
   //==============
@@ -71,7 +70,6 @@ async function main() {
   gui.add(material.uniforms.radius, 'value', 0.1, 1.0).name('radius');
   gui.add(param, 'rotasionZ', 0.0, 3.14);
   gui.add(param, 'offsetX', -1.0, 1.0);
-  gui.add(param, 'offsetY', -1.0, 1.0);
 
   //==============
   // Events
@@ -89,9 +87,9 @@ async function main() {
 
     // update matrix
     let mat = new THREE.Matrix4();
-    mat.makeTranslation(param.offsetX, param.offsetY, 0);
-    mat.makeRotationZ(param.rotasionZ);
-    //mat.makeScale(0.1, 1.0, 10.0);
+    mat.multiply(new THREE.Matrix4().makeTranslation(param.offsetX, 0, 0));
+    mat.multiply(new THREE.Matrix4().makeRotationZ(param.rotasionZ));
+
     let invMat = new THREE.Matrix4().getInverse(mat);
 
     material.uniforms.curlPushMatrix.value = mat;
