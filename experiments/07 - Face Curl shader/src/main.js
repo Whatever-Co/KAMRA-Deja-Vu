@@ -44,9 +44,9 @@ async function main() {
     side: THREE.DoubleSide,
     uniforms: {
       texture: {type: 't', value: texture},
-      rate: {type: 'f', value:0.5},
       scaleZ: {type: 'f', value:0.0},
-      radius: {type: 'f', value:0.2},
+      curlStrength: {type: 'f', value:0.5},
+      curlRadius: {type: 'f', value:0.2},
       curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
       curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
     }
@@ -65,9 +65,9 @@ async function main() {
   // dat GUI
   let gui = new dat.GUI();
   gui.add(material, 'wireframe');
-  gui.add(material.uniforms.rate, 'value', 0.0, 1.0).name('rate');
+  gui.add(material.uniforms.curlStrength, 'value', 0.0, 1.0).name('curlStrength');
   gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.2).name('zScale');
-  gui.add(material.uniforms.radius, 'value', 0.1, 1.0).name('radius');
+  gui.add(material.uniforms.curlRadius, 'value', 0.1, 1.0).name('radius');
   gui.add(param, 'rotasionZ', 0.0, 3.14);
   gui.add(param, 'offsetX', -1.0, 1.0);
 
