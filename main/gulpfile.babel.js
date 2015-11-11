@@ -112,11 +112,14 @@ gulp.task('watch', () => {
 
 
 gulp.task('browser-sync', () => {
+  let gzipStatic = require('connect-gzip-static')
   browserSync.init({
     server: {
       baseDir: ['./public']
     },
     open: false
+  }, (err, bs) => {
+    bs.addMiddleware('*', gzipStatic('./public'))
   })
 })
 
