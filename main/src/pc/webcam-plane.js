@@ -25,7 +25,7 @@ export default class WebcamPlane extends THREE.Mesh {
           texture: {type: 't', value: null},
           rate: {type: 'f', value:0.0},
           frame: {type: 'f', value:0.0},
-          center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+          centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
           waveForce: {type: 'f', value:0.1},
           zoomForce: {type: 'f', value:0.3}
         }
@@ -222,10 +222,16 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.push(isOK)
 
       // update center position of shader
-      let centerRate = [this.trackerCanvas.width*2, this.trackerCanvas.height*2]
-      vec2.divide(centerRate, center, centerRate)
-      vec2.add(centerRate, [0.5,0.5], centerRate)
-      this.material.uniforms.center.value = new THREE.Vector2(centerRate[0], centerRate[1])
+      let w = this.trackerCanvas.width
+      let h = this.trackerCanvas.height
+      let v4 = new THREE.Vector4(
+        center[0] / (w*2) + 0.5,
+        center[1] / (h*2) + 0.5,
+        size[0] / (w*4),
+        size[1] / (h*4)
+      )
+      this.material.uniforms.centerRect.value = v4
+
     } else {
       this.scoreHistory.push(false)
     }

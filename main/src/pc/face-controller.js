@@ -178,7 +178,7 @@ export default class FaceController extends THREE.Object3D {
         offset = this._remap(offset, 90, 300, -1.0, 1.0)
         let mat = new THREE.Matrix4()
         mat.multiply(new THREE.Matrix4().makeTranslation(offset, 0, 0))
-        mat.multiply(new THREE.Matrix4().makeRotationZ(0.5))
+        mat.multiply(new THREE.Matrix4().makeRotationZ(1.1))
         let invMat = new THREE.Matrix4().getInverse(mat)
         material.uniforms.curlPushMatrix.value = mat
         material.uniforms.curlPopMatrix.value = invMat
