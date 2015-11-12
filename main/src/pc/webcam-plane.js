@@ -14,14 +14,29 @@ const PARTS_INDICES = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 4
 
 export default class WebcamPlane extends THREE.Mesh {
 
-  constructor(camera) {
+  constructor(data, camera) {
     super(
-      new THREE.PlaneBufferGeometry(16 / 9, 1, 1, 1),
-      new THREE.MeshBasicMaterial({color: 0xffffff, depthWrite: false})
+      new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
+      new THREE.ShaderMaterial({
+        vertexShader:require('./shaders/webcam-plane.vert'),
+        fragmentShader:require('./shaders/webcam-plane.frag'),
+        depthWrite: false,
+        uniforms: {
+          texture: {type: 't', value: null},
+          rate: {type: 'f', value:0.4},
+          brightness: {type: 'f', value:1},
+          frame: {type: 'f', value:0},
+          center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+          waveForce: {type: 'f', value:0.02},
+          zoomForce: {type: 'f', value:0.3}
+        }
+      })
     )
-
+    this.enabled = false
+    this.isComplete = false
     this.update = this.update.bind(this)
 
+    this.data = data
     this.camera = camera
 
     this.video = document.createElement('video')
@@ -33,7 +48,7 @@ export default class WebcamPlane extends THREE.Mesh {
     this.textureContext.translate(1024, 0)
     this.textureContext.scale(-1, 1)
     this.texture = new THREE.CanvasTexture(this.textureCanvas)
-    this.material.map = this.texture
+    this.material.uniforms.texture.value = this.texture
     // document.body.appendChild(this.textureCanvas)
 
     this.trackerCanvas = document.createElement('canvas')
@@ -71,7 +86,8 @@ export default class WebcamPlane extends THREE.Mesh {
       this.stream.getVideoTracks()[0].stop()
       this.video.pause()
     }
-    Ticker.removeListener('update', this.update)
+    // Ticker.removeListener('update', this.update)
+    //this.enabled = false
   }
 
 
@@ -95,7 +111,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.tracker = new clm.tracker({useWebGL: true})
     this.tracker.init(pModel)
 
-    Ticker.on('update', this.update)
+    //Ticker.on('update', this.update)
+    this.enabled = true
   }
 
 
@@ -204,6 +221,12 @@ export default class WebcamPlane extends THREE.Mesh {
       let isOK = len > 400 && Math.abs(center[0] - pCenter[0]) < 10 && this.tracker.getConvergence() < 50
       // $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
       this.scoreHistory.push(isOK)
+
+      // update center position of shader
+      let centerRate = [this.trackerCanvas.width*2, this.trackerCanvas.height*2]
+      vec2.divide(centerRate, center, centerRate)
+      vec2.add(centerRate, [0.5,0.5], centerRate)
+      this.material.uniforms.center.value = new THREE.Vector2(centerRate[0], centerRate[1])
     } else {
       this.scoreHistory.push(false)
     }
@@ -213,35 +236,49 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.shift()
     }
     if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
+      this.isComplete = true
       this.dispatchEvent({type: 'complete'})
     }
   }
 
 
-  update() {
-    let h = this.video.videoWidth / 16 * 9
-    let y = (this.video.videoHeight - h) / 2
-    this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-    this.texture.needsUpdate = true
+  update(currentFrame) {
+    if(!this.isComplete) {
 
-    this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
+      // Before recognize
+      let h = this.video.videoWidth / 16 * 9
+      let y = (this.video.videoHeight - h) / 2
+      this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
+      this.texture.needsUpdate = true
 
-    for (let i = 0; i < 2; i++) {
-      this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
+      this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
+
+      for (let i = 0; i < 2; i++) {
+        this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
+      }
+      this.normralizeFeaturePoints()
+      // this.tracker.draw(this.trackerCanvas)
+
+      this.checkCaptureScore()
     }
-    this.normralizeFeaturePoints()
-    // this.tracker.draw(this.trackerCanvas)
+    else {
+      let f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
+      let fade = 1 - this.data.i_extra.property.webcam_fade[f]
+      // console.log(currentFrame +':'+fade)
+      // TODO : apply fade animation instead of 'fadeout'
+    }
 
-    this.checkCaptureScore()
+    this.material.uniforms.frame.value = currentFrame
   }
 
-
   fadeOut() {
-    let p = {b: 1}
-    new TWEEN.Tween(p).to({b: 0}, 2000).onUpdate(() => {
-      this.material.color.setHSL(0, 0, p.b)
+    let p = {rate: 0.4, brightness: 1}
+    new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
+      this.material.uniforms.rate.value = p.rate
+      this.material.uniforms.brightness.value = p.brightness
     }).onComplete(() => {
       this.visible = false
+      this.enabled = false
     }).start()
   }
 
