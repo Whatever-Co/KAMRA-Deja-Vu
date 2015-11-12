@@ -274,6 +274,11 @@ export default class WebcamPlane extends THREE.Mesh {
     }).start()
   }
 
+
+  set opacity(value) {
+    this.material.opacity = value
+  }
+
   
   getBoundsFor(vertices, indices) {
     let min = [Number.MAX_VALUE, Number.MAX_VALUE]

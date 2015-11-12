@@ -25,6 +25,7 @@ export default class FaceBlender extends THREE.Mesh {
         varying vec2 vUv2;
         void main() {
           gl_FragColor = mix(texture2D(map1, vUv1), texture2D(map2, vUv2), blend);
+          // gl_FragColor = vec4(0, 1, 0, 1);
         }
       `,
       uniforms: {
@@ -33,7 +34,8 @@ export default class FaceBlender extends THREE.Mesh {
         blend: {type: 'f', value: 0}
       },
       side: THREE.DoubleSide,
-      transparent: true
+      transparent: true,
+      // wireframe: true,
     }))
 
     this.geometry.setIndex(face1.geometry.index)
@@ -73,11 +75,13 @@ export default class FaceBlender extends THREE.Mesh {
     let position = new THREE.Vector3()
     let quat = new THREE.Quaternion()
     let scale = new THREE.Vector3()
-    this.face1.matrix.decompose(position, quat, scale)
+    this.face1.updateMatrixWorld()
+    this.face1.matrixWorld.decompose(position, quat, scale)
     let position2 = new THREE.Vector3()
     let quat2 = new THREE.Quaternion()
     let scale2 = new THREE.Vector3()
-    this.face2.matrix.decompose(position2, quat2, scale2)
+    this.face2.updateMatrixWorld()
+    this.face2.matrixWorld.decompose(position2, quat2, scale2)
 
     position.lerp(position2, value)
     quat.slerp(quat2, value)

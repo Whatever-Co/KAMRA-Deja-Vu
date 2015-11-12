@@ -1,6 +1,8 @@
 /*global module*/
 
 var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+var gzipStatic = require('connect-gzip-static');
+
 
 module.exports = {
   entry: {
@@ -28,6 +30,10 @@ module.exports = {
     new BrowserSyncPlugin({
       server: { baseDir: ['./public']},
       open: false
+    }, {
+      callback: (err, bs) => {
+        bs.addMiddleware('*', gzipStatic('./public'));
+      }
     })
   ],
   eslint: {

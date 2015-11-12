@@ -2,9 +2,9 @@
 
 import {vec3} from 'gl-matrix'
 import TWEEN from 'tween.js'
-import dat from 'dat-gui'
+// import dat from 'dat-gui'
 
-import Config from './config'
+// import Config from './config'
 
 
 class RandomFaceSelector {
@@ -101,7 +101,11 @@ export default class FaceParticle extends THREE.Points {
 
     let zero = new THREE.Vector3(0, 0, -0.5).applyMatrix4(face.matrixWorld)
 
-    let amount = 10000
+    let config = require('./data/config.json')
+    console.log(config.mosaic_face)
+    console.log(config.mosaic_face.random_x_min, config.mosaic_face.random_x_max)
+
+    let amount = 20000
     let position = new Float32Array(amount * 3)
     let triangleIndices = new Float32Array(amount * 3)
     let weight = new Float32Array(amount * 3)
@@ -128,18 +132,9 @@ export default class FaceParticle extends THREE.Points {
       weight[i + 1] = b
       weight[i + 2] = c
 
-      let p = getPosition(j0).multiplyScalar(a)
-      p.add(getPosition(j1).multiplyScalar(b))
-      p.add(getPosition(j2).multiplyScalar(c))
-      p.sub(zero)
-      if (Math.random() < 0.5) {
-        p.z *= -1
-      }
-      let r = 1000 + Math.random() * 2000
-      p.setLength(r).add(zero)
-      position[i] = p.x
-      position[i + 1] = p.y
-      position[i + 2] = p.z
+      position[i + 0] = THREE.Math.randFloat(config.mosaic_face.random_x_min, config.mosaic_face.random_x_max)
+      position[i + 1] = THREE.Math.randFloat(config.mosaic_face.random_y_min, config.mosaic_face.random_y_max)
+      position[i + 2] = -THREE.Math.randFloat(config.mosaic_face.random_z_min, config.mosaic_face.random_z_max)
 
       delay[i / 3] = Math.random() * 3
     }
@@ -148,24 +143,15 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('triangleIndices', new THREE.BufferAttribute(triangleIndices, 3))
     this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
-
-    // this._gui = new dat.GUI()
-    // this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 30).setValue(0).name('Time')
-    // this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 0, 100).name('Size')
-    // this._gui.add(this, 'start').name('Start')
   }
 
 
-  start() {
-    let p = {t: 0}
-    new TWEEN.Tween(p).to({t: 30}, 30000).onUpdate(() => {
-      this.material.uniforms.time.value = p.t
-      // this._guiTime.setValue(p.t)
-    }).start()
+  update(t) {
+    this.material.uniforms.time.value = t
   }
 
 
-  update() {
+  updateData() {
     if (!this.material.uniforms.faceTexture.value) {
       this.material.uniforms.faceTexture.value = this.face.material.map
     }

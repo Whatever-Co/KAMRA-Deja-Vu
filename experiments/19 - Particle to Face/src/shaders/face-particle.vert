@@ -17,8 +17,8 @@ varying float vBlend;
 #pragma glslify: range = require(glsl-range)
 #pragma glslify: easeOutSine = require(glsl-easings/sine-out)
 #pragma glslify: easeInOutSine = require(glsl-easings/sine-in-out)
-#pragma glslify: easeOutCubic = require(glsl-easings/cubic-out)
-#pragma glslify: easeInOutCubic = require(glsl-easings/cubic-in-out)
+// #pragma glslify: easeOutCubic = require(glsl-easings/cubic-out)
+// #pragma glslify: easeInOutCubic = require(glsl-easings/cubic-in-out)
 
 
 vec3 getp(float index) {
@@ -53,32 +53,32 @@ vec2 getSpriteUVLUT(vec3 c) {
 
 
 float getCurrentSize(float time) {
-  if (time < 5.0) {
-    float t = range(0.0, 5.0, time);
-    return mix(0.0, 20.0, easeInOutSine(t));
+  if (time < 0.4) {
+    float t = clamp(range(0.0, 0.1, time), 0.0, 1.0);
+    return mix(0.0, 25.0, easeInOutSine(t));
 
-  } else if (time < 12.0) {
-    float t = range(5.0, 12.0, time);
-    return mix(20.0, 5.0, easeInOutSine(t));
+  } else if (0.97 < time) {
+    float t = range(0.97, 1.0, time);
+    return mix(25.0, 0.0, easeInOutSine(t));
 
-  } else if (time < 15.0) {
-    return 5.0;
+  // } else if (time < 15.0) {
+  //   return 5.0;
 
-  } else {
-    float t = range(15.0, 17.0, time);
-    return mix(5.0, 0.0, t);
+  // } else {
+    // float t = range(15.0, 17.0, time);
+    // return mix(20.0, 0.0, t);
+    // return 20.
   }
-  return 0.0;
+  return 25.0;
 }
 
 
 void main() {
   vec4 dest = faceMatrix * vec4(getDest(), 1.0);
-  float t = clamp(range(0.0, 13.0, time - delay), 0.0, 1.0);
-  vec4 mvPosition = modelViewMatrix * vec4(mix(position, dest.xyz, easeInOutCubic(t)), 1.0);
-  gl_PointSize = getCurrentSize(max(0.0, time - delay)) * (scale / abs(mvPosition.z));
+  vec4 mvPosition = modelViewMatrix * vec4(mix(position, dest.xyz, time), 1.0);
+  gl_PointSize = getCurrentSize(time) * (scale / abs(mvPosition.z));
   gl_Position = projectionMatrix * mvPosition;
   vColor = texture2D(faceTexture, getUV());
   vFaceIndex = getSpriteUVLUT(vColor.xyz);
-  vBlend = easeOutSine(clamp(range(13.0, 20.0, time), 0.0, 1.0));
+  vBlend = easeOutSine(clamp(range(0.8, 1.0, time), 0.0, 1.0)) * 0.5;
 }
