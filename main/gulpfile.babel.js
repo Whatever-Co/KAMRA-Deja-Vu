@@ -29,7 +29,7 @@ gulp.task('webpack', () => {
       loaders: [
         {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel-loader'},
         {test: /\.json$/, loader: 'json-loader'},
-        {test: /\.(vert|frag)$/, loader: 'raw-loader'}
+        {test: /\.(vert|frag|glsl)$/, loaders:['raw-loader','glslify-loader']}
       ]
     },
     amd: {jQuery: true},

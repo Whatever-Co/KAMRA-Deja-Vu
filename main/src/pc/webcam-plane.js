@@ -23,11 +23,11 @@ export default class WebcamPlane extends THREE.Mesh {
         depthWrite: false,
         uniforms: {
           texture: {type: 't', value: null},
-          rate: {type: 'f', value:0.4},
-          brightness: {type: 'f', value:1},
-          frame: {type: 'f', value:0},
+          rate: {type: 'f', value:0.0},
+          frame: {type: 'f', value:0.0},
+          edgeAlpha: {type: 'f', value:0.7},
           center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
-          waveForce: {type: 'f', value:0.02},
+          waveForce: {type: 'f', value:0.1},
           zoomForce: {type: 'f', value:0.3}
         }
       })
@@ -272,10 +272,9 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
   fadeOut() {
-    let p = {rate: 0.4, brightness: 1}
-    new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
+    let p = {rate: 0.0}
+    new TWEEN.Tween(p).to({rate: 1.0}, 8000).onUpdate(() => {
       this.material.uniforms.rate.value = p.rate
-      this.material.uniforms.brightness.value = p.brightness
     }).onComplete(() => {
       this.visible = false
       this.enabled = false
