@@ -54,7 +54,12 @@ export default class FaceController extends THREE.Object3D {
     this.main.material = new THREE.ShaderMaterial({
       uniforms: {
         map: {type: 't', value: this.webcam.texture.clone()},
-        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)}
+        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
+        scaleZ: {type: 'f', value:1.0},
+        curlStrength: {type: 'f', value:1.0},
+        curlRadius: {type: 'f', value:0.2},
+        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
+        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
       },
       vertexShader: require('./shaders/face-front.vert'),
       fragmentShader: require('./shaders/face-front.frag'),
@@ -158,16 +163,27 @@ export default class FaceController extends THREE.Object3D {
       this.main.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
 
       // transition from captured position to keyframes'
-      // TODO : ぺろーん/*/**/*/
       f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
       let blend = 1 - this.data.i_extra.property.interpolation[f]
-      let curl = {
-        strength: this.data.i_extra.property.curl_strength[f],
-        rotation: this.data.i_extra.property.curl_rotation[f],
-        offset: this.data.i_extra.property.curl_offset[f],
-        scale_z: this.data.i_extra.property.scale_z[f]
+
+      this.main.material.uniforms.scaleZ.value = scaleZ
+      if (scaleZ < 1) {
+        // Apply curl morph
+        let material = this.main.material
+        let strength = this.data.i_extra.property.curl_strength[f]
+        let rotation = this.data.i_extra.property.curl_rotation[f]
+        let offset = this.data.i_extra.property.curl_offset[f]
+
+        //console.log(`strength:${strength} offset:${offset} z:${scaleZ}`)
+        offset = this._remap(offset, 90, 300, -1.0, 1.0)
+        let mat = new THREE.Matrix4()
+        mat.multiply(new THREE.Matrix4().makeTranslation(offset, 0, 0))
+        mat.multiply(new THREE.Matrix4().makeRotationZ(0.5))
+        let invMat = new THREE.Matrix4().getInverse(mat)
+        material.uniforms.curlPushMatrix.value = mat
+        material.uniforms.curlPopMatrix.value = invMat
+        material.uniforms.curlStrength.value = this._remap(strength, 0.0, 4.73, 0.0, 1.0)
       }
-      console.log(curl)
       if (blend > 0) {
         this.main.position.lerp(this.initialTransform.position, blend)
         this.main.scale.lerp(this.initialTransform.scale, blend)
@@ -227,4 +243,7 @@ export default class FaceController extends THREE.Object3D {
     }
   }
 
+  _remap(value, inputMin, inputMax, outputMin, outputMax) {
+    return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin)
+  }
 }
