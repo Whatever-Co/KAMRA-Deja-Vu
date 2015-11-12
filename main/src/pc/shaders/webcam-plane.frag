@@ -7,5 +7,6 @@ varying float vBrightness;
 
 
 void main() {
-  gl_FragColor = texture2D(texture, vUv) * vBrightness;
+  gl_FragColor = texture2D(texture, vUv);
+  gl_FragColor.a = vBrightness;
 }

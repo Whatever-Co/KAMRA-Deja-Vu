@@ -1,10 +1,8 @@
 /* global THREE clm pModel */
 
-// import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 
-import Ticker from './ticker'
 import StandardFaceData from './standard-face-data'
 
 
@@ -18,9 +16,6 @@ export default class WebcamPlane extends THREE.Mesh {
     super(
       new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
       new THREE.ShaderMaterial({
-        vertexShader:require('./shaders/webcam-plane.vert'),
-        fragmentShader:require('./shaders/webcam-plane.frag'),
-        depthWrite: false,
         uniforms: {
           texture: {type: 't', value: null},
           rate: {type: 'f', value:0.0},
@@ -28,9 +23,14 @@ export default class WebcamPlane extends THREE.Mesh {
           centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
           waveForce: {type: 'f', value:0.1},
           zoomForce: {type: 'f', value:0.3}
-        }
+        },
+        vertexShader:require('./shaders/webcam-plane.vert'),
+        fragmentShader:require('./shaders/webcam-plane.frag'),
+        transparent: true,
+        depthWrite: false,
       })
     )
+    this.renderOrder = -1000
     this.enabled = false
     this.isComplete = false
     this.update = this.update.bind(this)
@@ -275,20 +275,26 @@ export default class WebcamPlane extends THREE.Mesh {
       // TODO : apply fade animation instead of 'fadeout'
     }
 
+    if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
+      let f = currentFrame - this.data.o2_extra.in_frame
+      let props = this.data.o2_extra.property
+      this.material.uniforms.rate.value = props.webcam_fade[f]
+    }
+
     this.material.uniforms.frame.value = currentFrame
   }
 
 
-  // fadeOut() {
-  //   let p = {rate: 0.4, brightness: 1}
-  //   new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
-  //     this.material.uniforms.rate.value = p.rate
-  //     this.material.uniforms.brightness.value = p.brightness
-  //   }).onComplete(() => {
-  //     this.visible = false
-  //     this.enabled = false
-  //   }).start()
-  // }
+  fadeOut() {
+    let p = {rate: 0.4, brightness: 1}
+    new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
+      this.material.uniforms.rate.value = p.rate
+      // this.material.uniforms.brightness.value = p.brightness
+    }).onComplete(() => {
+      // this.visible = false
+      // this.enabled = false
+    }).start()
+  }
 
   
   getBoundsFor(vertices, indices) {

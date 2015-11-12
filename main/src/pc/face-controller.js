@@ -215,11 +215,9 @@ export default class FaceController extends THREE.Object3D {
       let props = this.data.user.property
       this.main.geometry.applyMorph(props.morph[f])
 
-      let i = f * 3
-      this.main.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
-      this.main.scale.set(props.scale[i] * SCALE, props.scale[i + 1] * SCALE, props.scale[i + 2] * SCALE * scaleZ)
-      i = f * 4
-      this.main.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
+      this.main.position.fromArray(props.position, f * 3)
+      this.main.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
+      this.main.quaternion.fromArray(props.quaternion, f * 4)
 
       // transition from captured position to data'
       f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
@@ -258,11 +256,9 @@ export default class FaceController extends THREE.Object3D {
           let face = this.alts[i]
           face.visible = props.enabled[f]
           if (face.visible) {
-            let j = f * 3
-            face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
-            face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
-            j = f * 4
-            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3]).normalize()
+            face.position.fromArray(props.position, f * 3)
+            face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
+            face.quaternion.fromArray(props.quaternion, f * 4)
           }
         })
       }
@@ -276,12 +272,9 @@ export default class FaceController extends THREE.Object3D {
           let face = this.smalls[i]
           face.visible = this.smallsEnabled[i].enabled_in_frame <= currentFrame
           if (face.visible) {
-            let j = f * 3
-            face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
-            // console.log(f, j, props.scale.slice(j, j + 3))
-            face.scale.set(props.scale[j] * SCALE, props.scale[j + 1] * SCALE, props.scale[j + 2] * SCALE)
-            j = f * 4
-            face.quaternion.set(props.quaternion[j], props.quaternion[j + 1], props.quaternion[j + 2], props.quaternion[j + 3]).normalize()
+            face.position.fromArray(props.position, f * 3)
+            face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
+            face.quaternion.fromArray(props.quaternion, f * 4)
           }
         })
       }

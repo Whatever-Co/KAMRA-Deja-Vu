@@ -132,7 +132,7 @@ class App {
     this.webcam.addEventListener('complete', () => {
       this.face.captureWebcam()
       this.webcam.enableTracking = false
-      // this.webcam.fadeOut()
+      this.webcam.fadeOut()
 
       this.camera.enabled = true
 
@@ -147,10 +147,8 @@ class App {
           height: 720,
           muted: true
         }).appendTo('body')[0]
-        console.log(this._vcon.currentTime)
         this._vcon.currentTime = 2 / 24
-        console.log(this._vcon.currentTime)
-        // vcon[0].play()
+        this._vcon.play()
 
         // setTimeout(() => {
         //   this.sound.position = this.keyframes.mosaic.in_frame / 24 * 1000 - 1000
@@ -176,9 +174,6 @@ class App {
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
         controller.update(currentFrame)
-      }
-      if (this._vcon) {
-        this._vcon.currentTime = this.sound.position
       }
     })
 

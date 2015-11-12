@@ -43,7 +43,8 @@
     "no-debugger": 1,
     "no-spaced-func": 2,
     "space-after-keywords": 2,
-    "eol-last": 2
+    "eol-last": 2,
+    "comma-dangle": 0
   },
   "env": {
     "es6": true,
