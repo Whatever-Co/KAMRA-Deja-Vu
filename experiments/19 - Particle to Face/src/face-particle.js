@@ -1,10 +1,6 @@
 /* global THREE */
 
 import {vec3} from 'gl-matrix'
-import TWEEN from 'tween.js'
-// import dat from 'dat-gui'
-
-// import Config from './config'
 
 
 class RandomFaceSelector {
@@ -89,21 +85,12 @@ export default class FaceParticle extends THREE.Points {
     }))
 
     this.face = face
+    this.face.updateMatrix()
 
     this.dataTexture = new THREE.DataTexture(new Float32Array(DATA_WIDTH * DATA_HEIGHT * 3), DATA_WIDTH, DATA_HEIGHT, THREE.RGBFormat, THREE.FloatType)
     this.material.uniforms.facePosition.value = this.dataTexture
 
-    let fp = this.face.geometry.positionAttribute.array
-    let getPosition = (index) => {
-      let i = index * 3
-      return new THREE.Vector3(fp[i], fp[i + 1], fp[i + 2]).applyMatrix4(face.matrixWorld)
-    }
-
-    let zero = new THREE.Vector3(0, 0, -0.5).applyMatrix4(face.matrixWorld)
-
     let config = require('./data/config.json')
-    console.log(config.mosaic_face)
-    console.log(config.mosaic_face.random_x_min, config.mosaic_face.random_x_max)
 
     let amount = 20000
     let position = new Float32Array(amount * 3)

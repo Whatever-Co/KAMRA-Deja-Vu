@@ -1,6 +1,5 @@
 /* global THREE */
 
-import TWEEN from 'tween.js'
 import {vec3} from 'gl-matrix'
 
 import StandardFaceData from './standard-face-data'
