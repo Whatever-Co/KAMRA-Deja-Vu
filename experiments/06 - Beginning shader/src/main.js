@@ -59,14 +59,16 @@ async function main() {
     fragmentShader:require('./webcamzoom.frag'),
     uniforms: {
       texture: {type: 't', value: texture},
-      rate: {type: 'f', value:0},
+      rate: {type: 'f', value:0.0},
+      frame: {type: 'f', value:0.0},
+      edgeAlpha: {type: 'f', value:0.7},
       center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
-      waveForce: {type: 'f', value:0.02},
+      waveForce: {type: 'f', value:0.1},
       zoomForce: {type: 'f', value:0.3}
     }
   });
 
-  let geometry = new THREE.PlaneGeometry(400, 300, 30, 40);
+  let geometry = new THREE.PlaneGeometry(400, 300, 400, 300);
   let mesh = new THREE.Mesh( geometry, material);
   scene.add(mesh);
 
@@ -78,8 +80,9 @@ async function main() {
   let gui_center = gui.addFolder('center');
   gui_center.add(material.uniforms.center.value, 'x', 0, 1);
   gui_center.add(material.uniforms.center.value, 'y', 0, 1);
-  gui.add(material.uniforms.waveForce, 'value', 0.0, 0.1).name('waveForce');
+  gui.add(material.uniforms.waveForce, 'value', 0.0, 1.0).name('waveForce');
   gui.add(material.uniforms.zoomForce, 'value', 0.0, 1.0).name('zoomForce');
+  gui.add(material.uniforms.edgeAlpha, 'value', 0.0, 1.0).name('edgeAlpha');
 
   //==============
   // Events
@@ -93,9 +96,12 @@ async function main() {
   // Loop
   const loop = true;
   while(loop) {
-    await requestAnimationFrameAsync();
+    let timestamp = await requestAnimationFrameAsync();
+    material.uniforms.frame.value = (timestamp+10000) / 1000 * 24;
+
     renderer.render(scene, camera);
     texture.needsUpdate = true;
+
   }
 
 }
