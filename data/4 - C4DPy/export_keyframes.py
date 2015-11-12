@@ -250,6 +250,9 @@ config = None
 def initConfig():
 	global config
 
+	slitscanPlane = search("slitscan_plane")
+	slitscanCam = search("slit_camera.uv")
+
 	mosaicFace = search("mosaic_face")
 
 	mosaicRandUniform = search("mosaic_rand_uniform")
@@ -274,6 +277,14 @@ def initConfig():
 			} for i in xrange(8)
 		],
 		"user_particles_mesh": [],
+		"slitscan": {
+			"plane_position": toPosition(slitscanPlane.GetMg().off),
+			"plane_dimension": [slitscanPlane[c4d.PRIM_PLANE_WIDTH], slitscanPlane[c4d.PRIM_PLANE_HEIGHT]],
+			"camera_position": toPosition(slitscanCam.GetRelPos()),
+			"camera_fov": 12,
+			"uv_in_frame": 2094,
+			"uv_out_frame": 2511
+		},
 		"mosaic_face": {
 			"position": toPosition(mosaicFace.GetAbsPos()),
 			"scale": toScale(mosaicFace.GetAbsScale()),
