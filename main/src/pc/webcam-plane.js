@@ -61,6 +61,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
 
+    this.enableTracking = true
+    this.enableScoreChecking = true
     this.scoreHistory = []
   }
 
@@ -79,14 +81,13 @@ export default class WebcamPlane extends THREE.Mesh {
     navigator.getUserMedia(options, this.onSuccess.bind(this), this.onError.bind(this))
   }
 
-
   stop() {
     if (this.stream) {
       this.stream.getVideoTracks()[0].stop()
       this.video.pause()
     }
-    // Ticker.removeListener('update', this.update)
-    //this.enabled = false
+    this.enableTracking = false
+    this.enableScoreChecking = false
   }
 
 
@@ -105,12 +106,11 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   onLoadedMetadata() {
-    console.log({width: this.video.videoWidth, height: this.video.videoHeight})
+    // console.log({width: this.video.videoWidth, height: this.video.videoHeight})
 
     this.tracker = new clm.tracker({useWebGL: true})
     this.tracker.init(pModel)
 
-    //Ticker.on('update', this.update)
     this.enabled = true
   }
 
@@ -241,15 +241,14 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.shift()
     }
     if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
-      this.isComplete = true
+      this.enableTracking = false
       this.dispatchEvent({type: 'complete'})
     }
   }
 
 
   update(currentFrame) {
-    if(!this.isComplete) {
-
+    if (this.enableTracking) {
       // Before recognize
       let h = this.video.videoWidth / 16 * 9
       let y = (this.video.videoHeight - h) / 2
@@ -264,10 +263,13 @@ export default class WebcamPlane extends THREE.Mesh {
       this.normralizeFeaturePoints()
       // this.tracker.draw(this.trackerCanvas)
 
-      this.checkCaptureScore()
+      if (this.enableScoreChecking) {
+        this.checkCaptureScore()
+      }
     }
-    else {
-      let f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
+
+    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame, currentFrame) {
+      let f = currentFrame - this.data.i_extra.in_frame
       let fade = 1 - this.data.i_extra.property.webcam_fade[f]
       // console.log(currentFrame +':'+fade)
       // TODO : apply fade animation instead of 'fadeout'
@@ -276,15 +278,17 @@ export default class WebcamPlane extends THREE.Mesh {
     this.material.uniforms.frame.value = currentFrame
   }
 
-  fadeOut() {
-    let p = {rate: 0.0}
-    new TWEEN.Tween(p).to({rate: 1.0}, 8000).onUpdate(() => {
-      this.material.uniforms.rate.value = p.rate
-    }).onComplete(() => {
-      this.visible = false
-      this.enabled = false
-    }).start()
-  }
+
+  // fadeOut() {
+  //   let p = {rate: 0.4, brightness: 1}
+  //   new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
+  //     this.material.uniforms.rate.value = p.rate
+  //     this.material.uniforms.brightness.value = p.brightness
+  //   }).onComplete(() => {
+  //     this.visible = false
+  //     this.enabled = false
+  //   }).start()
+  // }
 
   
   getBoundsFor(vertices, indices) {

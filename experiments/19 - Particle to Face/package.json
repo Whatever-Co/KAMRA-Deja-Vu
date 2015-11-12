@@ -77,7 +77,8 @@
       "no-unused-vars": 1,
       "no-empty": 1,
       "no-unreachable": 1,
-      "no-debugger": 1
+      "no-debugger": 1,
+      "no-comma-dangle": 0
     },
     "env": {
       "es6": true,

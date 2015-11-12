@@ -40,7 +40,10 @@
     "no-unused-vars": 1,
     "no-empty": 1,
     "no-unreachable": 1,
-    "no-debugger": 1
+    "no-debugger": 1,
+    "no-spaced-func": 2,
+    "space-after-keywords": 2,
+    "eol-last": 2
   },
   "env": {
     "es6": true,

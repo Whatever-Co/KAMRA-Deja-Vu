@@ -51,6 +51,7 @@ class App {
     let loader = window.__djv_loader
 
     this.keyframes = loader.getResult('keyframes')
+    console.log(this.keyframes)
 
     let worker = new PreprocessWorker()
     let start = performance.now()
@@ -113,10 +114,12 @@ class App {
       let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
       this.camera.fov = props.fov[f]
       this.camera.updateProjectionMatrix()
-      let i = f * 3
-      this.camera.position.set(props.position[i], props.position[i + 1], props.position[i + 2])
-      i = f * 4
-      this.camera.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
+      this.camera.position.fromArray(props.position, f * 3)
+      this.camera.quaternion.fromArray(props.quaternion, f * 4)
+
+      let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+      this.webcam.scale.set(scale, scale, scale)
+      this.webcam.rotation.z = this.camera.rotation.z
     }
     this.controllers.push(this.camera)
 
@@ -128,8 +131,8 @@ class App {
 
     this.webcam.addEventListener('complete', () => {
       this.face.captureWebcam()
-      this.webcam.stop()
-      this.webcam.fadeOut()
+      this.webcam.enableTracking = false
+      // this.webcam.fadeOut()
 
       this.camera.enabled = true
 
@@ -137,22 +140,28 @@ class App {
       Ticker.setClock(this.sound)
 
       if (Config.DEV_MODE) {
-        let vcon = $('<video>').attr({
+        this._vcon = $('<video>').attr({
           id: '_vcon',
           src: 'data/438726972.mp4',
           width: 1280,
           height: 720,
           muted: true
-        }).appendTo('body')
-        vcon.currentTime = 2 / 24
-        vcon[0].play()
+        }).appendTo('body')[0]
+        console.log(this._vcon.currentTime)
+        this._vcon.currentTime = 2 / 24
+        console.log(this._vcon.currentTime)
+        // vcon[0].play()
+
+        // setTimeout(() => {
+        //   this.sound.position = this.keyframes.mosaic.in_frame / 24 * 1000 - 1000
+        // }, 1000)
       }
     })
     this.controllers.push(this.webcam)
     this.webcam.start()
 
     // face
-    this.face = new FaceController(this.keyframes, this.webcam)
+    this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
     this.scene.add(this.face)
     this.controllers.push(this.face)
   }
@@ -167,6 +176,9 @@ class App {
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
         controller.update(currentFrame)
+      }
+      if (this._vcon) {
+        this._vcon.currentTime = this.sound.position
       }
     })
 

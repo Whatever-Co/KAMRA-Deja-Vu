@@ -1,22 +1,27 @@
 /* global THREE */
 
-// import TWEEN from 'tween.js'
-
 import Config from './config'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import CreepyFaceTexture from './creepy-face-texture'
+import FaceParticle from './face-particle'
+import FaceBlender from './face-blender'
 
 const SCALE = 150
 
 
 export default class FaceController extends THREE.Object3D {
 
-  constructor(data, webcam) {
+  constructor(data, webcam, renderer, camera) {
     super()
 
     this.enabled = true
+
     this.data = data
     this.webcam = webcam
+    this.renderer = renderer
+    this.camera = camera
 
+    // faces
     this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.main.matrixAutoUpdate = false
     this.add(this.main)
@@ -36,9 +41,30 @@ export default class FaceController extends THREE.Object3D {
       this.add(small)
       this.smalls.push(small)
     }
-    this.smallsEnabled = require('./data/config.json')
+    this.smallsEnabled = Config.DATA.user_children
 
+
+    // mosaic part
+    this.rotateGroup = new THREE.Object3D()
+    this.add(this.rotateGroup)
+
+    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1.matrixAutoUpdate = false
+    this.add(this.face1)
+
+    this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
+    this.face2.visible = false
+    this.face2.matrixAutoUpdate = false
+    this.rotateGroup.add(this.face2)
+
+    this.creepyFaceTexture = new CreepyFaceTexture(this.renderer, this.camera, this.webcam, this.face2)
+
+    this.face2.material.map = this.creepyFaceTexture
+
+
+    // first animation
     this.update = this._followWebcam.bind(this)
+
 
     if (Config.DEV_MODE) {
       this.main.add(new THREE.AxisHelper())
@@ -86,6 +112,7 @@ export default class FaceController extends THREE.Object3D {
       face.material = this.main.material
     })
 
+    // slice & montage part
     {
       let frontGeometry = this.main.geometry
       let frontMaterial = this.main.material
@@ -134,6 +161,38 @@ export default class FaceController extends THREE.Object3D {
       }
     }
 
+    // mosaic part
+    {
+      this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+      this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+
+      this.face1.material = new THREE.MeshBasicMaterial({map: this.creepyFaceTexture.clone(), transparent: true, opacity: 0})
+      this.face1.visible = false
+      this.face1.renderOrder = 1
+      this.face1.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+      let config = require('./data/config.json')
+      this.face1.position.fromArray(config.mosaic_face.position)
+      this.face1.rotation.set(0, 0, Math.PI)
+      this.face1.scale.fromArray(config.mosaic_face.scale.map((s) => s * 150))
+      console.log(this.face1.scale)
+
+      this.creepyFaceTexture.update()
+
+      let scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
+      let loader = window.__djv_loader
+      let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
+      let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
+      lut.minFilter = lut.maxFilter = THREE.NearestFilter
+      this.particles = new FaceParticle(scale, this.face1, sprite, lut)
+      this.add(this.particles)
+      this.particles.updateData()
+
+      this.blender = new FaceBlender(this.face1, this.face2)
+      this.blender.visible = false
+      this.blender.renderOrder = 1
+      this.add(this.blender)
+    }
+
     this.update = this._update.bind(this)
   }
 
@@ -162,7 +221,7 @@ export default class FaceController extends THREE.Object3D {
       i = f * 4
       this.main.quaternion.set(props.quaternion[i], props.quaternion[i + 1], props.quaternion[i + 2], props.quaternion[i + 3]).normalize()
 
-      // transition from captured position to keyframes'
+      // transition from captured position to data'
       f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
       let blend = 1 - this.data.i_extra.property.interpolation[f]
 
@@ -215,7 +274,7 @@ export default class FaceController extends THREE.Object3D {
         let f = currentFrame - this.data.user_children.in_frame
         this.data.user_children.property.forEach((props, i) => {
           let face = this.smalls[i]
-          face.visible = this.smallsEnabled.user_children[i].enabled_in_frame <= currentFrame
+          face.visible = this.smallsEnabled[i].enabled_in_frame <= currentFrame
           if (face.visible) {
             let j = f * 3
             face.position.set(props.position[j], props.position[j + 1], props.position[j + 2])
@@ -229,21 +288,65 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // slicing
-    {
-      if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
-        this.main.visible = false
-        let f = currentFrame - this.data.slice_row.in_frame
-        this.data.slice_row.property.forEach((props, i) => {
-          let slice = this.mainSlices[i]
-          slice.visible = true
-          slice.position.x = props.offset_x[f]
-          slice.rotation.y = props.rotation[f]
-        })
+    if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
+      this.main.visible = false
+      let f = currentFrame - this.data.slice_row.in_frame
+      this.data.slice_row.property.forEach((props, i) => {
+        let slice = this.mainSlices[i]
+        slice.visible = true
+        slice.position.x = props.offset_x[f]
+        slice.rotation.y = props.rotation[f]
+      })
+    }
+
+    // mosaic
+    if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame + 50) {
+      let t = (currentFrame - this.data.mosaic.in_frame) / (this.data.mosaic.out_frame + 50 - this.data.mosaic.in_frame)
+      this.particles.update(t)
+      this.webcam.enableTracking = true
+      this.webcam.enableScoreChecking = false
+    }
+    if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
+      let f = currentFrame - this.data.o2_extra.in_frame
+      let props = this.data.o2_extra.property
+      // this.webcam.opacity = 1 - props.webcam_fade[f]
+      // let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+      // this.webcam.scale.set(scale, scale, scale)
+      // this.webcam.rotation.z = this.camera.rotation.z
+      this.rotateGroup.rotation.z = this.camera.rotation.z
+
+      this.blender.visible = true
+      this.blender.blend = props.interpolation[f]
+      this.blender.opacity = THREE.Math.clamp(f / 50, 0, 1)
+      if (this.blender.blend >= 1) {
+        this.blender.visible = false
+        this.face1.visible = false
+        this.face2.visible = true
+      }
+      if (this.webcam.normalizedFeaturePoints) {
+        this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+        this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+        this.creepyFaceTexture.update()
       }
     }
+
+    if (this.data.camera.out_frame < currentFrame) {
+      this._update = this._updateCreepy.bind(this)
+    }
   }
+
+
+  _updateCreepy() {
+    if (this.webcam.normalizedFeaturePoints) {
+      this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+      this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+      this.creepyFaceTexture.update()
+    }
+  }
+
 
   _remap(value, inputMin, inputMax, outputMin, outputMax) {
     return ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin)
   }
+
 }
