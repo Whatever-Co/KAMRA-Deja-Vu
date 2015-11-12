@@ -11,10 +11,57 @@ import Config from './config'
 import Ticker from './ticker'
 import WebcamPlane from './webcam-plane'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import DeformeDUVTexture from './deformed-uv-texture'
 import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
 import './main.sass'
+
+
+
+class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
+
+  constructor(faceTexture, warpTexture, uvTexture) {
+    super({
+      uniforms: {
+        faceTexture: {type: 't', value: faceTexture},
+        warpTexture: {type: 't', value: warpTexture},
+        uvTexture: {type: 't', value: uvTexture},
+      },
+      vertexShader: `
+        attribute vec2 uv2;
+
+        varying vec2 vUv;
+        varying vec2 vUv2;
+
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          vUv = uv;
+          vUv2 = uv2;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D faceTexture;
+        uniform sampler2D warpTexture;
+        uniform sampler2D uvTexture;
+
+        varying vec2 vUv;
+        varying vec2 vUv2;
+
+        void main() {
+          vec4 color = texture2D(faceTexture, vUv);
+          vec4 uv2 = texture2D(warpTexture, vUv2);
+          vec4 uv3 = texture2D(uvTexture, uv2.xy);
+          vec4 parts = texture2D(faceTexture, uv3.xy);
+          gl_FragColor = vec4(mix(color.rgb, parts.rgb, uv2.a), 1.0);
+        }
+      `,
+      transparent: true,
+    })
+    // this.map = this
+  }
+
+}
 
 
 
@@ -68,16 +115,19 @@ class App2 {
 
     this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face.matrixAutoUpdate = false
+    // this.face.visible = false
     this.scene.add(this.face)
 
-    this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({color: 0xffffff, map: this.webcam.texture, transparent: true, opacity: 1, wireframe: false}))
-    this.face2.matrixAutoUpdate = false
-    this.face2.visible = false
-    hoge.add(this.face2)
-
-    this.blender = new FaceBlender(this.face, this.face2)
-    this.blender.visible = false
-    this.scene.add(this.blender)
+    {
+      let geometry = new DeformableFaceGeometry()
+      let uvTexture = new DeformeDUVTexture(this.renderer, geometry)
+      geometry.addAttribute('uv2', uvTexture.uvAttribute)
+      let material = new FacePartsDuplicateMaterial(this.webcam.texture, new THREE.CanvasTexture(this.loader.getResult('lut')), uvTexture)
+      this.face2 = new THREE.Mesh(geometry, material)
+      this.face2.matrixAutoUpdate = false
+      this.face2.visible = false
+      hoge.add(this.face2)
+    }
 
     this._updateObjects = () => {
       if (this.webcam.normalizedFeaturePoints) {
@@ -86,11 +136,26 @@ class App2 {
       }
     }
 
+    /*this._updateObjects = () => {
+      if (this.webcam.normalizedFeaturePoints) {
+        this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+        this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+        this.face2.material.uniforms.uvTexture.value.update()
+      }
+    }*/
+
     window.addEventListener('keydown', (e) => {
       if (e.keyCode == 32 && this.webcam.normalizedFeaturePoints) {
         this.webcam.opacity = 0
 
-        this.face.material = new THREE.MeshBasicMaterial({map: this.webcam.texture.clone(), transparent: true, opacity: 0})
+        {
+          let uvTexture = new DeformeDUVTexture(this.renderer, this.face.geometry)
+          this.face.geometry.addAttribute('uv2', uvTexture.uvAttribute)
+          let material = new FacePartsDuplicateMaterial(this.webcam.texture.clone(), new THREE.CanvasTexture(this.loader.getResult('lut')), uvTexture)
+          this.face.material = material
+        }
+        this.face.visible = false
+        // this.face.material = new THREE.MeshBasicMaterial({map: this.webcam.texture.clone(), transparent: true, opacity: 0})
         this.face.renderOrder = 1
         this.face.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
         let config = require('./data/config.json')
@@ -115,9 +180,13 @@ class App2 {
         this.scene.add(this.particles)
         this.particles.updateData()
 
+        this.blender = new FaceBlender(this.face, this.face2)
+        this.blender.visible = false
+        this.blender.renderOrder = 1
+        this.scene.add(this.blender)
+
         let _update = (currentFrame) => {
-          // console.log(currentFrame)
-          {
+          if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame + 50) {
             let f = currentFrame
             let props = this.keyframes.camera.property
             this.camera.fov = props.fov[currentFrame]
@@ -131,9 +200,8 @@ class App2 {
             this.webcam.scale.set(scale, scale, scale)
           }
 
-          if (this.keyframes.mosaic.in_frame <= currentFrame && currentFrame <= this.keyframes.mosaic.out_frame) {
-            let t = (currentFrame - this.keyframes.mosaic.in_frame) / (this.keyframes.mosaic.out_frame - this.keyframes.mosaic.in_frame)
-            // console.log(t)
+          if (this.keyframes.mosaic.in_frame <= currentFrame && currentFrame <= this.keyframes.mosaic.out_frame + 50) {
+            let t = (currentFrame - this.keyframes.mosaic.in_frame) / (this.keyframes.mosaic.out_frame + 50 - this.keyframes.mosaic.in_frame)
             this.particles.update(t)
           }
 
@@ -143,19 +211,26 @@ class App2 {
             this.webcam.opacity = 1 - props.webcam_fade[f]
             this.blender.visible = true
             this.blender.blend = props.interpolation[f]
-            this.face.visible = props.interpolation[f] == 0
+            this.blender.opacity = THREE.Math.clamp(f / 50, 0, 1)
+          }
+          if (this.blender.blend >= 1) {
+            this.blender.visible = false
+            this.face.visible = false
+            this.face2.visible = true
           }
 
           if (this.webcam.normalizedFeaturePoints) {
             this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
             this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+            this.face2.material.uniforms.uvTexture.value.update()
           }
         }
 
-
         let startFrame = Ticker.currentFrame - (this.keyframes.mosaic.in_frame - 10)
         this._updateObjects = (currentFrame) => {
-          _update(currentFrame - startFrame)
+          if (currentFrame <= this.keyframes.camera.out_frame) {
+            _update(currentFrame - startFrame)
+          }
         }
 
         /*let p = {f: this.keyframes.camera.in_frame}

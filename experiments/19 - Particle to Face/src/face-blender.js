@@ -21,17 +21,19 @@ export default class FaceBlender extends THREE.Mesh {
         uniform sampler2D map1;
         uniform sampler2D map2;
         uniform float blend;
+        uniform float alpha;
         varying vec2 vUv1;
         varying vec2 vUv2;
         void main() {
           gl_FragColor = mix(texture2D(map1, vUv1), texture2D(map2, vUv2), blend);
-          // gl_FragColor = vec4(0, 1, 0, 1);
+          gl_FragColor.a = alpha;
         }
       `,
       uniforms: {
         map1: {type: 't', value: null},
         map2: {type: 't', value: null},
-        blend: {type: 'f', value: 0}
+        blend: {type: 'f', value: 0},
+        alpha: {type: 'f', value: 0}
       },
       side: THREE.DoubleSide,
       transparent: true,
@@ -61,6 +63,11 @@ export default class FaceBlender extends THREE.Mesh {
     this.geometry.addAttribute('position2', face.geometry.positionAttribute)
     this.geometry.addAttribute('uv2', face.geometry.uvAttribute)
     this.material.uniforms.map2.value = face.material.map
+  }
+
+
+  set opacity(value) {
+    this.material.uniforms.alpha.value = value
   }
 
 

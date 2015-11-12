@@ -9,6 +9,7 @@ loader.loadManifest([
   {id: 'keyframes', src: 'keyframes.json'},
   {id: 'particle-sprite', src: 'media/particle_sprite.png'},
   {id: 'particle-lut', src: 'media/particle_index_lut.png'},
+  {id: 'lut', src: 'lut4b.png'},
 ], false)
 
 export default loader
