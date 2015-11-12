@@ -25,7 +25,6 @@ export default class WebcamPlane extends THREE.Mesh {
           texture: {type: 't', value: null},
           rate: {type: 'f', value:0.0},
           frame: {type: 'f', value:0.0},
-          edgeAlpha: {type: 'f', value:0.7},
           center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
           waveForce: {type: 'f', value:0.1},
           zoomForce: {type: 'f', value:0.3}

@@ -5,7 +5,6 @@ uniform float frame;
 uniform vec2 center;
 uniform float waveForce;
 uniform float zoomForce;
-uniform float edgeAlpha;
 
 varying vec2 vUv;
 varying float vBrightness;
@@ -28,12 +27,6 @@ float invLerp(float min, float max, float n) {
   return clamp((n - min) / (max - min), 0.0, 1.0);
 }
 
-float edgeColor() {
-  float d = distance(uv, vec2(0.5,0.5));
-  float r = invLerp(edgeAlpha, 0.0, d);
-  return mix(0.1, 1.0, r);
-}
-
 void main() {
   vec2 _uv = getWiggleUV();
 #ifdef MIRROR
@@ -42,7 +35,7 @@ void main() {
   vUv = _uv;
 #endif
 
-  vBrightness = (1.0 - rate) * edgeColor();
+  vBrightness = (1.0 - rate);
 
   vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
   gl_Position = projectionMatrix * mvPosition;

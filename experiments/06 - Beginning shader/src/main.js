@@ -61,7 +61,6 @@ async function main() {
       texture: {type: 't', value: texture},
       rate: {type: 'f', value:0.0},
       frame: {type: 'f', value:0.0},
-      edgeAlpha: {type: 'f', value:0.7},
       center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
       waveForce: {type: 'f', value:0.1},
       zoomForce: {type: 'f', value:0.3}
@@ -82,7 +81,6 @@ async function main() {
   gui_center.add(material.uniforms.center.value, 'y', 0, 1);
   gui.add(material.uniforms.waveForce, 'value', 0.0, 1.0).name('waveForce');
   gui.add(material.uniforms.zoomForce, 'value', 0.0, 1.0).name('zoomForce');
-  gui.add(material.uniforms.edgeAlpha, 'value', 0.0, 1.0).name('edgeAlpha');
 
   //==============
   // Events
