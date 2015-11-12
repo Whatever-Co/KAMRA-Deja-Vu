@@ -11,7 +11,7 @@ import Config from './config'
 import Ticker from './ticker'
 import WebcamPlane from './webcam-plane'
 import DeformableFaceGeometry from './deformable-face-geometry'
-import DeformeDUVTexture from './deformed-uv-texture'
+import DeformedUVTexture from './deformed-uv-texture'
 import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
@@ -54,11 +54,11 @@ class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
           vec4 uv3 = texture2D(uvTexture, uv2.xy);
           vec4 parts = texture2D(faceTexture, uv3.xy);
           gl_FragColor = vec4(mix(color.rgb, parts.rgb, uv2.a), 1.0);
+          // gl_FragColor = vec4(uv2.xy, 0, 1);
         }
       `,
       transparent: true,
     })
-    // this.map = this
   }
 
 }
@@ -113,17 +113,13 @@ class App2 {
     hoge.add(this.webcam)
     this.webcam.start()
 
-    this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
-    this.face.matrixAutoUpdate = false
-    // this.face.visible = false
-    this.scene.add(this.face)
+    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1.matrixAutoUpdate = false
+    // this.face1.visible = false
+    this.scene.add(this.face1)
 
     {
-      let geometry = new DeformableFaceGeometry()
-      let uvTexture = new DeformeDUVTexture(this.renderer, geometry)
-      geometry.addAttribute('uv2', uvTexture.uvAttribute)
-      let material = new FacePartsDuplicateMaterial(this.webcam.texture, new THREE.CanvasTexture(this.loader.getResult('lut')), uvTexture)
-      this.face2 = new THREE.Mesh(geometry, material)
+      this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
       this.face2.matrixAutoUpdate = false
       this.face2.visible = false
       hoge.add(this.face2)
@@ -131,39 +127,57 @@ class App2 {
 
     this._updateObjects = () => {
       if (this.webcam.normalizedFeaturePoints) {
-        this.face.geometry.deform(this.webcam.normalizedFeaturePoints)
-        this.face.matrix.copy(this.webcam.matrixFeaturePoints)
+        this.face1.geometry.deform(this.webcam.normalizedFeaturePoints)
+        this.face1.matrix.copy(this.webcam.matrixFeaturePoints)
       }
     }
-
-    /*this._updateObjects = () => {
-      if (this.webcam.normalizedFeaturePoints) {
-        this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
-        this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
-        this.face2.material.uniforms.uvTexture.value.update()
-      }
-    }*/
 
     window.addEventListener('keydown', (e) => {
       if (e.keyCode == 32 && this.webcam.normalizedFeaturePoints) {
         this.webcam.opacity = 0
 
         {
-          let uvTexture = new DeformeDUVTexture(this.renderer, this.face.geometry)
-          this.face.geometry.addAttribute('uv2', uvTexture.uvAttribute)
-          let material = new FacePartsDuplicateMaterial(this.webcam.texture.clone(), new THREE.CanvasTexture(this.loader.getResult('lut')), uvTexture)
-          this.face.material = material
+          let target = new THREE.WebGLRenderTarget(1024, 1024)
+          target.scene = new THREE.Scene()
+          let plane = this.webcam.clone()
+          plane.material.map = this.webcam.texture
+          plane.scale.copy(this.webcam.scale)
+          target.scene.add(plane)
+
+          target.camera = this.camera.clone()
+
+          let geometry = this.face2.geometry
+          let uvTexture = new DeformedUVTexture(this.renderer, geometry)
+          geometry.addAttribute('uv2', uvTexture.uvAttribute)
+          let material = new FacePartsDuplicateMaterial(this.webcam.texture, new THREE.CanvasTexture(this.loader.getResult('lut')), uvTexture)
+          this.face0 = new THREE.Mesh(geometry, material)
+          this.face0.matrixAutoUpdate = false
+          target.scene.add(this.face0)
+          this.creepyTexture = target
+
+          this.face2.material.map = this.creepyTexture
+          this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+          // this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
+          this.face0.matrix.copy(this.webcam.matrixFeaturePoints)
+          this.face0.material.uniforms.uvTexture.value.update()
+
+          this.face1.material = new THREE.MeshBasicMaterial({map: this.creepyTexture.clone(), transparent: true, opacity: 0})
+          this.renderer.render(this.creepyTexture.scene, this.creepyTexture.camera, this.face1.material.map, true)
+
+          // let mesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshBasicMaterial({map: target}))
+          // mesh.position.set(-340, -150, -2000)
+          // this.camera.add(mesh)
         }
-        this.face.visible = false
-        // this.face.material = new THREE.MeshBasicMaterial({map: this.webcam.texture.clone(), transparent: true, opacity: 0})
-        this.face.renderOrder = 1
-        this.face.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
+
+        this.face1.visible = false
+        this.face1.renderOrder = 1
+        this.face1.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
         let config = require('./data/config.json')
-        this.face.position.fromArray(config.mosaic_face.position)
-        this.face.rotation.set(0, 0, Math.PI)
-        this.face.scale.fromArray(config.mosaic_face.scale.map((s) => s * 150))
-        this.face.updateMatrix()
-        this.face.updateMatrixWorld(true)
+        this.face1.position.fromArray(config.mosaic_face.position)
+        this.face1.rotation.set(0, 0, Math.PI)
+        this.face1.scale.fromArray(config.mosaic_face.scale.map((s) => s * 150))
+        this.face1.updateMatrix()
+        this.face1.updateMatrixWorld(true)
 
         this._updateObjects = () => {
           if (this.webcam.normalizedFeaturePoints) {
@@ -176,11 +190,11 @@ class App2 {
         let sprite = new THREE.CanvasTexture(this.loader.getResult('particle-sprite'))
         let lut = new THREE.CanvasTexture(this.loader.getResult('particle-lut'))
         lut.minFilter = lut.maxFilter = THREE.NearestFilter
-        this.particles = new FaceParticle(scale, this.face, sprite, lut)
+        this.particles = new FaceParticle(scale, this.face1, sprite, lut)
         this.scene.add(this.particles)
         this.particles.updateData()
 
-        this.blender = new FaceBlender(this.face, this.face2)
+        this.blender = new FaceBlender(this.face1, this.face2)
         this.blender.visible = false
         this.blender.renderOrder = 1
         this.scene.add(this.blender)
@@ -198,6 +212,7 @@ class App2 {
 
             let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
             this.webcam.scale.set(scale, scale, scale)
+            this.creepyTexture.scene.children[0].scale.set(scale, scale, scale)
           }
 
           if (this.keyframes.mosaic.in_frame <= currentFrame && currentFrame <= this.keyframes.mosaic.out_frame + 50) {
@@ -212,17 +227,26 @@ class App2 {
             this.blender.visible = true
             this.blender.blend = props.interpolation[f]
             this.blender.opacity = THREE.Math.clamp(f / 50, 0, 1)
+
+            this.renderer.setClearColor(0x888888, 1)
+            this.creepyTexture.camera.fov = this.camera.fov
+            this.creepyTexture.camera.updateProjectionMatrix()
+            this.creepyTexture.camera.position.copy(this.camera.position)
+            this.creepyTexture.camera.rotation.set(0, 0, 0)
+            this.renderer.render(this.creepyTexture.scene, this.creepyTexture.camera, this.creepyTexture, true)
+            this.renderer.setClearColor(0x071520, 1)
           }
           if (this.blender.blend >= 1) {
             this.blender.visible = false
-            this.face.visible = false
+            this.face1.visible = false
             this.face2.visible = true
           }
 
           if (this.webcam.normalizedFeaturePoints) {
             this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
             this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
-            this.face2.material.uniforms.uvTexture.value.update()
+            this.face0.matrix.copy(this.webcam.matrixFeaturePoints)
+            this.face0.material.uniforms.uvTexture.value.update()
           }
         }
 
@@ -232,14 +256,6 @@ class App2 {
             _update(currentFrame - startFrame)
           }
         }
-
-        /*let p = {f: this.keyframes.camera.in_frame}
-        new TWEEN.Tween(p).to({f: this.keyframes.camera.out_frame}, 15000).start().onUpdate(() => {
-          _update(Math.round(p.f))
-        }).onComplete(() => {
-          this.blender.visible = false
-          this.face2.visible = true
-        })*/
       }
     })
   }
