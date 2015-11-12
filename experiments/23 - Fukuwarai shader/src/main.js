@@ -46,10 +46,7 @@ class App {
   initObjects() {
     let loader = new createjs.LoadQueue()
     loader.loadManifest([
-      // {id: 'color', src: 'faceuv.png'},
       {id: 'lut', src: 'lut4b.png'},
-      // {id: 'image', src: 'media/shutterstock_56254417.png'},
-      // {id: 'data', src: 'media/shutterstock_56254417.json'}
     ])
     loader.on('complete', () => {
       let geometry = new DeformableFaceGeometry()
@@ -75,8 +72,10 @@ class App {
         },
         vertexShader: `
           attribute vec2 uv2;
+
           varying vec2 vUv;
           varying vec2 vUv2;
+
           void main() {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             vUv = uv;
@@ -97,12 +96,9 @@ class App {
             vec4 uv3 = texture2D(hoge, uv2.xy);
             vec4 parts = texture2D(map, uv3.xy);
             gl_FragColor = vec4(mix(original.rgb, parts.rgb, uv2.a), 1.0);
-            // gl_FragColor = vec4(uv2.xy, 0, 1);
-            // gl_FragColor = vec4(1, 1, 0, 0.2);
           }
         `,
         transparent: true,
-        // wireframe: true
       })
       this.face = new THREE.Mesh(geometry, material)
       this.face.matrixAutoUpdate = false
