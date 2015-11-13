@@ -1,10 +1,8 @@
 /* global THREE clm pModel */
 
-// import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 
-import Ticker from './ticker'
 import StandardFaceData from './standard-face-data'
 
 
@@ -18,20 +16,21 @@ export default class WebcamPlane extends THREE.Mesh {
     super(
       new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
       new THREE.ShaderMaterial({
-        vertexShader:require('./shaders/webcam-plane.vert'),
-        fragmentShader:require('./shaders/webcam-plane.frag'),
-        depthWrite: false,
         uniforms: {
           texture: {type: 't', value: null},
-          rate: {type: 'f', value:0.4},
-          brightness: {type: 'f', value:1},
-          frame: {type: 'f', value:0},
-          center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
-          waveForce: {type: 'f', value:0.02},
+          rate: {type: 'f', value:0.0},
+          frame: {type: 'f', value:0.0},
+          centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
+          waveForce: {type: 'f', value:0.1},
           zoomForce: {type: 'f', value:0.3}
-        }
+        },
+        vertexShader:require('./shaders/webcam-plane.vert'),
+        fragmentShader:require('./shaders/webcam-plane.frag'),
+        transparent: true,
+        depthWrite: false,
       })
     )
+    this.renderOrder = -1000
     this.enabled = false
     this.isComplete = false
     this.update = this.update.bind(this)
@@ -62,6 +61,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
 
+    this.enableTracking = true
+    this.enableScoreChecking = true
     this.scoreHistory = []
   }
 
@@ -80,14 +81,13 @@ export default class WebcamPlane extends THREE.Mesh {
     navigator.getUserMedia(options, this.onSuccess.bind(this), this.onError.bind(this))
   }
 
-
   stop() {
     if (this.stream) {
       this.stream.getVideoTracks()[0].stop()
       this.video.pause()
     }
-    // Ticker.removeListener('update', this.update)
-    //this.enabled = false
+    this.enableTracking = false
+    this.enableScoreChecking = false
   }
 
 
@@ -106,12 +106,11 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   onLoadedMetadata() {
-    console.log({width: this.video.videoWidth, height: this.video.videoHeight})
+    // console.log({width: this.video.videoWidth, height: this.video.videoHeight})
 
     this.tracker = new clm.tracker({useWebGL: true})
     this.tracker.init(pModel)
 
-    //Ticker.on('update', this.update)
     this.enabled = true
   }
 
@@ -223,10 +222,16 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.push(isOK)
 
       // update center position of shader
-      let centerRate = [this.trackerCanvas.width*2, this.trackerCanvas.height*2]
-      vec2.divide(centerRate, center, centerRate)
-      vec2.add(centerRate, [0.5,0.5], centerRate)
-      this.material.uniforms.center.value = new THREE.Vector2(centerRate[0], centerRate[1])
+      let w = this.trackerCanvas.width
+      let h = this.trackerCanvas.height
+      let v4 = new THREE.Vector4(
+        center[0] / (w*2) + 0.5,
+        center[1] / (h*2) + 0.5,
+        size[0] / (w*4),
+        size[1] / (h*4)
+      )
+      this.material.uniforms.centerRect.value = v4
+
     } else {
       this.scoreHistory.push(false)
     }
@@ -236,15 +241,14 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.shift()
     }
     if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
-      this.isComplete = true
+      this.enableTracking = false
       this.dispatchEvent({type: 'complete'})
     }
   }
 
 
   update(currentFrame) {
-    if(!this.isComplete) {
-
+    if (this.enableTracking) {
       // Before recognize
       let h = this.video.videoWidth / 16 * 9
       let y = (this.video.videoHeight - h) / 2
@@ -259,26 +263,36 @@ export default class WebcamPlane extends THREE.Mesh {
       this.normralizeFeaturePoints()
       // this.tracker.draw(this.trackerCanvas)
 
-      this.checkCaptureScore()
+      if (this.enableScoreChecking) {
+        this.checkCaptureScore()
+      }
     }
-    else {
-      let f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
+
+    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame, currentFrame) {
+      let f = currentFrame - this.data.i_extra.in_frame
       let fade = 1 - this.data.i_extra.property.webcam_fade[f]
       // console.log(currentFrame +':'+fade)
       // TODO : apply fade animation instead of 'fadeout'
     }
 
+    if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
+      let f = currentFrame - this.data.o2_extra.in_frame
+      let props = this.data.o2_extra.property
+      this.material.uniforms.rate.value = props.webcam_fade[f]
+    }
+
     this.material.uniforms.frame.value = currentFrame
   }
+
 
   fadeOut() {
     let p = {rate: 0.4, brightness: 1}
     new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
       this.material.uniforms.rate.value = p.rate
-      this.material.uniforms.brightness.value = p.brightness
+      // this.material.uniforms.brightness.value = p.brightness
     }).onComplete(() => {
-      this.visible = false
-      this.enabled = false
+      // this.visible = false
+      // this.enabled = false
     }).start()
   }
 

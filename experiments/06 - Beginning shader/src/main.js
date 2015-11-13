@@ -61,14 +61,13 @@ async function main() {
       texture: {type: 't', value: texture},
       rate: {type: 'f', value:0.0},
       frame: {type: 'f', value:0.0},
-      edgeAlpha: {type: 'f', value:0.7},
-      center: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+      centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
       waveForce: {type: 'f', value:0.1},
       zoomForce: {type: 'f', value:0.3}
     }
   });
 
-  let geometry = new THREE.PlaneGeometry(400, 300, 400, 300);
+  let geometry = new THREE.PlaneGeometry(400, 300, 80, 60);
   let mesh = new THREE.Mesh( geometry, material);
   scene.add(mesh);
 
@@ -76,13 +75,14 @@ async function main() {
   // dat GUI
   let gui = new dat.GUI();
   gui.add(material, 'wireframe');
-  gui.add(material.uniforms.rate, 'value', 0, 1).name('rate');
-  let gui_center = gui.addFolder('center');
-  gui_center.add(material.uniforms.center.value, 'x', 0, 1);
-  gui_center.add(material.uniforms.center.value, 'y', 0, 1);
+  gui.add(material.uniforms.rate, 'value', 0.0, 1.0).name('rate');
+  let gui_center = gui.addFolder('center rect');
+  gui_center.add(material.uniforms.centerRect.value, 'x', 0.0, 1.0);
+  gui_center.add(material.uniforms.centerRect.value, 'y', 0.0, 1.0);
+  gui_center.add(material.uniforms.centerRect.value, 'z', 0.0, 1.0).name('w');
+  gui_center.add(material.uniforms.centerRect.value, 'w', 0.0, 1.0).name('h');
   gui.add(material.uniforms.waveForce, 'value', 0.0, 1.0).name('waveForce');
   gui.add(material.uniforms.zoomForce, 'value', 0.0, 1.0).name('zoomForce');
-  gui.add(material.uniforms.edgeAlpha, 'value', 0.0, 1.0).name('edgeAlpha');
 
   //==============
   // Events
