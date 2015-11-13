@@ -54,8 +54,8 @@ class App {
     this.face.scale.set(300, 300, 300)
     this.scene.add(this.face)
 
-    this.loadTexture('shutterstock_102487424.png')
-    this.loadData('shutterstock_102487424.json')
+    this.loadTexture('shutterstock_322271375.png')
+    this.loadData('shutterstock_322271375.json')
   }
 
 
@@ -118,6 +118,7 @@ class App {
     loader.load(url, (texture) => {
       texture.needsUpdate = true
       this.face.material.uniforms.map.value = texture
+      this.takeSnapshot = true
     })
   }
 
