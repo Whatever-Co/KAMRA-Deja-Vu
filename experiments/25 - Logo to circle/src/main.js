@@ -5,40 +5,28 @@ import 'jquery.transit'
 import 'OrbitControls'
 import TWEEN from 'tween.js'
 import dat from 'dat-gui'
+import Snap from 'imports-loader?this=>window,fix=>module.exports=0!snapsvg'
 
 import Config from './config'
 import Ticker from './ticker'
-import PreprocessWorker from 'worker!./preprocess-worker'
-import DeformableFaceGeometry from './deformable-face-geometry'
-import DeformedUVTexture from './deformed-uv-texture'
-import WebcamPlane from './webcam-plane'
 
 import './main.sass'
 
 
-class App {
+/*class App {
 
   constructor() {
     this.loader = new createjs.LoadQueue()
     this.loader.loadManifest([
-      {id: 'keyframes', src: 'keyframes.json'},
+      // {id: 'keyframes', src: 'keyframes.json'},
       {id: 'data', src: 'media/shutterstock_62329057.json'},
       {id: 'image', src: 'media/shutterstock_62329057.png'},
     ])
     this.loader.on('complete', () => {
-      this.keyframes = this.loader.getResult('keyframes')
-      let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
-      let worker = new PreprocessWorker()
-      worker.postMessage(vertices, vertices.map((a) => a.buffer))
-      worker.onmessage = (event) => {
-        this.keyframes.user.property.morph = event.data
-
-        this.initScene()
-        this.initObjects()
-
-        Ticker.on('update', this.update.bind(this))
-        Ticker.start()
-      }
+      this.initScene()
+      this.initObjects()
+      Ticker.on('update', this.update.bind(this))
+      Ticker.start()
     })
   }
 
@@ -56,45 +44,31 @@ class App {
 
     // this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
-    window.addEventListener('resize', this.onResize.bind(this))
-    this.onResize()
+    // window.addEventListener('resize', this.onResize.bind(this))
+    // this.onResize()
   }
 
 
   initObjects() {
-    this.keyframes = this.loader.getResult('keyframes')
-    console.log(this.keyframes)
-    this.config = require('./data/config.json').slitscan
-
+    // console.log(this.loader.getResult('keyframes'))
     let featurePoints = this.loader.getResult('data')
     let image = this.loader.getResult('image')
-    this.face = new THREE.Mesh(
-      new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200),
+    let face = new THREE.Mesh(
+      new DeformableFaceGeometry(featurePoints, 512, 512, 400, this.camera.position.z),
       new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(image)})
     )
+    face.geometry.computeBoundingBox()
+    face.geometry.boundingBox.center(face.position).negate()
 
-    {
-      let f = this.config.uv_in_frame
-      let props = this.keyframes.user.property
-      this.face.position.fromArray(props.position, f * 3)
-      this.face.scale.fromArray(props.scale, f * 3).multiplyScalar(150)
-      this.face.quaternion.fromArray(props.quaternion, f * 4)
-    }
-
-    {
-      let target = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
-      let camera = new THREE.PerspectiveCamera(this.config.camera_fov, 1, 10, 10000)
-      camera.position.fromArray(this.config.camera_position)
-      let scene = new THREE.Scene()
-      scene.add(this.face)
-      this.faceRenderer = {scene, camera, target}
-    }
-
-    // let prev = this.renderer.getClearColor().clone()
-    // this.renderer.setClearColor(0xff0000, 0)
-    // // this.renderer.render(scene, camera)
-    // this.renderer.render(scene, camera, target, true)
-    // this.renderer.setClearColor(prev, 1)
+    let target = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
+    let camera = new THREE.PerspectiveCamera(this.camera.fov, 1, 0.01, 100)
+    camera.position.z = face.geometry.boundingBox.size().y * 1.1 / 2 / Math.tan(THREE.Math.degToRad(camera.fov / 2))
+    let scene = new THREE.Scene()
+    scene.add(face)
+    let prev = this.renderer.getClearColor().clone()
+    this.renderer.setClearColor(0xff0000, 0)
+    this.renderer.render(scene, camera, target, true)
+    this.renderer.setClearColor(prev, 1)
 
     this.video = document.createElement('video')
     this.video.src = 'slitscan_uv_512.mp4'
@@ -108,7 +82,7 @@ class App {
         resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)},
         blurSize: {type: 'f', value: 8},
         map: {type: 't', value: map},
-        face: {type: 't', value: this.faceRenderer.target},
+        face: {type: 't', value: target},
       },
       vertexShader: `
         void main() {
@@ -154,9 +128,7 @@ class App {
           // gl_FragColor = sum;
         }
       `,
-      transparent: true,
-      depthWrite: false,
-      depthTest: false,
+      transparent: true
     }))
     this.scene.add(result)
 
@@ -173,21 +145,124 @@ class App {
 
 
   update(currentFrame, time) {
-    let f = currentFrame % (this.config.uv_out_frame - this.config.uv_in_frame)// + this.config.uv_in_frame
-    this.face.geometry.applyMorph(this.keyframes.user.property.morph[f])
-
-    let prev = this.renderer.getClearColor().clone()
-    this.renderer.setClearColor(0xff0000, 0)
-    this.renderer.render(this.faceRenderer.scene, this.faceRenderer.camera, this.faceRenderer.target, true)
-    this.renderer.setClearColor(prev, 1)
-
     this.renderer.render(this.scene, this.camera)
   }
 
 
   onResize() {
-    let s = Math.min(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    let s = Math.max(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
     $(this.renderer.domElement).css({
+      transformOrigin: 'left top',
+      translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
+      scale: [s, s],
+    })
+  }
+
+}*/
+
+
+
+
+class Node {
+
+  constructor() {
+    this.x = 0
+    this.y = 0
+    this.px = 0
+    this.py = 0
+    // this.vx = 0
+    // this.vy = 0
+  }
+
+  update(f, t) {
+    this.px = this.x
+    this.py = this.y
+
+    let a = t / 1000
+    let r = 300
+    this.x = Math.cos(a) * r
+    this.y = Math.sin(a) * r
+  }
+
+}
+
+
+
+class App {
+
+  constructor() {
+    this.canvas = document.createElement('canvas')
+    this.canvas.width = Config.RENDER_WIDTH
+    this.canvas.height = Config.RENDER_HEIGHT
+    document.body.appendChild(this.canvas)
+    this.ctx = this.canvas.getContext('2d')
+    this.ctx.fillStyle = 'rgb(26, 43, 52)'
+    this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+
+    this.ctx.save()
+    this.ctx.fillStyle = '#ffffff'
+    let frag = Snap.parse(require('raw!./logo.svg'))
+    frag.selectAll('path').forEach((el, i) => {
+      // if (i != 0) return
+      let total = el.getTotalLength()
+      // console.log(total)
+      let interval = 30
+      let n = Math.round(total / interval)
+      interval = total / n
+      for (let i = 0; i <= n; i++) {
+        let p = el.getPointAtLength(i * interval)
+        this.ctx.fillRect(p.x, p.y, 2, 2)
+      }
+    })
+    this.ctx.restore()
+
+    // this.data = $.parseXML(require('raw!./logo.svg'))
+    // console.log(this.data)
+
+    this.node = new Node()
+
+    window.addEventListener('resize', this.onResize.bind(this))
+    this.onResize()
+
+    Ticker.on('update', this.animate.bind(this))
+    // Ticker.start()
+  }
+
+
+  animate(f, t) {
+    this.update(f, t)
+    this.draw(f, t)
+  }
+
+
+  update(f, t) {
+    this.node.update(f, t)
+  }
+
+
+  draw() {
+    this.ctx.save()
+    this.ctx.globalAlpha = 0.2
+    this.ctx.fillStyle = 'rgb(26, 43, 52)'
+    this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+    this.ctx.restore()
+
+    this.ctx.save()
+    this.ctx.translate(Config.RENDER_WIDTH / 2, Config.RENDER_HEIGHT / 2)
+
+    this.ctx.beginPath()
+    this.ctx.moveTo(this.node.x, this.node.y)
+    this.ctx.lineTo(this.node.px, this.node.py)
+    this.ctx.strokeStyle = '#ffffff'
+    this.ctx.stroke()
+
+    this.ctx.restore()
+  }
+
+
+  onResize() {
+    let s = Math.min(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    $(this.canvas).css({
       transformOrigin: 'left top',
       // translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
       scale: [s, s],
@@ -195,6 +270,5 @@ class App {
   }
 
 }
-
 
 new App()
