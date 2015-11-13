@@ -11,7 +11,7 @@ class Ticker extends EventEmitter {
 
 
   start() {
-    this.update()
+    this.update(0)
   }
 
 

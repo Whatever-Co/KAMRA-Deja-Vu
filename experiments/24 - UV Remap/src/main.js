@@ -8,6 +8,7 @@ import dat from 'dat-gui'
 
 import Config from './config'
 import Ticker from './ticker'
+import PreprocessWorker from 'worker!./preprocess-worker'
 import DeformableFaceGeometry from './deformable-face-geometry'
 import DeformedUVTexture from './deformed-uv-texture'
 import WebcamPlane from './webcam-plane'
@@ -20,15 +21,24 @@ class App {
   constructor() {
     this.loader = new createjs.LoadQueue()
     this.loader.loadManifest([
-      // {id: 'keyframes', src: 'keyframes.json'},
+      {id: 'keyframes', src: 'keyframes.json'},
       {id: 'data', src: 'media/shutterstock_62329057.json'},
       {id: 'image', src: 'media/shutterstock_62329057.png'},
     ])
     this.loader.on('complete', () => {
-      this.initScene()
-      this.initObjects()
-      Ticker.on('update', this.update.bind(this))
-      Ticker.start()
+      this.keyframes = this.loader.getResult('keyframes')
+      let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
+      let worker = new PreprocessWorker()
+      worker.postMessage(vertices, vertices.map((a) => a.buffer))
+      worker.onmessage = (event) => {
+        this.keyframes.user.property.morph = event.data
+
+        this.initScene()
+        this.initObjects()
+
+        Ticker.on('update', this.update.bind(this))
+        Ticker.start()
+      }
     })
   }
 
@@ -46,31 +56,45 @@ class App {
 
     // this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
-    // window.addEventListener('resize', this.onResize.bind(this))
-    // this.onResize()
+    window.addEventListener('resize', this.onResize.bind(this))
+    this.onResize()
   }
 
 
   initObjects() {
-    // console.log(this.loader.getResult('keyframes'))
+    this.keyframes = this.loader.getResult('keyframes')
+    console.log(this.keyframes)
+    this.config = require('./data/config.json').slitscan
+
     let featurePoints = this.loader.getResult('data')
     let image = this.loader.getResult('image')
-    let face = new THREE.Mesh(
-      new DeformableFaceGeometry(featurePoints, 512, 512, 400, this.camera.position.z),
+    this.face = new THREE.Mesh(
+      new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200),
       new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(image)})
     )
-    face.geometry.computeBoundingBox()
-    face.geometry.boundingBox.center(face.position).negate()
 
-    let target = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
-    let camera = new THREE.PerspectiveCamera(this.camera.fov, 1, 0.01, 100)
-    camera.position.z = face.geometry.boundingBox.size().y * 1.1 / 2 / Math.tan(THREE.Math.degToRad(camera.fov / 2))
-    let scene = new THREE.Scene()
-    scene.add(face)
-    let prev = this.renderer.getClearColor().clone()
-    this.renderer.setClearColor(0xff0000, 0)
-    this.renderer.render(scene, camera, target, true)
-    this.renderer.setClearColor(prev, 1)
+    {
+      let f = this.config.uv_in_frame
+      let props = this.keyframes.user.property
+      this.face.position.fromArray(props.position, f * 3)
+      this.face.scale.fromArray(props.scale, f * 3).multiplyScalar(150)
+      this.face.quaternion.fromArray(props.quaternion, f * 4)
+    }
+
+    {
+      let target = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
+      let camera = new THREE.PerspectiveCamera(this.config.camera_fov, 1, 10, 10000)
+      camera.position.fromArray(this.config.camera_position)
+      let scene = new THREE.Scene()
+      scene.add(this.face)
+      this.faceRenderer = {scene, camera, target}
+    }
+
+    // let prev = this.renderer.getClearColor().clone()
+    // this.renderer.setClearColor(0xff0000, 0)
+    // // this.renderer.render(scene, camera)
+    // this.renderer.render(scene, camera, target, true)
+    // this.renderer.setClearColor(prev, 1)
 
     this.video = document.createElement('video')
     this.video.src = 'slitscan_uv_512.mp4'
@@ -84,7 +108,7 @@ class App {
         resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)},
         blurSize: {type: 'f', value: 8},
         map: {type: 't', value: map},
-        face: {type: 't', value: target},
+        face: {type: 't', value: this.faceRenderer.target},
       },
       vertexShader: `
         void main() {
@@ -130,7 +154,9 @@ class App {
           // gl_FragColor = sum;
         }
       `,
-      transparent: true
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
     }))
     this.scene.add(result)
 
@@ -147,15 +173,23 @@ class App {
 
 
   update(currentFrame, time) {
+    let f = currentFrame % (this.config.uv_out_frame - this.config.uv_in_frame)// + this.config.uv_in_frame
+    this.face.geometry.applyMorph(this.keyframes.user.property.morph[f])
+
+    let prev = this.renderer.getClearColor().clone()
+    this.renderer.setClearColor(0xff0000, 0)
+    this.renderer.render(this.faceRenderer.scene, this.faceRenderer.camera, this.faceRenderer.target, true)
+    this.renderer.setClearColor(prev, 1)
+
     this.renderer.render(this.scene, this.camera)
   }
 
 
   onResize() {
-    let s = Math.max(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    let s = Math.min(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
     $(this.renderer.domElement).css({
       transformOrigin: 'left top',
-      translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
+      // translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
       scale: [s, s],
     })
   }
