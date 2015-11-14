@@ -26,13 +26,20 @@ inFrame = {
     "A1": 418,
     "A2": 837,
     "A3": 1256,
+    "slice-in": 1662,
     "B": 1674,
+    "slice-all": 1767,
     "C": 2094,
+    "slice-out": 2120,
     "D": 2512,
     "E": 2722,
     "O1": 3142,
     "O2": 3356
 }
+
+ePosition = [0, 0, 0]
+eQuaternion = [0, 0, 0, 1]
+eScale = [1, 1, 1]
 
 doc = c4d.documents.GetActiveDocument()
 fps = doc[c4d.DOCUMENT_FPS]

@@ -28,6 +28,7 @@ childrenFrac = search("children_frac")
 
 webcamMat = doc.SearchMaterial("webcam.begin")
 webcamFadeShader = webcamMat[c4d.MATERIAL_ALPHA_SHADER]
+iTurbulance = search("i_extra.turbulance")
 
 userAltsRoot = [
 	search("user_alt0_root"),
@@ -47,9 +48,10 @@ particlesVanish = search("user_particles_vanish")
 particlesCount = mo.GeGetMoData(particlesCloner).GetCount()
 particlesIns = search("user_particles_ins")
 
-slices = [search("user_slice.%d" % i) for i in xrange(5)]
-sliceStrangerOrder = [5, 6, 3, 0, -1, 2, 7, 1, 4]
-
+# slices
+sliceRow = [search("user_slice.%d" % i) for i in xrange(5)]
+sliceCloner = search("slices-cloner")
+sliceMainIndex = 4
 
 fallingCloner = search("falling_cloner")
 fallingCloneCount = mo.GeGetMoData(fallingCloner).GetCount()
@@ -97,7 +99,8 @@ keyframes = {
 			"curl_offset": [],
 			"interpolation": [],
 			"scale_z": [],
-			"webcam_fade": []
+			"webcam_fade": [],
+			"turbulance": []
 		}
 	},
 
@@ -165,8 +168,8 @@ keyframes = {
 	#----------
 	# B
 	"slice_row": {
-		"in_frame": 1662,
-		"out_frame": 2119,
+		"in_frame": inFrame["slice-in"],
+		"out_frame": inFrame["slice-out"]-1,
 		"property": [
 			{"offset_x": [], "rotation": []},
 			{"offset_x": [], "rotation": []},
@@ -177,12 +180,12 @@ keyframes = {
 	},
 
 	"slice_col": {
-		"in_frame": 1662,
-		"out_frame": 2119,
+		"in_frame": inFrame["slice-in"],
+		"out_frame": inFrame["slice-out"]-1,
 		"property": [
 			{
-				"position_x": (i-4) * 200,
-				"enabled": []
+				"position": [],
+				"quaternion": []
 			}
 			for i in xrange(9)
 		]
@@ -265,6 +268,9 @@ def initConfig():
 	mosaicRandZmin = mosaicRandZamp * mosaicRandZ[c4d.ID_MG_BASEEFFECTOR_MINSTRENGTH]
 	mosaicRandZmax = mosaicRandZamp * mosaicRandZ[c4d.ID_MG_BASEEFFECTOR_MAXSTRENGTH]
 
+	sliceColRangeMain = (inFrame["slice-in"], inFrame["C"]-1)
+	sliceColRangeSide = (inFrame["slice-all"], inFrame["slice-out"]-1)
+
 	config = {
 		"tracer": {
 			"indices": [77, 82, 92, 95, 177, 245, 250, 260, 263],
@@ -277,6 +283,13 @@ def initConfig():
 			} for i in xrange(8)
 		],
 		"user_particles_mesh": [],
+		"slice_row": [
+			{"cut_y": search("cut.y.%d" % i).GetRelPos().y * scale}  for i in xrange(5)
+		],
+		"slice_col": [
+			{"enabled_in_frame": sliceColRangeMain if i == sliceMainIndex else sliceColRangeSide}
+			for i in xrange(9)
+		],
 		"slitscan": {
 			"plane_position": toPosition(slitscanPlane.GetMg().off),
 			"plane_dimension": [slitscanPlane[c4d.PRIM_PLANE_WIDTH], slitscanPlane[c4d.PRIM_PLANE_HEIGHT]],
@@ -379,7 +392,8 @@ def addFrame(f):
 		prop["curl_offset"].append(curl.GetRelPos().y)
 		prop["interpolation"].append(userWrapper[c4d.ID_USERDATA,3])
 		prop["scale_z"].append(userWrapper[c4d.ID_USERDATA,2])
-		prop["webcam_fade"].append(webcamFadeShader[c4d.COLORSHADER_BRIGHTNESS])
+		prop["webcam_fade"].append(1 - webcamFadeShader[c4d.COLORSHADER_BRIGHTNESS])
+		prop["turbulance"].append(iTurbulance[c4d.ID_MG_BASEEFFECTOR_STRENGTH])
 
 		# ignore user matrix
 		userProp = keyframes["user"]["property"]
@@ -499,36 +513,51 @@ def addFrame(f):
 			else:
 				prop["position"].extend([0, 0, 0])
 				prop["quaternion"].extend([0, 0, 0, 1])
-				prop["scale"].extend([0, 0, 0])
+				prop["scale"].extend([1, 1, 1])
 
 	#-------------------------
-	# part B
+	# Slices
 
 	if keyframes["slice_row"]["in_frame"] <= f <= keyframes["slice_row"]["out_frame"]:
 
 		for i in xrange(5):
-			slice = slices[i]
+			sr = sliceRow[i]
 			prop = keyframes["slice_row"]["property"][i]
 
-			prop["offset_x"].append(slice.GetRelPos().x)
-			prop["rotation"].append(slice.GetRelRot().x)
+			prop["offset_x"].append(sr.GetRelPos().x)
+			prop["rotation"].append(sr.GetRelRot().x)
 
 	if keyframes["slice_col"]["in_frame"] <= f <= keyframes["slice_col"]["out_frame"]:
 
+		sliceMainIndex = 4
+		md = mo.GeGetMoData(sliceCloner)
+		matrices = md.GetArray(c4d.MODATA_MATRIX)
+
+
 		for i in xrange(9):
 			prop = keyframes["slice_col"]["property"][i]
+			m = matrices[i]
 
-			# sidekicks
-			if f < 1768:
-				prop["enabled"].append(False)
-			else:
-				prop["enabled"].append(True)
+			if f < inFrame["slice-all"]: # only main
+				if i == sliceMainIndex:
+					prop["position"].extend(toPosition(m.off))
+					prop["quaternion"].extend(toQuaternion(m))
+				else:
+					prop["position"].extend(ePosition)
+					prop["quaternion"].extend(eQuaternion)
 
-			# main
-			if f < 2092:
-				keyframes["slice_col"]["property"][4][-1] = True
-			else:
-				keyframes["slice_col"]["property"][4][-1] = False
+			elif f < inFrame["C"]: # all
+				prop["position"].extend(toPosition(m.off))
+				prop["quaternion"].extend(toQuaternion(m))
+
+			else: # wipe out
+				if i == sliceMainIndex:
+					prop["position"].extend(ePosition)
+					prop["quaternion"].extend(eQuaternion)
+				else:
+					prop["position"].extend(toPosition(m.off))
+					prop["quaternion"].extend(toQuaternion(m))
+
 
 	if keyframes["b_extra"]["in_frame"] <= f <= keyframes["b_extra"]["out_frame"]:
 		prop = keyframes["b_extra"]["property"]
