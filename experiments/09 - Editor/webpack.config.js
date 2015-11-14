@@ -23,8 +23,6 @@ module.exports = {
   amd: { jQuery: true },
   plugins: [
     new BrowserSyncPlugin({
-      host: 'localhost',
-      port: 3000,
       server: { baseDir: ['./public'] },
       open: false
     })
