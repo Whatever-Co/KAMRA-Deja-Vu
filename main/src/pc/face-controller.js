@@ -49,6 +49,7 @@ export default class FaceController extends THREE.Object3D {
     this.add(this.rotateGroup)
 
     this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1.visible = false
     this.face1.matrixAutoUpdate = false
     this.add(this.face1)
 
@@ -81,9 +82,9 @@ export default class FaceController extends THREE.Object3D {
       uniforms: {
         map: {type: 't', value: this.webcam.texture.clone()},
         clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
-        scaleZ: {type: 'f', value:1.0},
-        curlStrength: {type: 'f', value:1.0},
-        curlRadius: {type: 'f', value:0.2},
+        scaleZ: {type: 'f', value: 1.0},
+        curlStrength: {type: 'f', value: 1.0},
+        curlRadius: {type: 'f', value: 0.2},
         curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
         curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
       },
@@ -142,18 +143,15 @@ export default class FaceController extends THREE.Object3D {
         let face = new THREE.Object3D()
         face.visible = false
         face.scale.set(SCALE, SCALE, SCALE)
-        face.position.z = -0.5 * SCALE
         this.add(face)
 
         let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
-        front.position.z = 0.5
         let clipMin = minY + i * sliceHeight
         let clipMax = minY + (i + 1) * sliceHeight
         front.material.uniforms.clipRange.value.set(clipMin, clipMax)
         face.add(front)
 
         let back = new THREE.Mesh(backGeometry, backMaterial.clone())
-        back.position.z = 0.5
         back.material.uniforms.clipRange.value.set(clipMin, clipMax)
         face.add(back)
 

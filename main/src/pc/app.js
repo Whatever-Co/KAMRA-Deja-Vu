@@ -107,15 +107,16 @@ class App {
       this.stateMachine.playCompleted()
     })
 
+
     // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       let props = this.keyframes.camera.property
       let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
-      this.camera.fov = props.fov[f]
-      this.camera.updateProjectionMatrix()
-      this.camera.position.fromArray(props.position, f * 3)
-      this.camera.quaternion.fromArray(props.quaternion, f * 4)
+      // this.camera.fov = props.fov[f]
+      // this.camera.updateProjectionMatrix()
+      // this.camera.position.fromArray(props.position, f * 3)
+      // this.camera.quaternion.fromArray(props.quaternion, f * 4)
 
       let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
       this.webcam.scale.set(scale, scale, scale)
@@ -149,10 +150,6 @@ class App {
         }).appendTo('body')[0]
         this._vcon.currentTime = 2 / 24
         this._vcon.play()
-
-        // setTimeout(() => {
-        //   this.sound.position = this.keyframes.mosaic.in_frame / 24 * 1000 - 1000
-        // }, 1000)
       }
     })
     this.controllers.push(this.webcam)

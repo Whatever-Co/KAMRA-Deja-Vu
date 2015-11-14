@@ -282,8 +282,9 @@ export default class extends THREE.Mesh {
 
   exportFace() {
     let position = []
+    let offset = 40 / 150
     this.geometry.vertices.forEach((v) => {
-      position.push(parseFloat(v.x.toPrecision(4)), parseFloat(v.y.toPrecision(4)), parseFloat(v.z.toPrecision(4)))
+      position.push(parseFloat(v.x.toPrecision(4)), parseFloat(v.y.toPrecision(4)), parseFloat((v.z + offset).toPrecision(4)))
     })
 
     let index = []

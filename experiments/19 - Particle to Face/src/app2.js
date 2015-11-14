@@ -49,7 +49,7 @@ class App2 {
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
     document.body.appendChild(this.renderer.domElement)
 
-    // this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
+    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
@@ -66,9 +66,13 @@ class App2 {
     root.add(this.webcam)
     this.webcam.start()
 
-    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3, depthTest: false}))
+    this.face1.renderOrder = 1
     this.face1.matrixAutoUpdate = false
     this.scene.add(this.face1)
+    this.face1.add(new THREE.AxisHelper())
+    this.face1.geometry.computeBoundingBox()
+    console.table(this.face1.geometry.boundingBox)
 
     this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
     this.face2.visible = false
@@ -80,10 +84,17 @@ class App2 {
 
     this.face2.material.map = this.creepyTexture
 
+    let z = this.camera.position.z
     this._updateObjects = () => {
       if (this.webcam.normalizedFeaturePoints) {
-        this.face1.geometry.deform(this.webcam.normalizedFeaturePoints)
+        this.face1.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, z)
+        // this.face1.geometry.deform(this.webcam.normalizedFeaturePoints)
         this.face1.matrix.copy(this.webcam.matrixFeaturePoints)
+        this.face1.material.wireframe = false
+        this.face1.material.opacity = 0.5
+        // this.face1.material.transparent = false
+        this.face1.material.map = this.webcam.texture
+        this.face1.material.needsUpdate = true
 
         // this.face2.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y, this.camera.position.z)
         // this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
@@ -184,7 +195,7 @@ class App2 {
       this._updateObjects(currentFrame, time)
     }
 
-    // this.controls.update()
+    this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }
 
