@@ -2,6 +2,7 @@
 
 import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
+import Modernizr from 'exports?Modernizr!modernizr-custom'
 
 import StandardFaceData from './standard-face-data'
 
@@ -67,8 +68,7 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
 
-  start() {
-    navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia)
+  startWebcam() {
     let options = {
       video: {
         mandatory: {minWidth: 640},
@@ -78,12 +78,21 @@ export default class WebcamPlane extends THREE.Mesh {
         ]
       }
     }
-    navigator.getUserMedia(options, this.onSuccess.bind(this), this.onError.bind(this))
+    let gUM = Modernizr.prefixed('getUserMedia', navigator)
+    gUM(options, this.onSuccess.bind(this), this.onError.bind(this))
   }
+
+
+  startVideo() {
+
+  }
+
 
   stop() {
     if (this.stream) {
       this.stream.getVideoTracks()[0].stop()
+    }
+    if (this.video) {
       this.video.pause()
     }
     this.enableTracking = false

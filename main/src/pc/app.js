@@ -156,7 +156,7 @@ class App {
       }
     })
     this.controllers.push(this.webcam)
-    this.webcam.start()
+    this.webcam.startWebcam()
 
     // face
     this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
