@@ -36,10 +36,17 @@ class App {
         this.initScene()
         this.initObjects()
 
+        this.frameCounter = $('<div id="frame-counter">').appendTo('body').text(0)
+
         Ticker.on('update', this.update.bind(this))
         Ticker.start()
       }
     })
+
+    this.video = document.createElement('video')
+    this.video.src = 'slitscan_uv_512.mp4'
+    this.video.loop = true
+    this.video.load()
   }
 
 
@@ -50,7 +57,7 @@ class App {
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer()
-    this.renderer.setClearColor(0x071544)
+    this.renderer.setClearColor(0x1a2b34)
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
     document.body.appendChild(this.renderer.domElement)
 
@@ -65,6 +72,8 @@ class App {
     this.keyframes = this.loader.getResult('keyframes')
     console.log(this.keyframes)
     this.config = require('./data/config.json').slitscan
+    this.config.duration = this.config.uv_out_frame - this.config.uv_in_frame + 1
+    console.log(this.config)
 
     let featurePoints = this.loader.getResult('data')
     let image = this.loader.getResult('image')
@@ -95,11 +104,6 @@ class App {
     // // this.renderer.render(scene, camera)
     // this.renderer.render(scene, camera, target, true)
     // this.renderer.setClearColor(prev, 1)
-
-    this.video = document.createElement('video')
-    this.video.src = 'slitscan_uv_512.mp4'
-    this.video.loop = true
-    this.video.play()
 
     let map = new THREE.VideoTexture(this.video)
     map.minFilter = map.magFilter = THREE.LinearFilter
@@ -165,16 +169,25 @@ class App {
     gui.add(result.material.uniforms.blurSize, 'value', 0, 30, 0.01).name('Blur size')
     gui.add(this.video, 'play').name('Play')
     gui.add(this.video, 'pause').name('Pause')
-    gui.add(p, 'src512').name('512?').onChange((e) => {
-      this.video.src = e ? 'slitscan_uv_512.mp4' : 'slitscan_uv_h264.mp4'
-      this.video.play()
+    // gui.add(p, 'src512').name('512?').onChange((e) => {
+    //   this.video.src = e ? 'slitscan_uv_512.mp4' : 'slitscan_uv_h264.mp4'
+    //   this.video.play()
+    // })
+
+    let video = this.video
+    Ticker.setClock({
+      get position() {
+        return video.currentTime * 1000
+      }
     })
+    this.video.play()
   }
 
 
   update(currentFrame, time) {
-    let f = currentFrame % (this.config.uv_out_frame - this.config.uv_in_frame)// + this.config.uv_in_frame
+    let f = currentFrame + this.config.uv_in_frame
     this.face.geometry.applyMorph(this.keyframes.user.property.morph[f])
+    this.frameCounter.text(f)
 
     let prev = this.renderer.getClearColor().clone()
     this.renderer.setClearColor(0xff0000, 0)
