@@ -1,11 +1,14 @@
-/* global THREE createjs */
+/* global THREE */
 
 import $ from 'jquery'
 import 'jquery.transit'
 import 'OrbitControls'
-import TWEEN from 'tween.js'
-import dat from 'dat-gui'
+// import TWEEN from 'tween.js'
+// import dat from 'dat-gui'
 import Snap from 'imports-loader?this=>window,fix=>module.exports=0!snapsvg'
+import {SpatialHash} from 'spatialhash'
+import {Noise} from 'noisejs'
+const noise = new Noise(Math.random())
 
 import Config from './config'
 import Ticker from './ticker'
@@ -13,180 +16,25 @@ import Ticker from './ticker'
 import './main.sass'
 
 
-/*class App {
 
-  constructor() {
-    this.loader = new createjs.LoadQueue()
-    this.loader.loadManifest([
-      // {id: 'keyframes', src: 'keyframes.json'},
-      {id: 'data', src: 'media/shutterstock_62329057.json'},
-      {id: 'image', src: 'media/shutterstock_62329057.png'},
-    ])
-    this.loader.on('complete', () => {
-      this.initScene()
-      this.initObjects()
-      Ticker.on('update', this.update.bind(this))
-      Ticker.start()
-    })
-  }
+class Node extends THREE.Vector3 {
 
-
-  initScene() {
-    this.camera = new THREE.PerspectiveCamera(16.8145, Config.RENDER_WIDTH / Config.RENDER_HEIGHT, 10, 10000)
-    this.camera.position.set(0, 0, 1700)
-
-    this.scene = new THREE.Scene()
-
-    this.renderer = new THREE.WebGLRenderer()
-    this.renderer.setClearColor(0x071544)
-    this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
-    document.body.appendChild(this.renderer.domElement)
-
-    // this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
-
-    // window.addEventListener('resize', this.onResize.bind(this))
-    // this.onResize()
-  }
-
-
-  initObjects() {
-    // console.log(this.loader.getResult('keyframes'))
-    let featurePoints = this.loader.getResult('data')
-    let image = this.loader.getResult('image')
-    let face = new THREE.Mesh(
-      new DeformableFaceGeometry(featurePoints, 512, 512, 400, this.camera.position.z),
-      new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(image)})
-    )
-    face.geometry.computeBoundingBox()
-    face.geometry.boundingBox.center(face.position).negate()
-
-    let target = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
-    let camera = new THREE.PerspectiveCamera(this.camera.fov, 1, 0.01, 100)
-    camera.position.z = face.geometry.boundingBox.size().y * 1.1 / 2 / Math.tan(THREE.Math.degToRad(camera.fov / 2))
-    let scene = new THREE.Scene()
-    scene.add(face)
-    let prev = this.renderer.getClearColor().clone()
-    this.renderer.setClearColor(0xff0000, 0)
-    this.renderer.render(scene, camera, target, true)
-    this.renderer.setClearColor(prev, 1)
-
-    this.video = document.createElement('video')
-    this.video.src = 'slitscan_uv_512.mp4'
-    this.video.loop = true
-    this.video.play()
-
-    let map = new THREE.VideoTexture(this.video)
-    map.minFilter = map.magFilter = THREE.LinearFilter
-    let result = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-      uniforms: {
-        resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)},
-        blurSize: {type: 'f', value: 8},
-        map: {type: 't', value: map},
-        face: {type: 't', value: target},
-      },
-      vertexShader: `
-        void main() {
-          gl_Position = vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec2 resolution;
-        uniform float blurSize;
-        uniform sampler2D map;
-        uniform sampler2D face;
-        void main() {
-          const int NUM_TAPS = 12;
-          
-          vec2 fTaps_Poisson[NUM_TAPS];
-          fTaps_Poisson[0]  = vec2(-.326,-.406);
-          fTaps_Poisson[1]  = vec2(-.840,-.074);
-          fTaps_Poisson[2]  = vec2(-.696, .457);
-          fTaps_Poisson[3]  = vec2(-.203, .621);
-          fTaps_Poisson[4]  = vec2( .962,-.195);
-          fTaps_Poisson[5]  = vec2( .473,-.480);
-          fTaps_Poisson[6]  = vec2( .519, .767);
-          fTaps_Poisson[7]  = vec2( .185,-.893);
-          fTaps_Poisson[8]  = vec2( .507, .064);
-          fTaps_Poisson[9]  = vec2( .896, .412);
-          fTaps_Poisson[10] = vec2(-.322,-.933);
-          fTaps_Poisson[11] = vec2(-.792,-.598);
-
-          vec4 sum;
-          for (int i = 0; i < NUM_TAPS; i++) {
-            sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize) / resolution);
-            sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 2.) / resolution);
-            sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 3.) / resolution);
-          }
-          sum /= float(NUM_TAPS * 3);
-
-          // vec2 uv = texture2D(map, gl_FragCoord.xy / resolution).xy;
-          gl_FragColor = texture2D(face, sum.xy);
-
-          // gl_FragColor = vec4(uv, 0., 1.);
-          // gl_FragColor = vec4(gl_FragCoord.xy / resolution, 0, 1);
-          // gl_FragColor = texture2D(face, gl_FragCoord.xy / resolution);
-          // gl_FragColor = sum;
-        }
-      `,
-      transparent: true
-    }))
-    this.scene.add(result)
-
-    let p = {src512: true}
-    let gui = new dat.GUI()
-    gui.add(result.material.uniforms.blurSize, 'value', 0, 30, 0.01).name('Blur size')
-    gui.add(this.video, 'play').name('Play')
-    gui.add(this.video, 'pause').name('Pause')
-    gui.add(p, 'src512').name('512?').onChange((e) => {
-      this.video.src = e ? 'slitscan_uv_512.mp4' : 'slitscan_uv_h264.mp4'
-      this.video.play()
-    })
-  }
-
-
-  update(currentFrame, time) {
-    this.renderer.render(this.scene, this.camera)
-  }
-
-
-  onResize() {
-    let s = Math.max(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
-    $(this.renderer.domElement).css({
-      transformOrigin: 'left top',
-      translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
-      scale: [s, s],
-    })
-  }
-
-}*/
-
-
-
-
-class Node {
-
-  constructor() {
-    this.x = 0
-    this.y = 0
-    this.px = 0
-    this.py = 0
-    // this.vx = 0
-    // this.vy = 0
-  }
-
-  update(f, t) {
-    this.px = this.x
-    this.py = this.y
-
-    let a = t / 1000
-    let r = 300
-    this.x = Math.cos(a) * r
-    this.y = Math.sin(a) * r
+  constructor(x = 0, y = 0, z = 0) {
+    super(x, y, z)
+    this.width = this.height = 1
+    this.prev = new THREE.Vector3()
+    this.velocity = new THREE.Vector3()
+    this.connection = []
+    this.history = []
   }
 
 }
 
 
+const signedAngle = (v1, v2) => Math.atan2(v1.x * v2.y - v1.y * v2.x, v1.x * v2.x + v1.y * v2.y)
+
+const PLUS_Z = new THREE.Vector3(0, 0, 1)
+let _v1 = new THREE.Vector3()
 
 class App {
 
@@ -199,64 +47,225 @@ class App {
     this.ctx.fillStyle = 'rgb(26, 43, 52)'
     this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
 
-    this.ctx.save()
-    this.ctx.fillStyle = '#ffffff'
-    let frag = Snap.parse(require('raw!./logo.svg'))
-    frag.selectAll('path').forEach((el, i) => {
-      // if (i != 0) return
+    this.spatialHash = new SpatialHash()
+
+    this.waypoints = []
+    Snap.parse(require('raw!./logo.svg')).selectAll('path').forEach((el) => {
       let total = el.getTotalLength()
-      // console.log(total)
-      let interval = 30
+      let interval = 20
       let n = Math.round(total / interval)
       interval = total / n
-      for (let i = 0; i <= n; i++) {
+      let offset = this.waypoints.length
+      for (let i = 0; i < n; i++) {
         let p = el.getPointAtLength(i * interval)
-        this.ctx.fillRect(p.x, p.y, 2, 2)
+        let node = new Node(p.x, p.y)
+        node.id = this.waypoints.length
+        this.waypoints.push(node)
+        this.spatialHash.insert(node)
+      }
+      for (let i = 0; i < n; i++) {
+        let node = this.waypoints[offset + i]
+        node.connection.push(this.waypoints[offset + (i + 1) % n])     // next
+        node.connection.push(this.waypoints[offset + (i + n - 1) % n]) // prev
       }
     })
-    this.ctx.restore()
 
-    // this.data = $.parseXML(require('raw!./logo.svg'))
-    // console.log(this.data)
-
-    this.node = new Node()
+    this.nodes = []
+    for (let i = 0; i < 100; i++) {
+      let node = new Node(Config.RENDER_WIDTH * Math.random(), Config.RENDER_HEIGHT * Math.random())
+      node.velocity.set(Math.random() - 0.5, Math.random() - 0.5, 0).setLength(3)
+      this.nodes.push(node)
+    }
 
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
 
+    this.mouseX = 0
+    this.mouseY = 0
+    this.canvas.addEventListener('mousemove', (e) => {
+      this.mouseX = e.offsetX
+      this.mouseY = e.offsetY
+    })
+
     Ticker.on('update', this.animate.bind(this))
-    // Ticker.start()
+    Ticker.start()
   }
 
 
   animate(f, t) {
-    this.update(f, t)
+    for (let i = 0; i < 5; i++) {
+      this.update(f, t)
+    }
     this.draw(f, t)
   }
 
 
-  update(f, t) {
-    this.node.update(f, t)
+  update( ) {
+    this.nodes.forEach((node) => {
+      node.prev.copy(node)
+
+      if (node.x < 0 || Config.RENDER_WIDTH < node.x) {
+        node.velocity.x *= -1
+      }
+      if (node.y < 0 || Config.RENDER_HEIGHT < node.y) {
+        node.velocity.y *= -1
+      }
+
+      let query = node.velocity.clone().multiplyScalar(5)
+      let d = Math.max(query.length(), 30)
+      query.setLength(d)
+      query.add(node)
+      query.width = query.height = d * 2
+      query.x -= d
+      query.y -= d
+      node._searchArea = query
+
+      let sorted = this.spatialHash.retrieve(query).map((p) => {
+        p._v = (p._v || new THREE.Vector3()).copy(p).sub(node)
+        p._a = signedAngle(node.velocity, p._v)
+        p._d = p._v.lengthSq()
+        return p
+      }).sort((a, b) => a._d - b._d).filter((p) => Math.abs(p._a) < Math.PI * 0.4)
+
+      if (sorted.length) { // found some nodes nearby
+        if (node.target) { // already tracked a node
+          if (sorted.indexOf(node.target) == -1) { // target passed
+            // find a nearest connected node for next target
+            let list = node.target.connection.concat()
+            let visited = {}
+            let candidate = []
+            while (list.length) {
+              let node = list.shift()
+              if (visited[node.id]) {
+                continue
+              }
+              if (sorted.indexOf(node) == -1) {
+                continue
+              }
+              visited[node.id] = true
+              candidate.push(node)
+              list.push(...node.connection)
+            }
+            node.target = candidate.length ? candidate.sort((a, b) => a._d - b._d)[0] : sorted[0]
+          }
+        } else {
+          node.target = sorted[0]
+        }
+        _v1.copy(node.velocity).applyAxisAngle(PLUS_Z, node.target._a)
+        node.velocity.lerp(_v1, 0.35).setLength(3)
+      } else {
+        delete node.target
+        let t = Date.now() / 1000
+        node.velocity.x += noise.simplex3((node.x - Config.RENDER_WIDTH * 0.5) * 0.0005, (node.y - Config.RENDER_HEIGHT * 0.5) * 0.001, t) * 0.2
+        node.velocity.y += noise.simplex3((node.x - Config.RENDER_WIDTH * 0.5) * 0.0005, -(node.y - Config.RENDER_HEIGHT * 0.5) * 0.001, t) * 0.2
+        node.velocity.setLength(3)
+      }
+      node._approaching = sorted
+
+      node.add(node.velocity)
+
+      /*{
+        const w = Config.RENDER_WIDTH
+        if (node.x < 0) {
+          node.x += w
+          node.prev.x += w
+        } else if (w < node.x) {
+          node.x -= w
+          node.prev.x -= w
+        }
+        const h = Config.RENDER_HEIGHT
+        if (node.y < 0) {
+          node.y += h
+          node.prev.y += h
+        } else if (h < node.y) {
+          node.y -= h
+          node.prev.y -= h
+        }
+      }*/
+
+      node.history.push([node.x, node.y])
+      if (node.history.length > 100) {
+        node.history.shift()
+      }
+    })
   }
 
 
   draw() {
-    this.ctx.save()
-    this.ctx.globalAlpha = 0.2
-    this.ctx.fillStyle = 'rgb(26, 43, 52)'
-    this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
-    this.ctx.restore()
+    let ctx = this.ctx
 
-    this.ctx.save()
-    this.ctx.translate(Config.RENDER_WIDTH / 2, Config.RENDER_HEIGHT / 2)
+    ctx.save()
+    // ctx.globalAlpha = 0.1
+    ctx.fillStyle = 'rgb(26, 43, 52)'
+    ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
+    ctx.restore()
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(this.node.x, this.node.y)
-    this.ctx.lineTo(this.node.px, this.node.py)
-    this.ctx.strokeStyle = '#ffffff'
-    this.ctx.stroke()
+    ctx.save()
+    // ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+    // this.waypoints.forEach((p) => {
+    //   ctx.fillRect(p.x - 1, p.y - 1, 2, 2)
+    // })
+    // ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)'
+    // this.waypoints.forEach((p) => {
+    //   ctx.beginPath()
+    //   ctx.moveTo(p.x, p.y)
+    //   ctx.lineTo(p.connection[0].x, p.connection[0].y)
+    //   ctx.stroke()
+    // })
+    // ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)'
+    // this.waypoints.forEach((p) => {
+    //   ctx.beginPath()
+    //   ctx.moveTo(p.x + 2, p.y)
+    //   ctx.lineTo(p.connection[1].x + 2, p.connection[1].y)
+    //   ctx.stroke()
+    // })
+    ctx.restore()
 
-    this.ctx.restore()
+    // ctx.fillStyle = 'rgba(255, 255, 255, 0.03)'
+    // ctx.fillRect(this.mouseX - 50, this.mouseY - 50, 100, 100)
+    // ctx.fillStyle = '#ff0000'
+    // this.spatialHash.retrieve({x: this.mouseX - 50, y: this.mouseY - 50, width: 100, height: 100}).forEach((p) => {
+    //   ctx.fillRect(p.x - 2, p.y - 2, 4, 4)
+    // })
+
+    ctx.save()
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
+    ctx.lineWidth = 2
+    // ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
+    this.nodes.forEach((node) => {
+      // ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
+      // ctx.strokeRect(node._searchArea.x, node._searchArea.y, node._searchArea.width, node._searchArea.height)
+
+      ctx.strokeStyle = 'white'
+      const n = node.history.length
+      for (let i = 0; i < n - 1; i++) {
+        ctx.globalAlpha = i / n * 0.5
+        ctx.beginPath()
+        ctx.moveTo(node.history[i][0], node.history[i][1])
+        ctx.lineTo(node.history[i + 1][0], node.history[i + 1][1])
+        ctx.stroke()
+      }
+
+      /*ctx.strokeStyle = 'green'
+      ctx.beginPath()
+      ctx.arc(node.x, node.y, 5, 0, Math.PI * 2, false)
+      ctx.stroke()
+
+      ctx.fillStyle = 'red'
+      node._approaching.forEach((p) => {
+        ctx.fillRect(p.x - 2, p.y - 2, 4, 4)
+      })
+
+      if (node.target) {
+        ctx.strokeStyle = 'red'
+        ctx.beginPath()
+        ctx.arc(node.target.x, node.target.y, 5, 0, Math.PI * 2, false)
+        ctx.stroke()
+      }*/
+    })
+
+    ctx.restore()
   }
 
 
