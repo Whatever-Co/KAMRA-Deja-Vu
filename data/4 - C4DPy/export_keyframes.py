@@ -272,6 +272,9 @@ def initConfig():
 	sliceColRangeSide = (inFrame["slice-all"], inFrame["slice-out"]-1)
 
 	config = {
+		"i_extra": {
+			"zoom_force": 0.88
+		},
 		"tracer": {
 			"indices": [77, 82, 92, 95, 177, 245, 250, 260, 263],
 			"duration": 10
