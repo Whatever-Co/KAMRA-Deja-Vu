@@ -7,7 +7,6 @@ import webpack from 'webpack'
 import browserSync from 'browser-sync'
 import mergeStream from 'merge-stream'
 
-
 let developmentMode = process.env.NODE_ENV == 'development'
 
 gulp.task('webpack', () => {
@@ -29,7 +28,7 @@ gulp.task('webpack', () => {
       loaders: [
         {test: /\.js$/, exclude: /node_modules|web_modules/, loader: 'babel-loader'},
         {test: /\.json$/, loader: 'json-loader'},
-        {test: /\.(vert|frag|glsl)$/, loaders:['raw-loader','glslify-loader']}
+        {test: /\.(vert|frag|glsl)$/, loaders:['raw-loader','glslify-loader']},
       ]
     },
     amd: {jQuery: true},
@@ -39,7 +38,6 @@ gulp.task('webpack', () => {
           NODE_ENV: JSON.stringify(process.env.NODE_ENV)
         }
       })
-      // new webpack.optimize.CommonsChunkPlugin('init.js')
     ],
     // eslint: {
     //   fix: true,

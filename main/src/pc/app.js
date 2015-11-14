@@ -97,7 +97,7 @@ class App {
   }
 
 
-  start(useWebcam) {
+  start(event, from, to, useWebcam) {
     // music
     this.sound = createjs.Sound.createInstance('music-main')
     // this.sound.volume = 0.05
@@ -156,7 +156,7 @@ class App {
       }
     })
     this.controllers.push(this.webcam)
-    this.webcam.startWebcam()
+    this.webcam.start(useWebcam)
 
     // face
     this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)

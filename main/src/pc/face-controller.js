@@ -302,10 +302,6 @@ export default class FaceController extends THREE.Object3D {
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame
       let props = this.data.o2_extra.property
-      // this.webcam.opacity = 1 - props.webcam_fade[f]
-      // let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-      // this.webcam.scale.set(scale, scale, scale)
-      // this.webcam.rotation.z = this.camera.rotation.z
       this.rotateGroup.rotation.z = this.camera.rotation.z
 
       this.blender.visible = true

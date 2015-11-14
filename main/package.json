@@ -17,6 +17,7 @@
     "glsl-easings": "^1.0.0",
     "glsl-noise": "0.0.0",
     "glsl-range": "^1.0.0",
+    "glslify": "^2.3.1",
     "glslify-loader": "^1.0.2",
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "^3.1.0",
