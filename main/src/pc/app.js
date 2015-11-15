@@ -36,6 +36,8 @@ class App {
     this.initAssets()
     this.initWebGL()
 
+    this.noiseLayer = $('.noise')
+
     Ticker.on('update', this.animate)
     Ticker.start()
   }
@@ -249,6 +251,10 @@ class App {
     TWEEN.update(time)
 
     this.composer.render()
+
+    if (currentFrame % 2 == 0) {
+      this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+    }
 
     if (Config.DEV_MODE) {
       this.stats.end()
