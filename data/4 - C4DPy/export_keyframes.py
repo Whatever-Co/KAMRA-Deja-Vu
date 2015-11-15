@@ -5,6 +5,7 @@ import shutil
 # config
 
 destKeyframeFile = projDir + "/0b/data/3 - JSON/keyframes.json"
+destKeyframeTest = projDir + "/0b/data/3 - JSON/keyframes_test.json"
 destKeyframeGz = projDir + "/0b/data/3 - JSON/keyframes.json.gz"
 destConfigFile = projDir + "/0b/data/3 - JSON/config.json"
 
@@ -48,7 +49,9 @@ particlesCount = len(particlesList)
 sliceRow = [search("user_slice.%d" % i) for i in xrange(5)]
 sliceCloner = search("slices-cloner")
 sliceMainIndex = 4
+sliceAlt = search("slice_alt.poly")
 
+# falling
 fallingCloner = search("falling_cloner")
 fallingClonerCount = mo.GeGetMoData(fallingCloner).GetCount()
 
@@ -56,8 +59,10 @@ fallingMeshContainer = search("falling_meshes_container")
 fallingMeshCount = len(fallingMeshContainer.GetChildren())
 fallingMeshes = [obj.GetDown() for obj in fallingMeshContainer.GetChildren()]
 
+# mosaic
 mosaicTime = search("mosaic_time")
 
+# o2
 webcamLast = search("webcam_last")
 
 #========================================
@@ -188,6 +193,15 @@ keyframes = {
 			}
 			for i in xrange(9)
 		]
+	},
+
+	"slice_alt": {
+		"in_frame": inFrame["slice-all"],
+		"out_frame": inFrame["slice-out"]-1,
+		"property": {
+			"face_vertices": [],
+			"eyemouth_vertices": []
+		}
 	},
 
 	#----------
@@ -380,18 +394,22 @@ def addFrame(f):
 	cameraProp["fov"].append(math.degrees(cam[c4d.CAMERAOBJECT_FOV_VERTICAL]))
 	cameraProp["focus_distance"].append(cam[c4d.CAMERAOBJECT_TARGETDISTANCE])
 
+	#-------------------------
+	# user kf
+
 	if f <= keyframes["user"]["out_frame"]:
 		userProp = keyframes["user"]["property"]
 		faceVertices, eyemouthVertices = getFaceVertices(user)
 
 		userProp["position"].extend(toPosition(userOff.GetMg().off))
 		userProp["quaternion"].extend(toQuaternion(userOff.GetMg()))
-		userProp["scale"].extend(toScale(userOff.GetAbsScale()))
+		userProp["scale"].extend(toScaleFromMatrix(userOff.GetMg()))
 
 		appendVertices(userProp, "face_vertices", faceVertices)
 		appendVertices(userProp, "eyemouth_vertices", eyemouthVertices)
 
 	#-------------------------
+	# i kf
 
 	if f <= keyframes["i_extra"]["out_frame"]:
 		curl = doc.SearchObject("user_curl")
@@ -418,6 +436,7 @@ def addFrame(f):
 		userProp["scale"][-1] = 1
 
 	#-------------------------
+	# a kf
 
 	if keyframes["user_children"]["in_frame"] <= f <= keyframes["user_children"]["out_frame"]:
 
@@ -438,7 +457,7 @@ def addFrame(f):
 
 				prop["position"].extend(toPosition(child.GetAbsPos()))
 				prop["quaternion"].extend(toQuaternion(child.GetMg()))
-				prop["scale"].extend(toScale(child.GetAbsScale()))
+				prop["scale"].extend(toScaleFromMatrix(child.GetMg()))
 
 				# print prop["face_vertices"]
 				appendVertices(prop, "face_vertices", faceVertices)
@@ -480,14 +499,14 @@ def addFrame(f):
 
 				prop["position"].extend(toPosition(userAltOff.GetMg().off))
 				prop["quaternion"].extend(toQuaternion(userAltOff.GetMg()))
-				prop["scale"].extend(toScale(userAltOff.GetAbsScale()))
+				prop["scale"].extend(toScaleFromMatrix(userAltOff.GetMg()))
 				appendVertices(prop, "face_vertices", faceVertices)
 				appendVertices(prop, "eyemouth_vertices", eyemouthVertices)
 
 			else:
-				prop["position"].extend([0, 0, 0])
-				prop["quaternion"].extend([0, 0, 0, 1])
-				prop["scale"].extend([1, 1, 1])
+				prop["position"].extend(ePosition)
+				prop["quaternion"].extend(eQuaternion)
+				prop["scale"].extend(eScale)
 				prop["face_vertices"].append(None)
 				prop["eyemouth_vertices"].append(None)
 
@@ -554,6 +573,14 @@ def addFrame(f):
 				else:
 					prop["position"].extend(toPosition(m.off))
 					prop["quaternion"].extend(toQuaternion(m))
+
+	if keyframes["slice_alt"]["in_frame"] <= f <= keyframes["slice_alt"]["out_frame"]:
+
+		prop = keyframes["slice_alt"]["property"]
+		faceVertices, eyemouthVertices = getFaceVertices(sliceAlt)
+
+		prop["face_vertices"].append(faceVertices)
+		prop["eyemouth_vertices"].append(eyemouthVertices)
 
 
 	#-------------------------
@@ -633,40 +660,49 @@ def main():
 
 	c4d.CallCommand(13957)
 
+	testFrame = None#1767
+
 	setFrame(0)
 	initConfig()
 
 	# duration = 1640
 
-	f = 0
+	if testFrame == None:
+
+		f = 0
+		for f in xrange(0, duration):
+			setFrame(f)
+			addFrame(f)
+
+			if escPressed():
+				break
+
+		with open(destKeyframeFile, 'w') as outFile:
+			json.dump(keyframes, outFile, separators=(',',':'))
+
+		with open(destKeyframeFile, 'rb') as inFile:
+			with gzip.open(destKeyframeGz, 'wb') as outFile:
+				outFile.writelines(inFile)
+
+		with open(destKeyframeGz, 'r') as srcFile:
+			for path in keyframeDupPath:
+				with open(path, 'w') as destFile:
+					shutil.copyfileobj(srcFile, destFile)
+
+		with open(destConfigFile, 'w') as outFile:
+			json.dump(config, outFile, separators=(',',':'))
+
+		print "Done (%04d/%04d)" % (f, duration)
 
 
-	for f in xrange(0, duration):
-	# oneFrame = 2986
-	# for f in xrange(oneFrame, oneFrame+1):
-		setFrame(f)
-		addFrame(f)
+	else:
+		setFrame(testFrame)
+		addFrame(testFrame)
 
-		if escPressed():
-			break
-
-	with open(destKeyframeFile, 'w') as outFile:
-		json.dump(keyframes, outFile, separators=(',',':'))
-
-	with open(destKeyframeFile, 'rb') as inFile:
-		with gzip.open(destKeyframeGz, 'wb') as outFile:
-			outFile.writelines(inFile)
-
-	with open(destKeyframeGz, 'r') as srcFile:
-		for path in keyframeDupPath:
-			with open(path, 'w') as destFile:
-				shutil.copyfileobj(srcFile, destFile)
-
-
-	with open(destConfigFile, 'w') as outFile:
-		json.dump(config, outFile, separators=(',',':'))
-
-	print "Done (%04d/%04d)" % (f, duration)
+		with open(destKeyframeTest, 'w') as outFile:
+			json.dump(keyframes, outFile, indent=4)
 	
+		print "finished  - %d" % testFrame
+
 if __name__=='__main__':
 	main()
