@@ -169,7 +169,7 @@ class App {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.sound.position = 1600 / 24 * 1000
+        //   this.sound.position = 2000 / 24 * 1000
         // }, 1000)
       }
     })

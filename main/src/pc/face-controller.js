@@ -3,6 +3,7 @@
 import Config from './config'
 import Ticker from './ticker'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import SlitScanPlane from './slit-scan-plane'
 import CreepyFaceTexture from './creepy-face-texture'
 import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
@@ -77,7 +78,6 @@ export default class FaceController extends THREE.Object3D {
     }
     this.smallsEnabled = Config.DATA.user_children
 
-
     // mosaic part
     this.rotateGroup = new THREE.Object3D()
     this.add(this.rotateGroup)
@@ -113,8 +113,19 @@ export default class FaceController extends THREE.Object3D {
 
   initFrameEvents() {
     Config.DATA.user_children.forEach((e, i) => {
-      // Ticker.addFrameEvent(e.enabled_in_frame, this.enableChild.bind(this, i))
       Ticker.addFrameEvent(e.stranger_in_frame, this.changeChildToAnother.bind(this, i))
+    })
+
+    Ticker.addFrameEvent(Config.DATA.slitscan.uv_in_frame, () => {
+      this.main.visible = false
+      this.slicedFaces.forEach((face, i) => face.visible = i != 4)
+      this.slitScan = new SlitScanPlane()
+      this.slitScan.start(this.main)
+      this.add(this.slitScan)
+    })
+    Ticker.addFrameEvent(Config.DATA.slitscan.uv_out_frame + 1, () => {
+      this.main.visible = true
+      this.remove(this.slitScan)
     })
   }
 
@@ -202,7 +213,7 @@ export default class FaceController extends THREE.Object3D {
         this.slicedFaces.forEach((face) => this.add(face))
       })
       Ticker.addFrameEvent(this.data.slice_col.out_frame + 1, () => {
-        this.main.visible = true
+        // this.main.visible = true
         // this.smalls.forEach((face) => face.visible = true)
         this.slicedFaces.forEach((face) => this.remove(face))
       })
@@ -361,6 +372,10 @@ export default class FaceController extends THREE.Object3D {
           slice.rotation.y = props.rotation[f]
         }
       }
+    }
+
+    if (Config.DATA.slitscan.uv_in_frame <= currentFrame && currentFrame <= Config.DATA.slitscan.uv_out_frame) {
+      this.slitScan.update(this.renderer)
     }
 
     // mosaic
