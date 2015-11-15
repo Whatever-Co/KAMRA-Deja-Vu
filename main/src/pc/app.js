@@ -161,13 +161,17 @@ class App {
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({
           id: '_vcon',
-          src: 'data/438726972.mp4',
+          src: 'data/_/438726972.mp4',
           width: 1280,
           height: 720,
           muted: true
         }).appendTo('body')[0]
         this._vcon.currentTime = 2 / 24
         this._vcon.play()
+
+        setTimeout(() => {
+          this.sound.position = 1600 / 24 * 1000
+        }, 1000)
       }
     })
     this.controllers.push(this.webcam)

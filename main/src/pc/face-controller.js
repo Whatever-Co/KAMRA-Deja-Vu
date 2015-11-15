@@ -1,12 +1,37 @@
 /* global THREE */
 
 import Config from './config'
+import Ticker from './ticker'
 import DeformableFaceGeometry from './deformable-face-geometry'
 import CreepyFaceTexture from './creepy-face-texture'
 import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
 const SCALE = 150
+
+const loader = window.__djv_loader
+
+
+class FaceFrontMaterial extends THREE.ShaderMaterial {
+
+  constructor(texture, withCurl = false) {
+    super({
+      uniforms: {
+        map: {type: 't', value: texture},
+        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
+        scaleZ: {type: 'f', value: 1.0},
+        curlStrength: {type: 'f', value: 1.0},
+        curlRadius: {type: 'f', value: 0.2},
+        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
+        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
+      },
+      vertexShader: require('./shaders/face-front.vert'),
+      fragmentShader: require('./shaders/face-front.frag'),
+      side: THREE.DoubleSide
+    })
+  }
+
+}
 
 
 export default class FaceController extends THREE.Object3D {
@@ -34,9 +59,18 @@ export default class FaceController extends THREE.Object3D {
       this.alts.push(alt)
     }
 
+    // children
     this.smalls = []
     for (let i = 0; i < this.data.user_children.property.length; i++) {
-      let small = new THREE.Mesh(new DeformableFaceGeometry())
+      let data = loader.getResult(`face${i}data`)
+      if (!Array.isArray(data)) debugger
+      data.forEach((p) => {
+        p[0] *= 512
+        p[1] = (1 - p[1]) * 512
+      })
+      let geometry = new DeformableFaceGeometry(data, 512, 512, 512, 512, 400, 1200)
+      let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`face${i}image`)))
+      let small = new THREE.Mesh(geometry, material)
       small.visible = false
       this.add(small)
       this.smalls.push(small)
@@ -63,6 +97,8 @@ export default class FaceController extends THREE.Object3D {
     this.face2.material.map = this.creepyFaceTexture
 
 
+    this.initFrameEvents()
+
     // first animation
     this.update = this._followWebcam.bind(this)
 
@@ -75,23 +111,17 @@ export default class FaceController extends THREE.Object3D {
   }
 
 
+  initFrameEvents() {
+    Config.DATA.user_children.forEach((e, i) => {
+      Ticker.addFrameEvent(e.enabled_in_frame, this.enableChild.bind(this, i))
+      Ticker.addFrameEvent(e.stranger_in_frame, this.changeChildToAnother.bind(this, i))
+    })
+  }
+
+
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-
-    this.main.material = new THREE.ShaderMaterial({
-      uniforms: {
-        map: {type: 't', value: this.webcam.texture.clone()},
-        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
-        scaleZ: {type: 'f', value: 1.0},
-        curlStrength: {type: 'f', value: 1.0},
-        curlRadius: {type: 'f', value: 0.2},
-        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
-        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
-      },
-      vertexShader: require('./shaders/face-front.vert'),
-      fragmentShader: require('./shaders/face-front.frag'),
-      side: THREE.DoubleSide
-    })
+    this.main.material = new FaceFrontMaterial(this.webcam.texture.clone(), true)
 
     let position = new THREE.Vector3()
     let quaternion = new THREE.Quaternion()
@@ -104,8 +134,10 @@ export default class FaceController extends THREE.Object3D {
       face.geometry.copy(this.main.geometry)
       face.material = this.main.material
     })
-    this.smalls.forEach((face) => {
-      face.geometry.copy(this.main.geometry)
+    this.smalls.forEach((face, i) => {
+      face.geometry.originalUV = face.geometry.uvAttribute.clone()
+      face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
+      face.originalMaterial = face.material
       face.material = this.main.material
     })
 
@@ -128,22 +160,20 @@ export default class FaceController extends THREE.Object3D {
         side: THREE.BackSide
       })
 
-      const minY = frontGeometry.boundingBox.min.y * SCALE
-      const maxY = frontGeometry.boundingBox.max.y * SCALE
-      const height = maxY - minY
-      const numSlices = 5
-      const sliceHeight = height / numSlices
+      let clipRanges = Config.DATA.slice_row.slice(0, 4).map((r) => r.cut_y * SCALE)
+      clipRanges.unshift(10000)
+      clipRanges.push(-10000)
 
       this.mainSlices = []
-      for (let i = 0; i < numSlices; i++) {
+      for (let i = 0; i < clipRanges.length - 1; i++) {
         let face = new THREE.Object3D()
         face.visible = false
         face.scale.set(SCALE, SCALE, SCALE)
         this.add(face)
 
         let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
-        let clipMin = minY + i * sliceHeight
-        let clipMax = minY + (i + 1) * sliceHeight
+        let clipMin = clipRanges[i + 1]
+        let clipMax = clipRanges[i]
         front.material.uniforms.clipRange.value.set(clipMin, clipMax)
         face.add(front)
 
@@ -168,12 +198,10 @@ export default class FaceController extends THREE.Object3D {
       this.face1.position.fromArray(config.mosaic_face.position)
       this.face1.rotation.set(0, 0, Math.PI)
       this.face1.scale.fromArray(config.mosaic_face.scale.map((s) => s * 150))
-      console.log(this.face1.scale)
 
       this.creepyFaceTexture.update()
 
       let scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
-      let loader = window.__djv_loader
       let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
@@ -188,6 +216,21 @@ export default class FaceController extends THREE.Object3D {
     }
 
     this.update = this._update.bind(this)
+  }
+
+
+  enableChild(i) {
+    console.log('enableChild', i, Ticker.currentFrame)
+  }
+
+
+  changeChildToAnother(i) {
+    let child = this.smalls[i]
+    child.geometry.uvAttribute.copy(child.geometry.originalUV)
+    child.geometry.uvAttribute.needsUpdate = true
+    child.material = child.originalMaterial
+    delete child.geometry.originalUV
+    delete child.originalMaterial
   }
 
 
@@ -290,6 +333,8 @@ export default class FaceController extends THREE.Object3D {
         slice.position.x = props.offset_x[f]
         slice.rotation.y = props.rotation[f]
       })
+    }
+    if (this.data.slice_col.in_frame <= currentFrame && currentFrame <= this.data.slice_col.out_frame) {
     }
 
     // mosaic
