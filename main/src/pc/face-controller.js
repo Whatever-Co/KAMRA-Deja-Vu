@@ -146,8 +146,8 @@ export default class FaceController extends THREE.Object3D {
       this.remove(this.main)
     })
 
-    Ticker.addFrameEvent(this.data.user.out_frame + 1, () => {
-      this._update = this._updateCreepy.bind(this)
+    Ticker.addFrameEvent(3640, () => {
+      this.update = this._updateCreepy.bind(this)
     })
   }
 
@@ -167,7 +167,7 @@ export default class FaceController extends THREE.Object3D {
       face.geometry.copy(this.main.geometry)
       face.material = this.main.material
     })
-    this.smalls.forEach((face, i) => {
+    this.smalls.forEach((face) => {
       face.geometry.originalUV = face.geometry.uvAttribute.clone()
       face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
       face.originalMaterial = face.material
