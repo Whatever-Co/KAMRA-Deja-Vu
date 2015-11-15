@@ -143,46 +143,69 @@ export default class FaceController extends THREE.Object3D {
 
     // slice & montage part
     {
-      let frontGeometry = this.main.geometry
-      let frontMaterial = this.main.material
-      frontGeometry.computeBoundingBox()
-
-      let backGeometry = new THREE.BufferGeometry()
-      backGeometry.setIndex(new THREE.Uint16Attribute(frontGeometry.standardFace.data.back.index, 1))
-      backGeometry.addAttribute('position', frontGeometry.positionAttribute)
-
-      let backMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          clipRange: {type: 'v2', value: new THREE.Vector2()}
-        },
-        vertexShader: require('./shaders/face-back.vert'),
-        fragmentShader: require('./shaders/face-back.frag'),
-        side: THREE.BackSide
-      })
-
       let clipRanges = Config.DATA.slice_row.slice(0, 4).map((r) => r.cut_y * SCALE)
       clipRanges.unshift(10000)
       clipRanges.push(-10000)
 
-      this.mainSlices = []
-      for (let i = 0; i < clipRanges.length - 1; i++) {
-        let face = new THREE.Object3D()
-        face.visible = false
-        face.scale.set(SCALE, SCALE, SCALE)
-        this.add(face)
+      this.slicedFaces = []
 
-        let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
-        let clipMin = clipRanges[i + 1]
-        let clipMax = clipRanges[i]
-        front.material.uniforms.clipRange.value.set(clipMin, clipMax)
-        face.add(front)
+      let order = [5, 6, 3, 0, -1, 2, 7, 1, 4]
+      for (let i = 0; i < 9; i++) {
+        let frontGeometry
+        let frontMaterial
+        if (order[i] == -1) {
+          frontGeometry = this.main.geometry
+          frontMaterial = this.main.material
+        } else {
+          frontGeometry = this.smalls[order[i]].geometry
+          frontMaterial = this.smalls[order[i]].originalMaterial
+        }
 
-        let back = new THREE.Mesh(backGeometry, backMaterial.clone())
-        back.material.uniforms.clipRange.value.set(clipMin, clipMax)
-        face.add(back)
+        let backGeometry = new THREE.BufferGeometry()
+        backGeometry.setIndex(new THREE.Uint16Attribute(frontGeometry.standardFace.data.back.index, 1))
+        backGeometry.addAttribute('position', frontGeometry.positionAttribute)
 
-        this.mainSlices.push(face)
+        let backMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            clipRange: {type: 'v2', value: new THREE.Vector2()}
+          },
+          vertexShader: require('./shaders/face-back.vert'),
+          fragmentShader: require('./shaders/face-back.frag'),
+          side: THREE.BackSide
+        })
+
+        let sliced = new THREE.Object3D()
+        sliced.scale.set(SCALE, SCALE, SCALE)
+        for (let i = 0; i < clipRanges.length - 1; i++) {
+          let slice = new THREE.Object3D()
+          slice.position.z = -0.1
+          sliced.add(slice)
+
+          let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
+          front.position.z = 0.1
+          let clipMin = clipRanges[i + 1]
+          let clipMax = clipRanges[i]
+          front.material.uniforms.clipRange.value.set(clipMin, clipMax)
+          slice.add(front)
+
+          let back = new THREE.Mesh(backGeometry, backMaterial.clone())
+          back.position.z = 0.1
+          back.material.uniforms.clipRange.value.set(clipMin, clipMax)
+          slice.add(back)
+        }
+        this.slicedFaces.push(sliced)
       }
+
+      Ticker.addFrameEvent(this.data.user_children.out_frame + 1, () => {
+        this.main.visible = false
+        this.smalls.forEach((face) => this.remove(face))
+        this.slicedFaces.forEach((face) => this.add(face))
+      })
+      Ticker.addFrameEvent(this.data.slice_col.out_frame + 1, () => {
+        this.main.visible = true
+        // this.smalls.forEach((face) => face.visible = true)
+        this.slicedFaces.forEach((face) => this.remove(face))
+      })
     }
 
     // mosaic part
@@ -325,16 +348,19 @@ export default class FaceController extends THREE.Object3D {
 
     // slicing
     if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
-      this.main.visible = false
       let f = currentFrame - this.data.slice_row.in_frame
-      this.data.slice_row.property.forEach((props, i) => {
-        let slice = this.mainSlices[i]
-        slice.visible = true
-        slice.position.x = props.offset_x[f]
-        slice.rotation.y = props.rotation[f]
-      })
-    }
-    if (this.data.slice_col.in_frame <= currentFrame && currentFrame <= this.data.slice_col.out_frame) {
+      for (let i = 0; i < 9; i++) {
+        let face = this.slicedFaces[i]
+        let props = this.data.slice_col.property[i]
+        face.position.fromArray(props.position, f * 3)
+        face.quaternion.fromArray(props.quaternion, f * 4)
+        for (let j = 0; j < 5; j++) {
+          let slice = face.children[j]
+          let props = this.data.slice_row.property[j]
+          slice.position.x = props.offset_x[f] / SCALE
+          slice.rotation.y = props.rotation[f]
+        }
+      }
     }
 
     // mosaic

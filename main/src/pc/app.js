@@ -53,8 +53,7 @@ class App {
     this.keyframes = loader.getResult('keyframes')
     console.log(this.keyframes)
 
-    let start = performance.now()
-    console.log('start', start)
+    console.time('morph data processing')
     let worker = new PreprocessWorker()
 
     let targetObject = [
@@ -79,10 +78,10 @@ class App {
 
     worker.postMessage(objectVertices, transferList)
     worker.onmessage = (event) => {
-      console.log('finish', performance.now(), performance.now() - start)
       event.data.forEach((morph, i) => {
         targetObject[i].morph = morph
       })
+      console.timeEnd('morph data processing')
       this.stateMachine.loadComplete()
     }
   }
