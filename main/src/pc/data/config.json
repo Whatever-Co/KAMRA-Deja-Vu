@@ -2197,6 +2197,62 @@
       ]
     }
   ],
+  "slice_col": [
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1662,
+        2093
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    },
+    {
+      "enabled_in_frame": [
+        1767,
+        2119
+      ]
+    }
+  ],
   "user_children": [
     {
       "enabled_in_frame": 839,
@@ -2231,6 +2287,42 @@
       "stranger_in_frame": 1707
     }
   ],
+  "slice_row": [
+    {
+      "cut_y": 0.233333
+    },
+    {
+      "cut_y": 0.033333
+    },
+    {
+      "cut_y": -0.206667
+    },
+    {
+      "cut_y": -0.473333
+    },
+    {
+      "cut_y": -0.74
+    }
+  ],
+  "slitscan": {
+    "camera_fov": 12,
+    "uv_in_frame": 2094,
+    "plane_position": [
+      0,
+      0,
+      -118.066387
+    ],
+    "plane_dimension": [
+      739.981415,
+      416.234826
+    ],
+    "uv_out_frame": 2511,
+    "camera_position": [
+      0,
+      0,
+      1040
+    ]
+  },
   "tracer": {
     "indices": [
       77,
@@ -2262,5 +2354,8 @@
     "random_x_max": 1000,
     "random_z_max": -16000,
     "random_z_min": -1600
+  },
+  "i_extra": {
+    "zoom_force": 0.88
   }
 }

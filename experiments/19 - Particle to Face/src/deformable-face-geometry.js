@@ -80,7 +80,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       this.matrixFeaturePoints.makeRotationZ(angle)
       let s = 1 / scale
       this.matrixFeaturePoints.scale(new THREE.Vector3(s, s, s))
-      this.matrixFeaturePoints.setPosition(new THREE.Vector3(center[0], center[1], center[2]))
+      this.matrixFeaturePoints.setPosition(new THREE.Vector3(center[0], center[1], 0))
 
       this.normalizedFeaturePoints = featurePoint3D.map((p) => {
         let q = vec2.transformMat3([], p, mtx)

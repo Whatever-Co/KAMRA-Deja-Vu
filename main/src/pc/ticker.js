@@ -6,6 +6,7 @@ class Ticker extends EventEmitter {
   constructor() {
     super()
     this.update = this.update.bind(this)
+    this.frameEvents = {}
     this.currentFrame = -1
   }
 
@@ -22,9 +23,19 @@ class Ticker extends EventEmitter {
 
   update(t) {
     this.requestId = requestAnimationFrame(this.update)
-    let currentFrame = Math.floor((this.clock ? this.clock.position : t) / 1000 * 24)
+    let currentFrame = Math.floor((this.clock ? this.clock.position : -t) / 1000 * 24)
     if (currentFrame != this.currentFrame) {
+      let prev = this.currentFrame
       this.currentFrame = currentFrame
+
+      let d = currentFrame - prev
+      if (d > 0) {
+        for (let f = prev + 1; f <= currentFrame; f++) {
+          if (typeof(this.frameEvents[f]) == 'function') {
+            this.frameEvents[f]()
+          }
+        }
+      }
       this.emit('update', currentFrame, t)
     }
   }
@@ -32,6 +43,11 @@ class Ticker extends EventEmitter {
 
   setClock(clock) {
     this.clock = clock
+  }
+
+
+  addFrameEvent(frame, callback) {
+    this.frameEvents[frame] = callback
   }
 
 }

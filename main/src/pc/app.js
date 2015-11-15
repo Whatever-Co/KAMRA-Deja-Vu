@@ -53,17 +53,36 @@ class App {
     this.keyframes = loader.getResult('keyframes')
     console.log(this.keyframes)
 
+    console.time('morph data processing')
     let worker = new PreprocessWorker()
-    let start = performance.now()
-    console.log('start', start)
-    this.keyframes = loader.getResult('keyframes')
-    let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
-    console.log('toarraybuffer', start)
-    worker.postMessage(vertices, vertices.map((a) => a.buffer))
-    worker.onmessage = (event) => {
-      console.log('finish', performance.now())
-      this.keyframes.user.property.morph = event.data
 
+    let targetObject = [
+      this.keyframes.user.property,
+      this.keyframes.user_alt.property[0],
+      this.keyframes.user_alt.property[1],
+      this.keyframes.falling_children_mesh.property[0],
+    ]
+    .concat(this.keyframes.user_children.property.map((props) => props))
+    .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
+
+    let transferList = []
+    let objectVertices = targetObject.map((obj) => {
+      return obj.face_vertices.map((v) => {
+        if (v) {
+          let a = new Float32Array(v)
+          transferList.push(a.buffer)
+          return a
+        }
+        return null
+      })
+    })
+
+    worker.postMessage(objectVertices, transferList)
+    worker.onmessage = (event) => {
+      event.data.forEach((morph, i) => {
+        targetObject[i].morph = morph
+      })
+      console.timeEnd('morph data processing')
       this.stateMachine.loadComplete()
     }
   }
@@ -97,7 +116,7 @@ class App {
   }
 
 
-  start(useWebcam) {
+  start(event, from, to, useWebcam) {
     // music
     this.sound = createjs.Sound.createInstance('music-main')
     // this.sound.volume = 0.05
@@ -110,16 +129,18 @@ class App {
     // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
-      let props = this.keyframes.camera.property
-      let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
-      this.camera.fov = props.fov[f]
-      this.camera.updateProjectionMatrix()
-      this.camera.position.fromArray(props.position, f * 3)
-      this.camera.quaternion.fromArray(props.quaternion, f * 4)
+      if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
+        let f = currentFrame - this.keyframes.camera.in_frame
+        let props = this.keyframes.camera.property
+        this.camera.fov = props.fov[f]
+        this.camera.updateProjectionMatrix()
+        this.camera.position.fromArray(props.position, f * 3)
+        this.camera.quaternion.fromArray(props.quaternion, f * 4)
 
-      let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-      this.webcam.scale.set(scale, scale, scale)
-      this.webcam.rotation.z = this.camera.rotation.z
+        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+        this.webcam.scale.set(scale, scale, scale)
+        this.webcam.rotation.z = this.camera.rotation.z
+      }
     }
     this.controllers.push(this.camera)
 
@@ -142,7 +163,7 @@ class App {
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({
           id: '_vcon',
-          src: 'data/438726972.mp4',
+          src: 'data/_/438726972.mp4',
           width: 1280,
           height: 720,
           muted: true
@@ -151,12 +172,12 @@ class App {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.sound.position = this.keyframes.mosaic.in_frame / 24 * 1000 - 1000
+        //   this.sound.position = 2090 / 24 * 1000
         // }, 1000)
       }
     })
     this.controllers.push(this.webcam)
-    this.webcam.start()
+    this.webcam.start(useWebcam)
 
     // face
     this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)

@@ -1,12 +1,38 @@
 /* global THREE */
 
 import Config from './config'
+import Ticker from './ticker'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import SlitScanPlane from './slit-scan-plane'
 import CreepyFaceTexture from './creepy-face-texture'
 import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
 const SCALE = 150
+
+const loader = window.__djv_loader
+
+
+class FaceFrontMaterial extends THREE.ShaderMaterial {
+
+  constructor(texture, withCurl = false) {
+    super({
+      uniforms: {
+        map: {type: 't', value: texture},
+        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
+        scaleZ: {type: 'f', value: 1.0},
+        curlStrength: {type: 'f', value: 1.0},
+        curlRadius: {type: 'f', value: 0.2},
+        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
+        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
+      },
+      vertexShader: require('./shaders/face-front.vert'),
+      fragmentShader: require('./shaders/face-front.frag'),
+      side: THREE.DoubleSide
+    })
+  }
+
+}
 
 
 export default class FaceController extends THREE.Object3D {
@@ -34,21 +60,30 @@ export default class FaceController extends THREE.Object3D {
       this.alts.push(alt)
     }
 
+    // children
     this.smalls = []
     for (let i = 0; i < this.data.user_children.property.length; i++) {
-      let small = new THREE.Mesh(new DeformableFaceGeometry())
+      let featurePoints = loader.getResult(`face${i}data`)
+      if (!Array.isArray(featurePoints)) debugger
+      featurePoints.forEach((p) => {
+        p[0] *= 512
+        p[1] = (1 - p[1]) * 512
+      })
+      let geometry = new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200)
+      let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`face${i}image`)))
+      let small = new THREE.Mesh(geometry, material)
       small.visible = false
       this.add(small)
       this.smalls.push(small)
     }
     this.smallsEnabled = Config.DATA.user_children
 
-
     // mosaic part
     this.rotateGroup = new THREE.Object3D()
     this.add(this.rotateGroup)
 
     this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1.visible = false
     this.face1.matrixAutoUpdate = false
     this.add(this.face1)
 
@@ -62,6 +97,8 @@ export default class FaceController extends THREE.Object3D {
     this.face2.material.map = this.creepyFaceTexture
 
 
+    this.initFrameEvents()
+
     // first animation
     this.update = this._followWebcam.bind(this)
 
@@ -74,23 +111,50 @@ export default class FaceController extends THREE.Object3D {
   }
 
 
+  initFrameEvents() {
+    Config.DATA.user_children.forEach((e, i) => {
+      Ticker.addFrameEvent(e.stranger_in_frame, this.changeChildToAnother.bind(this, i))
+    })
+
+    Ticker.addFrameEvent(Config.DATA.slitscan.uv_in_frame, () => {
+      this.main.visible = false
+      this.slicedFaces.forEach((face, i) => face.visible = i != 4)
+      this.slitScan = new SlitScanPlane()
+      this.slitScan.start(this.main)
+      this.add(this.slitScan)
+    })
+
+    Ticker.addFrameEvent(this.data.falling_children.in_frame, () => {
+      this.main.visible = true
+      this.remove(this.slitScan)
+
+      let geometry = this.main.geometry.clone()
+      this.fallingChildren = this.data.falling_children.property.map(() => {
+        let face = new THREE.Mesh(geometry, this.main.material)
+        face.scale.set(SCALE, SCALE, SCALE)
+        this.add(face)
+        return face
+      })
+    })
+
+    Ticker.addFrameEvent(this.data.falling_children.out_frame + 1, () => {
+      this.fallingChildren[0].geometry.dispose()
+      this.fallingChildren.forEach((face) => {
+        this.remove(face)
+      })
+      delete this.fallingChildren
+      this.remove(this.main)
+    })
+
+    Ticker.addFrameEvent(3640, () => {
+      this.update = this._updateCreepy.bind(this)
+    })
+  }
+
+
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-
-    this.main.material = new THREE.ShaderMaterial({
-      uniforms: {
-        map: {type: 't', value: this.webcam.texture.clone()},
-        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
-        scaleZ: {type: 'f', value:1.0},
-        curlStrength: {type: 'f', value:1.0},
-        curlRadius: {type: 'f', value:0.2},
-        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
-        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
-      },
-      vertexShader: require('./shaders/face-front.vert'),
-      fragmentShader: require('./shaders/face-front.frag'),
-      side: THREE.DoubleSide
-    })
+    this.main.material = new FaceFrontMaterial(this.webcam.texture.clone(), true)
 
     let position = new THREE.Vector3()
     let quaternion = new THREE.Quaternion()
@@ -100,65 +164,81 @@ export default class FaceController extends THREE.Object3D {
     this.main.matrixAutoUpdate = true
 
     this.alts.forEach((face) => {
-      face.geometry.positionAttribute.copy(this.main.geometry.positionAttribute)
-      face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
-      face.geometry.uvAttribute.needsUpdate = true
+      face.geometry.copy(this.main.geometry)
       face.material = this.main.material
     })
     this.smalls.forEach((face) => {
-      face.geometry.positionAttribute.copy(this.main.geometry.positionAttribute)
+      face.geometry.originalUV = face.geometry.uvAttribute.clone()
       face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
-      face.geometry.uvAttribute.needsUpdate = true
+      face.originalMaterial = face.material
       face.material = this.main.material
     })
 
     // slice & montage part
     {
-      let frontGeometry = this.main.geometry
-      let frontMaterial = this.main.material
-      frontGeometry.computeBoundingBox()
+      let clipRanges = Config.DATA.slice_row.slice(0, 4).map((r) => r.cut_y * SCALE)
+      clipRanges.unshift(10000)
+      clipRanges.push(-10000)
 
-      let backGeometry = new THREE.BufferGeometry()
-      backGeometry.setIndex(new THREE.Uint16Attribute(frontGeometry.standardFace.data.back.index, 1))
-      backGeometry.addAttribute('position', frontGeometry.positionAttribute)
+      this.slicedFaces = []
 
-      let backMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          clipRange: {type: 'v2', value: new THREE.Vector2()}
-        },
-        vertexShader: require('./shaders/face-back.vert'),
-        fragmentShader: require('./shaders/face-back.frag'),
-        side: THREE.BackSide
-      })
+      let order = [5, 6, 3, 0, -1, 2, 7, 1, 4]
+      for (let i = 0; i < 9; i++) {
+        let frontGeometry
+        let frontMaterial
+        if (order[i] == -1) {
+          frontGeometry = this.main.geometry
+          frontMaterial = this.main.material
+        } else {
+          frontGeometry = this.smalls[order[i]].geometry
+          frontMaterial = this.smalls[order[i]].originalMaterial
+        }
 
-      const minY = frontGeometry.boundingBox.min.y * SCALE
-      const maxY = frontGeometry.boundingBox.max.y * SCALE
-      const height = maxY - minY
-      const numSlices = 5
-      const sliceHeight = height / numSlices
+        let backGeometry = new THREE.BufferGeometry()
+        backGeometry.setIndex(new THREE.Uint16Attribute(frontGeometry.standardFace.data.back.index, 1))
+        backGeometry.addAttribute('position', frontGeometry.positionAttribute)
 
-      this.mainSlices = []
-      for (let i = 0; i < numSlices; i++) {
-        let face = new THREE.Object3D()
-        face.visible = false
-        face.scale.set(SCALE, SCALE, SCALE)
-        face.position.z = -0.5 * SCALE
-        this.add(face)
+        let backMaterial = new THREE.ShaderMaterial({
+          uniforms: {
+            clipRange: {type: 'v2', value: new THREE.Vector2()}
+          },
+          vertexShader: require('./shaders/face-back.vert'),
+          fragmentShader: require('./shaders/face-back.frag'),
+          side: THREE.BackSide
+        })
 
-        let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
-        front.position.z = 0.5
-        let clipMin = minY + i * sliceHeight
-        let clipMax = minY + (i + 1) * sliceHeight
-        front.material.uniforms.clipRange.value.set(clipMin, clipMax)
-        face.add(front)
+        let sliced = new THREE.Object3D()
+        sliced.scale.set(SCALE, SCALE, SCALE)
+        for (let i = 0; i < clipRanges.length - 1; i++) {
+          let slice = new THREE.Object3D()
+          slice.position.z = -0.1
+          sliced.add(slice)
 
-        let back = new THREE.Mesh(backGeometry, backMaterial.clone())
-        back.position.z = 0.5
-        back.material.uniforms.clipRange.value.set(clipMin, clipMax)
-        face.add(back)
+          let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
+          front.position.z = 0.1
+          let clipMin = clipRanges[i + 1]
+          let clipMax = clipRanges[i]
+          front.material.uniforms.clipRange.value.set(clipMin, clipMax)
+          slice.add(front)
 
-        this.mainSlices.push(face)
+          let back = new THREE.Mesh(backGeometry, backMaterial.clone())
+          back.position.z = 0.1
+          back.material.uniforms.clipRange.value.set(clipMin, clipMax)
+          slice.add(back)
+        }
+        this.slicedFaces.push(sliced)
       }
+
+      Ticker.addFrameEvent(this.data.user_children.out_frame + 1, () => {
+        this.main.visible = false
+        this.smalls.forEach((face) => this.remove(face))
+        this.slicedFaces.forEach((face) => this.add(face))
+      })
+      Ticker.addFrameEvent(this.data.slice_col.out_frame + 1, () => {
+        // this.main.visible = true
+        // this.smalls.forEach((face) => face.visible = true)
+        this.slicedFaces.forEach((face) => this.remove(face))
+      })
     }
 
     // mosaic part
@@ -174,12 +254,10 @@ export default class FaceController extends THREE.Object3D {
       this.face1.position.fromArray(config.mosaic_face.position)
       this.face1.rotation.set(0, 0, Math.PI)
       this.face1.scale.fromArray(config.mosaic_face.scale.map((s) => s * 150))
-      console.log(this.face1.scale)
 
       this.creepyFaceTexture.update()
 
       let scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
-      let loader = window.__djv_loader
       let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
@@ -194,6 +272,21 @@ export default class FaceController extends THREE.Object3D {
     }
 
     this.update = this._update.bind(this)
+  }
+
+
+  enableChild(i) {
+    console.log('enableChild', i, Ticker.currentFrame)
+  }
+
+
+  changeChildToAnother(i) {
+    let child = this.smalls[i]
+    child.geometry.uvAttribute.copy(child.geometry.originalUV)
+    child.geometry.uvAttribute.needsUpdate = true
+    child.material = child.originalMaterial
+    delete child.geometry.originalUV
+    delete child.originalMaterial
   }
 
 
@@ -259,6 +352,9 @@ export default class FaceController extends THREE.Object3D {
             face.position.fromArray(props.position, f * 3)
             face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
             face.quaternion.fromArray(props.quaternion, f * 4)
+            if (props.morph[f]) {
+              face.geometry.applyMorph(props.morph[f])
+            }
           }
         })
       }
@@ -275,6 +371,9 @@ export default class FaceController extends THREE.Object3D {
             face.position.fromArray(props.position, f * 3)
             face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
             face.quaternion.fromArray(props.quaternion, f * 4)
+            if (props.morph[f]) {
+              face.geometry.applyMorph(props.morph[f])
+            }
           }
         })
       }
@@ -282,13 +381,34 @@ export default class FaceController extends THREE.Object3D {
 
     // slicing
     if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
-      this.main.visible = false
       let f = currentFrame - this.data.slice_row.in_frame
-      this.data.slice_row.property.forEach((props, i) => {
-        let slice = this.mainSlices[i]
-        slice.visible = true
-        slice.position.x = props.offset_x[f]
-        slice.rotation.y = props.rotation[f]
+      for (let i = 0; i < 9; i++) {
+        let face = this.slicedFaces[i]
+        let props = this.data.slice_col.property[i]
+        face.position.fromArray(props.position, f * 3)
+        face.quaternion.fromArray(props.quaternion, f * 4)
+        for (let j = 0; j < 5; j++) {
+          let slice = face.children[j]
+          let props = this.data.slice_row.property[j]
+          slice.position.x = props.offset_x[f] / SCALE
+          slice.rotation.y = props.rotation[f]
+        }
+      }
+    }
+
+    // slit-scan
+    if (Config.DATA.slitscan.uv_in_frame <= currentFrame && currentFrame <= Config.DATA.slitscan.uv_out_frame) {
+      this.slitScan.update(this.renderer)
+    }
+
+    // falling children
+    if (this.data.falling_children.in_frame <= currentFrame && currentFrame <= this.data.falling_children.out_frame) {
+      let f = currentFrame - this.data.falling_children.in_frame
+      this.fallingChildren[0].geometry.applyMorph(this.data.falling_children_mesh.property[0].morph[f])
+      this.data.falling_children.property.forEach((props, i) => {
+        let face = this.fallingChildren[i]
+        face.position.fromArray(props.position, f * 3)
+        face.quaternion.fromArray(props.quaternion, f * 4)
       })
     }
 
@@ -302,10 +422,6 @@ export default class FaceController extends THREE.Object3D {
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame
       let props = this.data.o2_extra.property
-      // this.webcam.opacity = 1 - props.webcam_fade[f]
-      // let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-      // this.webcam.scale.set(scale, scale, scale)
-      // this.webcam.rotation.z = this.camera.rotation.z
       this.rotateGroup.rotation.z = this.camera.rotation.z
 
       this.blender.visible = true
@@ -321,10 +437,6 @@ export default class FaceController extends THREE.Object3D {
         this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
         this.creepyFaceTexture.update()
       }
-    }
-
-    if (this.data.camera.out_frame < currentFrame) {
-      this._update = this._updateCreepy.bind(this)
     }
   }
 

@@ -10,3 +10,4 @@ Thumbs.db
 
 **/*.log
 **/*.blend?
+main/public/data/_

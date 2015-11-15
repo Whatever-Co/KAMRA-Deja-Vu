@@ -26,6 +26,7 @@ class FeaturePointEditor {
     this.buttons = $('<div>').addClass('buttons').appendTo(this.el).hide()
     this.textureButton = $('<a>').addClass('btn btn-default').text('Save texture').appendTo(this.buttons)
     this.dataButton = $('<a>').addClass('btn btn-default').text('Save JSON').appendTo(this.buttons)
+    $('<button>').addClass('btn btn-default').text('Dump raw coords').appendTo(this.buttons).on('click', this.dump.bind(this))
 
     this.texture = document.createElement('canvas')
     this.texture.id = 'texture-preview'
@@ -39,7 +40,8 @@ class FeaturePointEditor {
 
     this.initDropHandler()
     // this.filename = 'shutterstock_62329042.jpg'
-    this.filename = 'shutterstock_102487424.jpg'
+    // this.filename = 'shutterstock_102487424_512.jpg'
+    this.filename = 'shutterstock_102487424_1920.jpg'
     this.loadImage(`media/${this.filename}`)
   }
 
@@ -55,13 +57,19 @@ class FeaturePointEditor {
       e.preventDefault()
       let file = e.dataTransfer.files[0]
       console.log(file)
-      if (file.type.match(/image/i)) {
-        this.filename = file.name
-        let reader = new FileReader()
-        reader.onload = (e) => {
-          this.loadImage(e.target.result)
-        }
-        reader.readAsDataURL(file)
+      switch (file.type) {
+        case 'image/png':
+        case 'image/jpeg':
+          this.filename = file.name
+          let reader = new FileReader()
+          reader.onload = (e) => {
+            this.loadImage(e.target.result)
+          }
+          reader.readAsDataURL(file)
+          break
+        case 'application/json':
+          this.loadPoints(file)
+          break
       }
     })
   }
@@ -74,27 +82,40 @@ class FeaturePointEditor {
     if (this.editArea) {
       this.editArea.empty()
     } else {
-      this.editArea = $('<div>').appendTo(this.el).css('position', 'relative')
+      this.editArea = $('<div id="edit-area">').appendTo(this.el).css('position', 'relative')
     }
 
-    let image = new Image()
-    image.onload = () => {
-      this.imageForEditting = document.createElement('canvas')
-      this.imageForEditting.width = this.imageForEditting.height = 1024
-      const ctx = this.imageForEditting.getContext('2d')
-      let s = 1024 / Math.min(image.width, image.height)
-      let w = image.width * s
-      let h = image.height * s
-      this.origin = [-(w - 1024) / 2, -(h - 1024) / 2]
-      // this.origin = [0, 0]
-      // console.log(this.origin)
-      ctx.drawImage(image, this.origin[0], this.origin[1], w, h)
-      $(this.imageForEditting).appendTo(this.editArea)
-      this.tracker.startImage(this.imageForEditting)
+    this.currentImage = new Image()
+    this.currentImage.onload = () => {
+      let s = 320 / Math.max(this.currentImage.width, this.currentImage.height)
+      this.trackingScale = s
+
+      let imageForTracking = document.createElement('canvas')
+      imageForTracking.width = Math.round(this.currentImage.width * s)
+      imageForTracking.height = Math.round(this.currentImage.height * s)
+      console.log('tracking scale', this.trackingScale, imageForTracking.width, imageForTracking.height)
+
+      let ctx = imageForTracking.getContext('2d')
+      ctx.drawImage(this.currentImage, 0, 0, this.currentImage.width, this.currentImage.height, 0, 0, imageForTracking.width, imageForTracking.height)
+
+      // this.imageForEditting = document.createElement('canvas')
+      // this.imageForEditting.width = this.imageForEditting.height = 1024
+
+      // const ctx = this.imageForEditting.getContext('2d')
+      // let s = 1024 / Math.min(image.width, image.height)
+      // let w = image.width * s
+      // let h = image.height * s
+      // this.origin = [-(w - 1024) / 2, -(h - 1024) / 2]
+      // ctx.drawImage(image, this.origin[0], this.origin[1], w, h)
+
+      // $(this.imageForEditting).appendTo(this.editArea)
+      $(this.currentImage).appendTo(this.editArea)
+
+      this.tracker.startImage(imageForTracking)
       this.startTime = Date.now()
       this.interval = setInterval(this.checkScore, 200)
     }
-    image.src = url
+    this.currentImage.src = url
   }
 
 
@@ -117,6 +138,23 @@ class FeaturePointEditor {
         }
       })
     }
+  }
+
+
+  loadPoints(file) {
+    let reader = new FileReader()
+    reader.onload = (e) => {
+      let data = JSON.parse(reader.result)
+      data.forEach((p, i) => {
+        let dot = this.editPoints[i]
+        dot.css({left: `${p[0] - 6}px`, top: `${p[1] - 6}px`, opacity: 0.5})
+      })
+      this.cropTexture()
+      this.face.applyTexture(this.texture, this.textureCoords)
+      this.face.applyMorph()
+      this.setupDownloadData()
+    }
+    reader.readAsText(file)
   }
 
 
@@ -148,8 +186,8 @@ class FeaturePointEditor {
 
   addEditPoint(p, i) {
     let dot = $('<div>').addClass('edit-point')
-    dot.data('index', i)
-    dot.css({left: `${p[0] - 6}px`, top: `${p[1] - 6}px`, opacity: 0.5})
+    // dot.data('index', i)
+    dot.css({left: `${p[0] / this.trackingScale - 6}px`, top: `${p[1] / this.trackingScale - 6}px`, opacity: 0.5})
     dot.appendTo(this.editArea)
     dot.draggable({stop: () => {
       this.cropTexture()
@@ -161,19 +199,32 @@ class FeaturePointEditor {
     return dot
   }
 
-
   onEditPointMouseDown(e) {
     e.preventDefault()
     console.log(this)
   }
 
 
+  dump() {
+    let scrollLeft = this.editArea.scrollLeft()
+    let scrollTop = this.editArea.scrollTop()
+    let points = this.editPoints.map((p) => {
+      let c = p.position()
+      return [scrollLeft + c.left + 6, scrollTop + c.top + 6]
+    })
+    console.log(JSON.stringify(points))
+  }
+
+
   cropTexture() {
+    let scrollLeft = this.editArea.scrollLeft()
+    let scrollTop = this.editArea.scrollTop()
+    // console.log({scrollLeft, scrollTop})
     let min = [Number.MAX_VALUE, Number.MAX_VALUE]
     let max = [Number.MIN_VALUE, Number.MIN_VALUE]
-    this.editPoints.forEach((p) => {
+    this.editPoints.forEach((p, i) => {
       let c = p.position()
-      c = [c.left + 6, c.top + 6]
+      c = [scrollLeft + c.left + 6, scrollTop + c.top + 6]
       vec2.min(min, min, c)
       vec2.max(max, max, c)
     })
@@ -191,12 +242,12 @@ class FeaturePointEditor {
     ctx.scale(scale, scale)
     ctx.translate(-center[0], -center[1])
     let mtx = ctx.getTransform()
-    ctx.drawImage(this.imageForEditting, 0, 0)
+    ctx.drawImage(this.currentImage, 0, 0)
     ctx.restore()
 
     this.textureCoords = this.editPoints.map((ep) => {
       let c = ep.position()
-      let p = vec2.transformMat3([], [c.left + 6, c.top + 6], mtx)
+      let p = vec2.transformMat3([], [scrollLeft + c.left + 6, scrollTop + c.top + 6], mtx)
       vec2.scale(p, p, 1 / 512)
       p[1] = 1 - p[1]
       return p

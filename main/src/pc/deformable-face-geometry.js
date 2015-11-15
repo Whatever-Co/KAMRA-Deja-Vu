@@ -80,7 +80,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       this.matrixFeaturePoints.makeRotationZ(angle)
       let s = 1 / scale
       this.matrixFeaturePoints.scale(new THREE.Vector3(s, s, s))
-      this.matrixFeaturePoints.setPosition(new THREE.Vector3(center[0], center[1], center[2]))
+      this.matrixFeaturePoints.setPosition(new THREE.Vector3(center[0], center[1], 0))
 
       this.normalizedFeaturePoints = featurePoint3D.map((p) => {
         let q = vec2.transformMat3([], p, mtx)
@@ -188,6 +188,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
   applyMorph(weights) {
     let position = this.positionAttribute.array
     let n = position.length / 3
+    let offset = 40 / 150
     for (let i = 0; i < n; i++) {
       let j = i * 7
       let p0 = this.neutralPosition[weights[j + 0]]
@@ -199,9 +200,25 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       let k = i * 3
       position[k + 0] = p0[0] * w0 + p1[0] * w1 + p2[0] * w2
       position[k + 1] = p0[1] * w0 + p1[1] * w1 + p2[1] * w2
-      position[k + 2] = weights[j + 6]
+      position[k + 2] = weights[j + 6] + offset
     }
     this.positionAttribute.needsUpdate = true
+  }
+
+
+  copy(geometry) {
+    this.positionAttribute.copy(geometry.positionAttribute)
+    this.positionAttribute.needsUpdate = true
+    this.uvAttribute.copy(geometry.uvAttribute)
+    this.uvAttribute.needsUpdate = true
+    this.neutralPosition = geometry.neutralPosition
+  }
+
+
+  clone() {
+    let geometry = new DeformableFaceGeometry()
+    geometry.copy(this)
+    return geometry
   }
 
 }
