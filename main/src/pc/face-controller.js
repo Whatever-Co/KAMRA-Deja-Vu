@@ -62,13 +62,13 @@ export default class FaceController extends THREE.Object3D {
     // children
     this.smalls = []
     for (let i = 0; i < this.data.user_children.property.length; i++) {
-      let data = loader.getResult(`face${i}data`)
-      if (!Array.isArray(data)) debugger
-      data.forEach((p) => {
+      let featurePoints = loader.getResult(`face${i}data`)
+      if (!Array.isArray(featurePoints)) debugger
+      featurePoints.forEach((p) => {
         p[0] *= 512
         p[1] = (1 - p[1]) * 512
       })
-      let geometry = new DeformableFaceGeometry(data, 512, 512, 512, 512, 400, 1200)
+      let geometry = new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200)
       let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`face${i}image`)))
       let small = new THREE.Mesh(geometry, material)
       small.visible = false
@@ -113,7 +113,7 @@ export default class FaceController extends THREE.Object3D {
 
   initFrameEvents() {
     Config.DATA.user_children.forEach((e, i) => {
-      Ticker.addFrameEvent(e.enabled_in_frame, this.enableChild.bind(this, i))
+      // Ticker.addFrameEvent(e.enabled_in_frame, this.enableChild.bind(this, i))
       Ticker.addFrameEvent(e.stranger_in_frame, this.changeChildToAnother.bind(this, i))
     })
   }

@@ -169,9 +169,9 @@ class App {
         this._vcon.currentTime = 2 / 24
         this._vcon.play()
 
-        setTimeout(() => {
-          this.sound.position = 1600 / 24 * 1000
-        }, 1000)
+        // setTimeout(() => {
+        //   this.sound.position = 1600 / 24 * 1000
+        // }, 1000)
       }
     })
     this.controllers.push(this.webcam)
