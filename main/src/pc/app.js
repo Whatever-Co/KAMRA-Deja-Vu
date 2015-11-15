@@ -53,15 +53,16 @@ class App {
     this.keyframes = loader.getResult('keyframes')
     console.log(this.keyframes)
 
-    let worker = new PreprocessWorker()
     let start = performance.now()
     console.log('start', start)
+    let worker = new PreprocessWorker()
     this.keyframes = loader.getResult('keyframes')
     let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
+    let n = vertices.length
     console.log('toarraybuffer', start)
     worker.postMessage(vertices, vertices.map((a) => a.buffer))
     worker.onmessage = (event) => {
-      console.log('finish', performance.now())
+      console.log('finish', performance.now(), performance.now() - start, (performance.now() - start) / n)
       this.keyframes.user.property.morph = event.data
 
       this.stateMachine.loadComplete()

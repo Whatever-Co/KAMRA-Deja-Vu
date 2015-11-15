@@ -2,7 +2,8 @@ self.THREE = {}
 importScripts('libs/three.min.js')
 
 import Delaunay from 'delaunay-fast'
-import QuadTree from 'simple-quadtree'
+// http://zufallsgenerator.github.io/assets/code/2014-01-26/spatialhash/spatialhash.js
+import {SpatialHash} from 'spatialhash'
 
 import StandardFaceData from './standard-face-data'
 
@@ -22,7 +23,8 @@ const convertData = (vertices) => {
 
   let triangleIndices = Delaunay.triangulate(standardFacePoints)
 
-  let tree = QuadTree(-1, -1, 2, 2)
+  let spatialHash = new SpatialHash(5)
+  const scale = 1000
   for (let i = 0; i < triangleIndices.length; i += 3) {
     let v0 = standardFacePoints[triangleIndices[i]]
     let v1 = standardFacePoints[triangleIndices[i + 1]]
@@ -31,11 +33,11 @@ const convertData = (vertices) => {
     let minY = Math.min(v0[1], v1[1], v2[1])
     let maxX = Math.max(v0[0], v1[0], v2[0])
     let maxY = Math.max(v0[1], v1[1], v2[1])
-    tree.put({
-      x: minX,
-      y: minY,
-      w: maxX - minX,
-      h: maxY - minY,
+    spatialHash.insert({
+      x: minX * scale,
+      y: minY * scale,
+      width: (maxX - minX) * scale,
+      height: (maxY - minY) * scale,
       index: i,
       v0,
       v1,
@@ -43,26 +45,59 @@ const convertData = (vertices) => {
     })
   }
 
-  const getTriangleIndex = (p) => {
-    let candidate = tree.get({x: p[0], y: p[1], w: 0, h: 0})
+  const contains = (v0, v1, v2, x, y) => {
+    let a = v1[0] - v0[0]
+    let b = v2[0] - v0[0]
+    let c = v1[1] - v0[1]
+    let d = v2[1] - v0[1]
+    let i = a * d - b * c
+
+    /* Degenerate tri. */
+    if (i === 0.0) {
+      return null
+    }
+
+    let u = (d * (x - v0[0]) - b * (y - v0[1])) / i
+    let v = (a * (y - v0[1]) - c * (x - v0[0])) / i
+
+    /* If we're outside the tri, fail. */
+    if (u < 0.0 || v < 0.0 || (u + v) > 1.0) {
+      return null
+    }
+
+    return [u, v, 1 - u - v]
+  }
+
+  let index
+  let coord
+  const getTriangleIndex = (x, y) => {
+    let candidate = spatialHash.retrieve({x: x * scale, y: y * scale, width: 0, height: 0})
     for (let i = 0; i < candidate.length; i++) {
       let node = candidate[i]
-      let uv = Delaunay.contains([node.v0, node.v1, node.v2], p)
+      let uv = contains(node.v0, node.v1, node.v2, x, y)
       if (uv) {
-        uv.unshift(1 - uv[0] - uv[1])
-        return [node.index, uv]
+        index = node.index
+        coord = uv
+        return
       }
     }
     console.error('not found')
   }
 
   return vertices.map((vertices) => {
-    let weights = []
+    let weights = new Float32Array(vertices.length * 7)
     for (let i = 0; i < vertices.length; i += 3) {
-      let [index, coord] = getTriangleIndex([vertices[i], vertices[i + 1]], standardFacePoints)
-      weights.push(triangleIndices[index + 0], triangleIndices[index + 1], triangleIndices[index + 2], coord[0], coord[1], coord[2], vertices[i + 2])
+      getTriangleIndex(vertices[i], vertices[i + 1])
+      let j = i * 7
+      weights[j + 0] = triangleIndices[index + 0]
+      weights[j + 1] = triangleIndices[index + 1]
+      weights[j + 2] = triangleIndices[index + 2]
+      weights[j + 3] = coord[0]
+      weights[j + 4] = coord[1]
+      weights[j + 5] = coord[2]
+      weights[j + 6] = vertices[i + 2]
     }
-    return new Float32Array(weights)
+    return weights
   })
 }
 
