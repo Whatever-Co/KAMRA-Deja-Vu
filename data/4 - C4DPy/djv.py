@@ -26,13 +26,16 @@ inFrame = {
     "A1": 418,
     "A2": 837,
     "A3": 1256,
+    "particles-in": 1347,
     "slice-in": 1662,
     "B": 1674,
     "slice-all": 1767,
+    "particles-out": 2040,
     "C": 2094,
     "slice-out": 2120,
     "D": 2512,
     "E": 2722,
+    "falling-out": 2753,
     "O1": 3142,
     "O2": 3356
 }
@@ -53,6 +56,16 @@ def search(name):
 
 # zInvMat = c4d.Matrix()
 # zInvMat.Scale(c4d.Vector(1.0, 1.0, -1.0))
+
+def toScaleFromMatrix(m):
+
+    scale = [
+        m.v1.GetLength(),
+        m.v2.GetLength(),
+        m.v3.GetLength()
+    ]
+
+    return scale
 
 def toMatrix(mg):
     v1, v2, v3, off = mg.v1, mg.v2, mg.v3, mg.off
@@ -120,6 +133,3 @@ def redraw():
     c4d.DrawViews(c4d.DA_ONLY_ACTIVE_VIEW|c4d.DA_NO_THREAD|c4d.DA_NO_REDUCTION|c4d.DA_STATICBREAK)
     c4d.GeSyncMessage(c4d.EVMSG_TIMECHANGED)
     c4d.EventAdd(c4d.EVENT_ANIMATE|c4d.EVENT_FORCEREDRAW)
-
-if __name__=='__main__':
-    main()
