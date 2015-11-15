@@ -6,6 +6,16 @@ import StateMachine from 'javascript-state-machine'
 import TWEEN from 'tween.js'
 import Stats from 'stats-js'
 
+import 'shaders/CopyShader'
+// import 'shaders/BokehShader'
+import 'shaders/FXAAShader'
+import 'shaders/VignetteShader'
+import 'postprocessing/ShaderPass'
+import 'postprocessing/MaskPass'
+import 'postprocessing/RenderPass'
+// import 'postprocessing/BokehPass'
+import 'postprocessing/EffectComposer'
+
 import Ticker from './ticker'
 import Config from './config'
 import PageManager from './page-manager'
@@ -25,6 +35,9 @@ class App {
     this.initStates()
     this.initAssets()
     this.initWebGL()
+
+    Ticker.on('update', this.animate)
+    Ticker.start()
   }
 
 
@@ -42,8 +55,6 @@ class App {
     this.stateMachine.onenterplaying = this.start.bind(this)
 
     this.pageManager = new PageManager(this.stateMachine)
-
-    // this.stateMachine.loadComplete()
   }
 
 
@@ -99,6 +110,46 @@ class App {
     this.renderer.setClearColor(0x071520, 1)
     this.renderer.clear()
 
+    // post-processing
+    this.composer = new THREE.EffectComposer(this.renderer)
+    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
+    {
+      let effect = new THREE.ShaderPass(THREE.FXAAShader)
+      effect.uniforms.resolution.value.set(1 / Config.RENDER_WIDTH, 1 / Config.RENDER_HEIGHT)
+      this.composer.addPass(effect)
+    }
+    {
+      this.composer.addPass(new THREE.ShaderPass({
+        uniforms: {
+          tDiffuse: {type: 't', value: null},
+          resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)}
+        },
+        vertexShader: require('./shaders/basic-transform.vert'),
+        fragmentShader: require('./shaders/chromatic-aberration.frag')
+      }))
+    }
+    {
+      let effect = new THREE.ShaderPass(THREE.VignetteShader)
+      effect.uniforms.darkness.value = 1.2
+      this.composer.addPass(effect)
+    }
+    {
+      let texture = new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))
+      texture.magFilter = texture.minFilter = THREE.NearestFilter
+      texture.generateMipmaps = false
+      texture.flipY = false
+      this.composer.addPass(new THREE.ShaderPass({
+        uniforms: {
+          tDiffuse: {type: 't', value: null},
+          tLut: {type: 't', value: texture}
+        },
+        vertexShader: require('./shaders/basic-transform.vert'),
+        fragmentShader: require('./shaders/color-correction.frag'),
+      }))
+    }
+    this.composer.passes[this.composer.passes.length - 1].renderToScreen = true
+
+    //
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
 
@@ -110,9 +161,6 @@ class App {
 
       this._frameCounter = $('<div>').attr({id: '_frame-counter'}).appendTo(document.body)
     }
-
-    Ticker.on('update', this.animate)
-    Ticker.start()
   }
 
 
@@ -200,7 +248,7 @@ class App {
 
     TWEEN.update(time)
 
-    this.renderer.render(this.scene, this.camera)
+    this.composer.render()
 
     if (Config.DEV_MODE) {
       this.stats.end()
