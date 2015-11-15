@@ -38,8 +38,6 @@ class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
           vec4 uv3 = texture2D(uvTexture, uv2.xy);
           vec4 parts = texture2D(faceTexture, uv3.xy);
           gl_FragColor = vec4(mix(color.rgb, parts.rgb, uv2.a), 1.0);
-          // gl_FragColor = vec4(uv2.xy, 0., 1.);
-          // gl_FragColor = color;
         }
       `,
       transparent: true,
@@ -50,7 +48,7 @@ class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
 
 
 
-export default class CreepyTexture extends THREE.WebGLRenderTarget {
+export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
 
   constructor(renderer, camera, webcam, face, warpTexture) {
     super(1024, 1024, {depthBuffer: false, stencilBuffer: false})

@@ -4,6 +4,7 @@ import {vec3} from 'gl-matrix'
 
 import StandardFaceData from './standard-face-data'
 
+const OFFSET = 40 / 150
 
 export default class DeformedUVTexture extends THREE.WebGLRenderTarget {
 
@@ -33,6 +34,7 @@ export default class DeformedUVTexture extends THREE.WebGLRenderTarget {
           break
       }
     })
+    vertices.forEach((v) => v[2] += OFFSET)
 
     let getUVForVertex = (v) => {
       let min = Number.MAX_VALUE
