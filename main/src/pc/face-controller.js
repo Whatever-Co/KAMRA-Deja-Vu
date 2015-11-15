@@ -136,6 +136,19 @@ export default class FaceController extends THREE.Object3D {
         return face
       })
     })
+
+    Ticker.addFrameEvent(this.data.falling_children.out_frame + 1, () => {
+      this.fallingChildren[0].geometry.dispose()
+      this.fallingChildren.forEach((face) => {
+        this.remove(face)
+      })
+      delete this.fallingChildren
+      this.remove(this.main)
+    })
+
+    Ticker.addFrameEvent(this.data.user.out_frame + 1, () => {
+      this._update = this._updateCreepy.bind(this)
+    })
   }
 
 
@@ -424,10 +437,6 @@ export default class FaceController extends THREE.Object3D {
         this.face2.matrix.copy(this.webcam.matrixFeaturePoints)
         this.creepyFaceTexture.update()
       }
-    }
-
-    if (this.data.camera.out_frame < currentFrame) {
-      this._update = this._updateCreepy.bind(this)
     }
   }
 

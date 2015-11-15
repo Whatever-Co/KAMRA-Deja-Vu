@@ -129,16 +129,18 @@ class App {
     // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
-      let props = this.keyframes.camera.property
-      let f = Math.max(this.keyframes.camera.in_frame, Math.min(this.keyframes.camera.out_frame, currentFrame))
-      this.camera.fov = props.fov[f]
-      this.camera.updateProjectionMatrix()
-      this.camera.position.fromArray(props.position, f * 3)
-      this.camera.quaternion.fromArray(props.quaternion, f * 4)
+      if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
+        let f = currentFrame - this.keyframes.camera.in_frame
+        let props = this.keyframes.camera.property
+        this.camera.fov = props.fov[f]
+        this.camera.updateProjectionMatrix()
+        this.camera.position.fromArray(props.position, f * 3)
+        this.camera.quaternion.fromArray(props.quaternion, f * 4)
 
-      let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-      this.webcam.scale.set(scale, scale, scale)
-      this.webcam.rotation.z = this.camera.rotation.z
+        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+        this.webcam.scale.set(scale, scale, scale)
+        this.webcam.rotation.z = this.camera.rotation.z
+      }
     }
     this.controllers.push(this.camera)
 
