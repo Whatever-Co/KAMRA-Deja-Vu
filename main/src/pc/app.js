@@ -56,15 +56,33 @@ class App {
     let start = performance.now()
     console.log('start', start)
     let worker = new PreprocessWorker()
-    this.keyframes = loader.getResult('keyframes')
-    let vertices = this.keyframes.user.property.face_vertices.map((v) => new Float32Array(v))
-    let n = vertices.length
-    console.log('toarraybuffer', start)
-    worker.postMessage(vertices, vertices.map((a) => a.buffer))
-    worker.onmessage = (event) => {
-      console.log('finish', performance.now(), performance.now() - start, (performance.now() - start) / n)
-      this.keyframes.user.property.morph = event.data
 
+    let targetObject = [
+      this.keyframes.user.property,
+      this.keyframes.user_alt.property[0],
+      this.keyframes.user_alt.property[1],
+    ]
+    .concat(this.keyframes.user_children.property.map((props) => props))
+    .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
+
+    let transferList = []
+    let objectVertices = targetObject.map((obj) => {
+      return obj.face_vertices.map((v) => {
+        if (v) {
+          let a = new Float32Array(v)
+          transferList.push(a.buffer)
+          return a
+        }
+        return null
+      })
+    })
+
+    worker.postMessage(objectVertices, transferList)
+    worker.onmessage = (event) => {
+      console.log('finish', performance.now(), performance.now() - start)
+      event.data.forEach((morph, i) => {
+        targetObject[i].morph = morph
+      })
       this.stateMachine.loadComplete()
     }
   }

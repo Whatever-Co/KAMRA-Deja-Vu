@@ -65,7 +65,7 @@ const convertData = (vertices) => {
       return null
     }
 
-    return [u, v, 1 - u - v]
+    return [1 - u - v, u, v]
   }
 
   let index
@@ -85,10 +85,13 @@ const convertData = (vertices) => {
   }
 
   return vertices.map((vertices) => {
+    if (!vertices) {
+      return null
+    }
+
     let weights = new Float32Array(vertices.length * 7)
-    for (let i = 0; i < vertices.length; i += 3) {
+    for (let i = 0, j = 0; i < vertices.length; i += 3, j += 7) {
       getTriangleIndex(vertices[i], vertices[i + 1])
-      let j = i * 7
       weights[j + 0] = triangleIndices[index + 0]
       weights[j + 1] = triangleIndices[index + 1]
       weights[j + 2] = triangleIndices[index + 2]
@@ -104,7 +107,16 @@ const convertData = (vertices) => {
 
 onmessage = (event) => {
   console.log('start', performance.now())
-  let result = convertData(event.data)
+  let transferList = []
+  let result = event.data.map((vertices) => {
+    let v = convertData(vertices)
+    v.forEach((a) => {
+      if (a) {
+        transferList.push(a.buffer)
+      }
+    })
+    return v
+  })
   console.log('done', performance.now())
-  postMessage(result, result.map((a) => a.buffer))
+  postMessage(result, transferList)
 }
