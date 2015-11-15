@@ -66,6 +66,7 @@ const ids = _.shuffle([
 
 let loader = new createjs.LoadQueue()
 loader.installPlugin(createjs.Sound)
+
 let min = Config.DEV_MODE ? '.min' : ''
 let manifest = [
   {src: `libs/clmtrackr${min}.js`},
@@ -75,7 +76,6 @@ let manifest = [
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'music-main', src: 'data/main.mp3'},
-  {src: 'app.js'}
 ]
 
 for (let i = 0; i < 10; i++) {
@@ -84,6 +84,8 @@ for (let i = 0; i < 10; i++) {
     {id: `face${i}image`, src: `textures/faces/${ids[i]}.jpg`}
   )
 }
+
+manifest.push({src: 'app.js'})
 
 loader.loadManifest(manifest, false)
 
