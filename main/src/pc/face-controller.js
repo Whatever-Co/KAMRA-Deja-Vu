@@ -408,7 +408,7 @@ export default class FaceController extends THREE.Object3D {
     // falling children
     if (this.data.falling_children.in_frame <= currentFrame && currentFrame <= this.data.falling_children.out_frame) {
       let f = currentFrame - this.data.falling_children.in_frame
-      this.fallingChildren[0].geometry.applyMorph(this.data.falling_children_mesh.property[0].morph[f])
+      // this.fallingChildren[0].geometry.applyMorph(this.data.falling_children_mesh.property[0].morph[f])
       this.data.falling_children.property.forEach((props, i) => {
         let face = this.fallingChildren[i]
         face.position.fromArray(props.position, f * 3)
