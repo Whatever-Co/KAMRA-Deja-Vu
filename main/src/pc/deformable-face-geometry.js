@@ -205,4 +205,13 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
     this.positionAttribute.needsUpdate = true
   }
 
+
+  copy(geometry) {
+    this.positionAttribute.copy(geometry.positionAttribute)
+    this.positionAttribute.needsUpdate = true
+    this.uvAttribute.copy(geometry.uvAttribute)
+    this.uvAttribute.needsUpdate = true
+    this.neutralPosition = geometry.neutralPosition
+  }
+
 }

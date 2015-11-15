@@ -101,15 +101,11 @@ export default class FaceController extends THREE.Object3D {
     this.main.matrixAutoUpdate = true
 
     this.alts.forEach((face) => {
-      face.geometry.positionAttribute.copy(this.main.geometry.positionAttribute)
-      face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
-      face.geometry.uvAttribute.needsUpdate = true
+      face.geometry.copy(this.main.geometry)
       face.material = this.main.material
     })
     this.smalls.forEach((face) => {
-      face.geometry.positionAttribute.copy(this.main.geometry.positionAttribute)
-      face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
-      face.geometry.uvAttribute.needsUpdate = true
+      face.geometry.copy(this.main.geometry)
       face.material = this.main.material
     })
 
@@ -257,6 +253,9 @@ export default class FaceController extends THREE.Object3D {
             face.position.fromArray(props.position, f * 3)
             face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
             face.quaternion.fromArray(props.quaternion, f * 4)
+            if (props.morph[f]) {
+              face.geometry.applyMorph(props.morph[f])
+            }
           }
         })
       }
@@ -273,6 +272,9 @@ export default class FaceController extends THREE.Object3D {
             face.position.fromArray(props.position, f * 3)
             face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
             face.quaternion.fromArray(props.quaternion, f * 4)
+            if (props.morph[f]) {
+              face.geometry.applyMorph(props.morph[f])
+            }
           }
         })
       }

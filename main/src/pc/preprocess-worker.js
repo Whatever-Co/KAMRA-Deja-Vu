@@ -106,7 +106,7 @@ const convertData = (vertices) => {
 
 
 onmessage = (event) => {
-  console.log('start', performance.now())
+  // console.log('start', performance.now())
   let transferList = []
   let result = event.data.map((vertices) => {
     let v = convertData(vertices)
@@ -117,6 +117,6 @@ onmessage = (event) => {
     })
     return v
   })
-  console.log('done', performance.now())
+  // console.log('done', performance.now())
   postMessage(result, transferList)
 }
