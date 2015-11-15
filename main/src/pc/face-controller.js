@@ -123,9 +123,18 @@ export default class FaceController extends THREE.Object3D {
       this.slitScan.start(this.main)
       this.add(this.slitScan)
     })
-    Ticker.addFrameEvent(Config.DATA.slitscan.uv_out_frame + 1, () => {
+
+    Ticker.addFrameEvent(this.data.falling_children.in_frame, () => {
       this.main.visible = true
       this.remove(this.slitScan)
+
+      let geometry = this.main.geometry.clone()
+      this.fallingChildren = this.data.falling_children.property.map(() => {
+        let face = new THREE.Mesh(geometry, this.main.material)
+        face.scale.set(SCALE, SCALE, SCALE)
+        this.add(face)
+        return face
+      })
     })
   }
 
@@ -374,8 +383,20 @@ export default class FaceController extends THREE.Object3D {
       }
     }
 
+    // slit-scan
     if (Config.DATA.slitscan.uv_in_frame <= currentFrame && currentFrame <= Config.DATA.slitscan.uv_out_frame) {
       this.slitScan.update(this.renderer)
+    }
+
+    // falling children
+    if (this.data.falling_children.in_frame <= currentFrame && currentFrame <= this.data.falling_children.out_frame) {
+      let f = currentFrame - this.data.falling_children.in_frame
+      this.fallingChildren[0].geometry.applyMorph(this.data.falling_children_mesh.property[0].morph[f])
+      this.data.falling_children.property.forEach((props, i) => {
+        let face = this.fallingChildren[i]
+        face.position.fromArray(props.position, f * 3)
+        face.quaternion.fromArray(props.quaternion, f * 4)
+      })
     }
 
     // mosaic

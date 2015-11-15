@@ -214,4 +214,11 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
     this.neutralPosition = geometry.neutralPosition
   }
 
+
+  clone() {
+    let geometry = new DeformableFaceGeometry()
+    geometry.copy(this)
+    return geometry
+  }
+
 }

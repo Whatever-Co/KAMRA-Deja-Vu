@@ -60,6 +60,7 @@ class App {
       this.keyframes.user.property,
       this.keyframes.user_alt.property[0],
       this.keyframes.user_alt.property[1],
+      this.keyframes.falling_children_mesh.property[0],
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
     .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
@@ -169,7 +170,7 @@ class App {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.sound.position = 2000 / 24 * 1000
+        //   this.sound.position = 2090 / 24 * 1000
         // }, 1000)
       }
     })
