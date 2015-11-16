@@ -279,6 +279,10 @@ def initConfig():
 	sliceColRangeSide = (inFrame["slice-all"], inFrame["slice-out"]-1)
 
 	config = {
+		"effects": {
+			"intro_overlay": {"r": 16, "g": 23, "b": 31, "a": 0.4},
+			"bgcolor": {"r": 16, "g": 23, "b": 28, "a": 1.0}
+		},
 		"i_extra": {
 			"zoom_force": 0.88
 		},
