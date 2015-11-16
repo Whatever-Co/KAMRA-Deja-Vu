@@ -47,7 +47,7 @@ class App {
     let loader = new createjs.LoadQueue()
     loader.loadManifest([
       // {id: 'color', src: 'faceuv.png'},
-      {id: 'lut', src: 'lut4b.png'},
+      {id: 'lut', src: 'lut5.png'},
       // {id: 'image', src: 'media/shutterstock_56254417.png'},
       // {id: 'data', src: 'media/shutterstock_56254417.json'}
     ])
