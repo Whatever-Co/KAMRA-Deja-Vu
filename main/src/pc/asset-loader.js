@@ -75,7 +75,7 @@ let manifest = [
   {id: 'keyframes', src: 'data/keyframes.json'},
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
-  {id: 'colorcorrect-lut', src: 'textures/lookup_selective_color.png'},
+  {id: 'colorcorrect-lut', src: 'textures/lut.png'},
   {id: 'music-main', src: 'data/main.mp3'},
 ]
 
