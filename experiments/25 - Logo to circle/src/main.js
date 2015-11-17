@@ -69,7 +69,7 @@ class App {
     window.addEventListener('keydown', (e) => {
       if (e.keyCode == 32) {
         console.log(this.logo.mode)
-        this.logo.setMode(this.logo.mode == 'logo' ? 'circle' : 'logo')
+        this.logo.setMode({logo: 'circle', circle: 'tracker', tracker: 'logo'}[this.logo.mode])
       }
     })
   }

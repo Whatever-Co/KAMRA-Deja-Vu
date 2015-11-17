@@ -16,7 +16,7 @@ class Node extends THREE.Vector3 {
     this.linearVelocity = 3
     this.velocity = new THREE.Vector3()
     this.history = []
-    this.maxHistory = THREE.Math.randInt(20, 100)
+    this.maxHistory = THREE.Math.randInt(50, 120)
 
     this.target = new THREE.Vector3()
     this.path = null
@@ -24,11 +24,11 @@ class Node extends THREE.Vector3 {
     this.velocityOnPath = 3
     this.maxSteeringSensitivity = 0.7
 
-    this.noiseStrength = 8
+    this.noiseStrength = 5
     if (Math.random() < 0.1) {
       this.noiseStrength = 30
     }
-    if (Math.random() < 0.1) {
+    if (Math.random() < 0.05) {
       this.maxSteeringSensitivity = 0.1
     }
     this.variation = Math.random()
@@ -76,6 +76,47 @@ class Node extends THREE.Vector3 {
 }
 
 
+
+class Polyline {
+
+  constructor(vertices) {
+    this.vertices = vertices
+    this.totalLength = 0
+    this._length = [0]
+
+    for (let i = 1; i <= vertices.length; i++) {
+      this.totalLength += vertices[i % vertices.length].distanceTo(vertices[i - 1])
+      this._length.push(this.totalLength)
+    }
+  }
+
+
+  getPointAtLength2(length) {
+    if (length <= 0) {
+      return this.vertices[0].clone()
+    }
+    if (length >= this.totalLength) {
+      return _.last(this.vertices).clone()
+    }
+    let r = 0
+    let l = this._length.length - 1
+    let m = (l + r) >> 1
+    while (l - r > 1) {
+      if (this._length[m] < length) {
+        r = m
+      } else {
+        l = m
+      }
+      m = (l + r) >> 1
+    }
+    let t = THREE.Math.mapLinear(length, this._length[m], this._length[m + 1], 0, 1)
+    return new THREE.Vector3().copy(this.vertices[m]).lerp(this.vertices[(m + 1) % this.vertices.length], t)
+  }
+
+}
+
+
+
 const signedAngle = (v1, v2) => Math.atan2(v1.x * v2.y - v1.y * v2.x, v1.x * v2.x + v1.y * v2.y)
 
 const PLUS_Z = new THREE.Vector3(0, 0, 1)
@@ -85,6 +126,9 @@ export default class ParticledLogo extends THREE.Line {
 
   constructor() {
     super(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
+      uniforms: {
+        time: {type: 'f', value: 0}
+      },
       vertexShader: `
         attribute float alpha;
         varying float vAlpha;
@@ -94,19 +138,20 @@ export default class ParticledLogo extends THREE.Line {
         }
       `,
       fragmentShader: `
+        uniform float time;
         varying float vAlpha;
         float rand(vec2 co){
             return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
         }
         void main() {
           if (vAlpha < 0.01) discard;
-          gl_FragColor = vec4(1, 1, 1, vAlpha * rand(gl_FragCoord.xy));
+          gl_FragColor = vec4(1, 1, 1, vAlpha * rand(gl_FragCoord.xy + vec2(time * 100., 0.)));
         }
       `,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      linewidth: 2
+      linewidth: 1
     }))
     // this.material = new THREE.LineBasicMaterial()
 
@@ -115,6 +160,16 @@ export default class ParticledLogo extends THREE.Line {
     this.logoPaths = Snap.parse(require('raw!./logo2.svg')).selectAll('path')
     this.circlePath = Snap.parse(require('raw!./face-circle.svg')).select('path')
     this.circlePath.totalLength = this.circlePath.getTotalLength()
+
+    {
+      let center = new THREE.Vector3(Config.RENDER_WIDTH / 2, Config.RENDER_HEIGHT / 2, 0)
+      this.rectPath = new Polyline([
+        new THREE.Vector3(200, 200, 0).add(center),
+        new THREE.Vector3(200, -200, 0).add(center),
+        new THREE.Vector3(-200, -200, 0).add(center),
+        new THREE.Vector3(-200, 200, 0).add(center),
+      ])
+    }
 
     console.time('prepare')
     this.pathPoints = []
@@ -139,7 +194,7 @@ export default class ParticledLogo extends THREE.Line {
       }
       path.getPointAtLength2 = (length) => {
         if (length <= 0) {
-          _points[0]
+          return _points[0]
         }
         if (length >= path.totalLength) {
           return _.last(_points)
@@ -188,7 +243,6 @@ export default class ParticledLogo extends THREE.Line {
       })
     }
 
-    console.log({numVertices})
     this.positionAttribute = new THREE.BufferAttribute(new Float32Array(numVertices * 3), 3)
     this.positionAttribute.dynamic = true
     this.geometry.addAttribute('position', this.positionAttribute)
@@ -217,6 +271,9 @@ export default class ParticledLogo extends THREE.Line {
         })
         break
       case 'tracker':
+        this.nodes.forEach((node) => {
+          node.setPath(this.rectPath, THREE.Math.randFloat(10, 20) / 3)
+        })
         break
       default:
         return
@@ -268,6 +325,9 @@ export default class ParticledLogo extends THREE.Line {
     this._updateNodes(frame, time)
     this._updateNodes(frame, time)
     this._updateGeometry()
+    if (frame % 2 == 0) {
+      this.material.uniforms.time.value = Math.random()
+    }
   }
 
 }
