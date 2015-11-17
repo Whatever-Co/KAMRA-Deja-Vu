@@ -18,6 +18,7 @@ import 'postprocessing/EffectComposer'
 
 import Ticker from './ticker'
 import Config from './config'
+import ParticledLogo from './particled-logo'
 import WebcamPlane from './webcam-plane'
 import FaceController from './face-controller'
 
@@ -31,7 +32,7 @@ export default class App extends EventEmitter {
     this.keyframes = keyframes
     this.controllers = []
 
-    this.initWebGL()
+    this.initScene()
 
     this.noiseLayer = $('.noise')
 
@@ -39,7 +40,7 @@ export default class App extends EventEmitter {
   }
 
 
-  initWebGL() {
+  initScene() {
     this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
 
@@ -89,12 +90,23 @@ export default class App extends EventEmitter {
     }
     this.composer.passes[this.composer.passes.length - 1].renderToScreen = true
 
+    // logo
+    {
+      this.logo = new ParticledLogo()
+      let scale = 2 * Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z / 1080
+      // console.log(scale)
+      this.logo.scale.set(scale, scale, scale)
+      this.scene.add(this.logo)
+      this.controllers.push(this.logo)
+      this.logo.enabled = true
+    }
+
     //
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
 
     if (Config.DEV_MODE) {
-      this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
+      // this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
 
       this.stats = new Stats()
       document.body.appendChild(this.stats.domElement)
@@ -138,6 +150,16 @@ export default class App extends EventEmitter {
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
 
+    this.webcam.addEventListener('detected', () => {
+      // console.log('detected')
+      this.logo.setMode('tracker')
+      this.logo.updateVertices(this.face)
+    })
+    this.webcam.addEventListener('lost', () => {
+      // console.log('lost')
+      this.logo.setMode('circle')
+    })
+
     this.webcam.addEventListener('complete', () => {
       this.face.captureWebcam()
       this.webcam.enableTracking = false
@@ -171,6 +193,8 @@ export default class App extends EventEmitter {
     this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
     this.scene.add(this.face)
     this.controllers.push(this.face)
+
+    this.logo.setMode('circle')
   }
 
 
@@ -182,7 +206,7 @@ export default class App extends EventEmitter {
 
     this.controllers.forEach((controller) => {
       if (controller.enabled) {
-        controller.update(currentFrame)
+        controller.update(currentFrame, time)
       }
     })
 

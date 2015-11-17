@@ -1,5 +1,6 @@
 /* global THREE clm pModel */
 
+import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 import Modernizr from 'exports?Modernizr!modernizr-custom'
@@ -61,7 +62,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.trackerCanvas.width = 320
     this.trackerCanvas.height = 180
     this.trackerContext = this.trackerCanvas.getContext('2d')
-    // document.body.appendChild(this.trackerCanvas)
+    this.trackerCanvas.id = '_tracker-canvas'
+    document.body.appendChild(this.trackerCanvas)
 
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
@@ -105,6 +107,23 @@ export default class WebcamPlane extends THREE.Mesh {
       this.enableTracking = false
       this.enableScoreChecking = false
     }
+  }
+
+
+  onSuccess(stream) {
+    this.stream = stream
+    this.video.src = window.URL.createObjectURL(stream)
+    this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
+    this.video.play()
+    this.enableTextureUpdating = true
+    this.enableTracking = true
+    this.enableScoreChecking = true
+  }
+
+
+  onError(error) {
+    console.error(error)  
+    debugger
   }
 
 
@@ -152,26 +171,8 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
 
-  onSuccess(stream) {
-    this.stream = stream
-    this.video.src = window.URL.createObjectURL(stream)
-    this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
-    this.video.play()
-    this.enableTextureUpdating = true
-    this.enableTracking = true
-    this.enableScoreChecking = true
-  }
-
-
-  onError(error) {
-    console.error(error)  
-    debugger
-  }
-
-
   onLoadedMetadata() {
     // console.log({width: this.video.videoWidth, height: this.video.videoHeight})
-
     this.tracker = new clm.tracker({useWebGL: true})
     this.tracker.init(pModel)
 
@@ -281,9 +282,13 @@ export default class WebcamPlane extends THREE.Mesh {
       let {size, center} = this.getBoundsFor(this.featurePoint3D, FACE_INDICES)
       let len = vec2.len(size)
       let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
-      let isOK = len > 400 && Math.abs(center[0] - pCenter[0]) < 10 && this.tracker.getConvergence() < 50
-      // $('#frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isOK ? 'OK' : 'NG'}`)
-      this.scoreHistory.push(isOK)
+      let isSizeOK = 350 < len && len < 520
+      let isPositionOK = Math.abs(center[0]) < 50 && Math.abs(center[1]) < 50
+      let isAngleOK = Math.abs(center[0] - pCenter[0]) < 30
+      let isStable = this.tracker.getConvergence() < 50
+      $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
+      this.dispatchEvent({type: isSizeOK && isPositionOK && isAngleOK ? 'detected' : 'lost'})
+      this.scoreHistory.push(isSizeOK && isPositionOK && isAngleOK && isStable)
 
       // update center position of shader
       let w = this.trackerCanvas.width
@@ -299,17 +304,18 @@ export default class WebcamPlane extends THREE.Mesh {
     } else {
       this.scoreHistory.push(false)
     }
+    // console.log(this.scoreHistory)
 
     const WAIT_FOR_FRAMES = 10 // 2 secs
     if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
       this.scoreHistory.shift()
     }
-    if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
-      this.enableTextureUpdating = false
-      this.enableTracking = false
-      this.enableScoreChecking = false
-      this.dispatchEvent({type: 'complete'})
-    }
+    // if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
+    //   this.enableTextureUpdating = false
+    //   this.enableTracking = false
+    //   this.enableScoreChecking = false
+    //   this.dispatchEvent({type: 'complete'})
+    // }
   }
 
 

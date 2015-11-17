@@ -45,6 +45,7 @@ void main() {
 #else
   vUv = _uv;
 #endif
+  vUv = uv;
 
   vBrightness = (1.0 - rate);
 

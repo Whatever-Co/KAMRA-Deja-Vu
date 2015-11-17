@@ -9,7 +9,7 @@ import App from './app'
 class PageManager {
 
   constructor() {
-    this.stateMachine = StateMachine.create({
+    this.fsm = StateMachine.create({
       initial: 'loadAssets',
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
@@ -22,9 +22,12 @@ class PageManager {
           $('#loading').fadeOut(1000, () => {
             this.app= new App(this.keyframes)
             this.app.on('complete', () => {
-              this.stateMachine.playCompleted()
+              this.fsm.playCompleted()
             })
-            this.stateMachine.transition()
+            this.fsm.transition()
+            setTimeout(() => {
+              this.fsm.start(true)
+            }, 1000)
           })
           return StateMachine.ASYNC
         },
@@ -33,7 +36,7 @@ class PageManager {
         },
         onleavetop: () => {
           $('#top').fadeOut(1000, () => {
-            this.stateMachine.transition()
+            this.fsm.transition()
           })
           return StateMachine.ASYNC
         },
@@ -45,15 +48,15 @@ class PageManager {
         },
         onleaveshare: () => {
           $('#share').fadeOut(1000, () => {
-            this.stateMachine.transition()
+            this.fsm.transition()
           })
           return StateMachine.ASYNC
         },
       }
     })
-    $('.with-webcam').click(() => this.stateMachine.start(true))
-    $('.without-webcam').click(() => this.stateMachine.start(false))
-    $('.button-top').click(() => this.stateMachine.goTop())
+    $('.with-webcam').click(() => this.fsm.start(true))
+    $('.without-webcam').click(() => this.fsm.start(false))
+    $('.button-top').click(() => this.fsm.goTop())
 
     Ticker.start()
 
@@ -97,7 +100,7 @@ class PageManager {
         targetObject[i].morph = morph
       })
       console.timeEnd('morph data processing')
-      this.stateMachine.loadComplete()
+      this.fsm.loadComplete()
     }
   }
 

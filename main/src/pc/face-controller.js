@@ -48,7 +48,7 @@ export default class FaceController extends THREE.Object3D {
     this.camera = camera
 
     // faces
-    this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
     this.main.matrixAutoUpdate = false
     this.add(this.main)
 
