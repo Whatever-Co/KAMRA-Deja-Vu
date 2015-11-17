@@ -11,13 +11,30 @@ import StandardFaceData from './standard-face-data'
 export const FACE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
 export const PARTS_INDICES = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
 
+//const KEY_COLOR = [7, 21, 32] //#071520
+const KEY_COLOR = [0, 255, 0]
+
 
 export default class WebcamPlane extends THREE.Mesh {
 
   constructor(camera) {
     super(
-      new THREE.PlaneBufferGeometry(16 / 9, 1, 1, 1),
-      new THREE.MeshBasicMaterial({color: 0xffffff, depthWrite: false})
+      new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
+      new THREE.ShaderMaterial({
+        vertexShader:require('./shaders/webcam-plane.vert'),
+        fragmentShader:require('./shaders/webcam-plane.frag'),
+        uniforms: {
+          texture: {type: 't', value: null},
+          rate: {type: 'f', value:0.0},
+          frame: {type: 'f', value:0.0},
+          centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
+          waveForce: {type: 'f', value:0.1},
+          zoomForce: {type: 'f', value:0.3},
+          holeTexture: {type: 't', value: null},
+          holeKeyColor: {type: 'v3', value: new THREE.Vector3(KEY_COLOR[0]/255.0, KEY_COLOR[1]/255.0, KEY_COLOR[2]/255.0)},
+          holeKeyThreshold: {type: 'f', value:0.6}
+        }
+      })
     )
 
     this.update = this.update.bind(this)
@@ -33,7 +50,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.textureContext.translate(1024, 0)
     this.textureContext.scale(-1, 1)
     this.texture = new THREE.CanvasTexture(this.textureCanvas)
-    this.material.map = this.texture
+    this.material.uniforms.texture.value = this.texture
+    this.material.uniforms.holeTexture.value = this.texture
     // document.body.appendChild(this.textureCanvas)
 
     this.trackerCanvas = document.createElement('canvas')
@@ -48,6 +66,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.matrixFeaturePoints = new THREE.Matrix4()
 
     this.scoreHistory = []
+
+    this.enableTextureUpdating = true
   }
 
 
@@ -63,6 +83,7 @@ export default class WebcamPlane extends THREE.Mesh {
       }
     }
     navigator.getUserMedia(options, this.onSuccess.bind(this), this.onError.bind(this))
+    this.enableTextureUpdating = true
   }
 
 
@@ -221,8 +242,10 @@ export default class WebcamPlane extends THREE.Mesh {
   update() {
     let h = this.video.videoWidth / 16 * 9
     let y = (this.video.videoHeight - h) / 2
-    this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-    this.texture.needsUpdate = true
+    if (this.enableTextureUpdating) {
+      this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
+      this.texture.needsUpdate = true
+    }
 
     this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
 
@@ -233,6 +256,10 @@ export default class WebcamPlane extends THREE.Mesh {
     // this.tracker.draw(this.trackerCanvas)
 
     this.checkCaptureScore()
+
+    let frame = performance.now() / 1000 * 24
+    this.material.uniforms.frame.value = frame
+
   }
 
 

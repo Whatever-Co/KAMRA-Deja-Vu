@@ -81,7 +81,9 @@ const convertData = (vertices) => {
         return
       }
     }
-    console.error('not found')
+    console.warn('triangle not found')
+    index = 0
+    coord = [0, 0, 0]
   }
 
   return vertices.map((vertices) => {

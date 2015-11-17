@@ -39,7 +39,10 @@ export default class WebcamPlane extends THREE.Mesh {
     this.renderOrder = -1000
     this.enabled = false
     this.isComplete = false
+
     this.update = this.update.bind(this)
+    this.onIntroVideoEnded = this.onIntroVideoEnded.bind(this)
+    this.onOutroVideoEnded = this.onOutroVideoEnded.bind(this)
 
     this.data = data
     this.camera = camera
@@ -50,8 +53,6 @@ export default class WebcamPlane extends THREE.Mesh {
     this.textureCanvas = document.createElement('canvas')
     this.textureCanvas.width = this.textureCanvas.height = 1024
     this.textureContext = this.textureCanvas.getContext('2d')
-    // this.textureContext.translate(1024, 0)
-    // this.textureContext.scale(-1, 1)
     this.texture = new THREE.CanvasTexture(this.textureCanvas)
     this.material.uniforms.texture.value = this.texture
     // document.body.appendChild(this.textureCanvas)
@@ -60,15 +61,15 @@ export default class WebcamPlane extends THREE.Mesh {
     this.trackerCanvas.width = 320
     this.trackerCanvas.height = 180
     this.trackerContext = this.trackerCanvas.getContext('2d')
-    // this.trackerContext.translate(this.trackerCanvas.width, 0)
-    // this.trackerContext.scale(-1, 1)
-    // // document.body.appendChild(this.trackerCanvas)
+    // document.body.appendChild(this.trackerCanvas)
 
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
 
-    this.enableTracking = true
-    this.enableScoreChecking = true
+    this.enableTextureUpdating = false
+    this.enableTracking = false
+    this.enableScoreChecking = false
+    this.numTrackingIteration = 2
     this.scoreHistory = []
   }
 
@@ -94,17 +95,46 @@ export default class WebcamPlane extends THREE.Mesh {
       gUM(options, this.onSuccess.bind(this), this.onError.bind(this))
 
     } else {
-      this.video.src = 'data/_/lula-1920.jpg'
+      this.video.src = 'data/_/lula-in-1920.jpg'
       this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
-      this.video.addEventListener('ended', () => {
-        this.enableTracking = false
-        this.dispatchEvent({type: 'complete'})
-      })
+      this.video.addEventListener('ended', this.onIntroVideoEnded)
       this.video.play()
       this.rawFeaturePoints = LULA
       this.normralizeFeaturePoints()
+      this.enableTextureUpdating = true
+      this.enableTracking = false
       this.enableScoreChecking = false
     }
+  }
+
+
+  onIntroVideoEnded() {
+    this.video.removeEventListener('ended', this.onIntroVideoEnded)
+
+    this.enableTracking = false
+    this.dispatchEvent({type: 'complete'})
+
+    this.video.pause()
+    this.video.src = 'data/_/lula-out-1920.jpg'
+    this.video.load()
+  }
+
+
+  onOutroVideoEnded() {
+    this.video.currentTime = 10
+    this.video.play()
+  }
+
+
+  restart() {
+    if (!this.useWebcam) {
+      this.video.addEventListener('ended', this.onOutroVideoEnded)
+      this.video.play()
+    }
+    this.enableTextureUpdating = true
+    this.enableTracking = true
+    this.enableScoreChecking = false
+    this.numTrackingIteration = 2
   }
 
 
@@ -113,8 +143,10 @@ export default class WebcamPlane extends THREE.Mesh {
       this.stream.getVideoTracks()[0].stop()
     }
     if (this.video) {
+      this.video.removeEventListener('ended', this.onOutroVideoEnded)
       this.video.pause()
     }
+    this.enableTextureUpdating = true
     this.enableTracking = false
     this.enableScoreChecking = false
   }
@@ -125,6 +157,9 @@ export default class WebcamPlane extends THREE.Mesh {
     this.video.src = window.URL.createObjectURL(stream)
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
     this.video.play()
+    this.enableTextureUpdating = true
+    this.enableTracking = true
+    this.enableScoreChecking = true
   }
 
 
@@ -270,7 +305,9 @@ export default class WebcamPlane extends THREE.Mesh {
       this.scoreHistory.shift()
     }
     if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
+      this.enableTextureUpdating = false
       this.enableTracking = false
+      this.enableScoreChecking = false
       this.dispatchEvent({type: 'complete'})
     }
   }
@@ -287,19 +324,16 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   update(currentFrame) {
-    if (this.enableTracking) {
+    if (this.enableTextureUpdating) {
       this.updateTexture()
-
-      if (this.useWebcam) {
-        for (let i = 0; i < 2; i++) {
-          this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
-        }
-        this.normralizeFeaturePoints()
-        // this.tracker.draw(this.trackerCanvas)
-
-        if (this.enableScoreChecking) {
-          this.checkCaptureScore()
-        }
+    }
+    if (this.enableTracking) {
+      for (let i = 0; i < this.numTrackingIteration; i++) {
+        this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
+      }
+      this.normralizeFeaturePoints()
+      if (this.enableScoreChecking) {
+        this.checkCaptureScore()
       }
     }
 

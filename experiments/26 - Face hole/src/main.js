@@ -23,6 +23,7 @@ class App {
     this.initScene()
     this.initObjects()
     this.start()
+    this.isPausing = false
   }
 
 
@@ -54,43 +55,47 @@ class App {
     this.webcam.addEventListener('complete', this.takeSnapshot.bind(this))
     this.webcam.start()
 
+
     // face
     this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
 
     this.faceHole = new FaceHolePlane()
-    this.faceHole.matrixAutoUpdate = false
-    this.scene.add(this.faceHole)
-
-
+    //this.scene.add(this.faceHole)
 
     this.gui = new dat.GUI()
     this.gui.add(this, 'takeSnapshot').name('Take snapshot')
 
-    {
-      // Hole canvas
-
-      $(this.faceHole.canvas).css({
-        position: "absolute",
-        border: "1px solid",
-        top: "0",
-        left: "0",
-        transformOrigin: 'left top',
-        transform:'scale(0.5)'
-      })
-      document.body.appendChild(this.faceHole.canvas)
-    }
+    //{
+    //  // Hole canvas
+    //  $(this.faceHole.canvas).css({
+    //    position: "absolute",
+    //    border: "1px solid",
+    //    top: "0",
+    //    left: "0",
+    //    transformOrigin: 'left top',
+    //    transform:'scale(0.5)'
+    //  })
+    //  document.body.appendChild(this.faceHole.canvas)
+    //}
   }
 
 
   takeSnapshot() {
-    if(!this.webcam.rawFeaturePoints) {
-      console.warn('not tracking')
-      return
+    if (this.webcam.enableTextureUpdating) {
+      if(!this.webcam.rawFeaturePoints) {
+        console.warn('not tracking')
+        return
+      }
+      this.faceHole.capture(this.webcam)
+      this.webcam.enableTextureUpdating = false
+    }
+    else {
+      this.webcam.enableTextureUpdating = true
     }
 
-    this.faceHole.capture(this.webcam)
+
   }
 
   start() {

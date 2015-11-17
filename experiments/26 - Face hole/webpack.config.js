@@ -17,7 +17,8 @@ module.exports = {
       { test: /\.sass$/, loaders: ['style-loader', 'css-loader', 'autoprefixer-loader', 'sass-loader?indentedSyntax'] },
       { test: /\.jade$/, loader: 'jade-loader?self' },
       { test: /\.json$/, loader: 'json-loader' },
-      { test: /\.(vert|frag)$/, loader: 'raw-loader' }
+      //{ test: /\.(vert|frag)$/, loader: 'raw-loader' }
+      { test: /\.(glsl|frag|vert)$/, exclude: /node_modules|web_modules/, loaders:['raw','glslify'] }
     ]
   },
   amd: { jQuery: true },
