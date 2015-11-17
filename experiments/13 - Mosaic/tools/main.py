@@ -11,6 +11,7 @@ from matplotlib import pyplot
 from mpl_toolkits.mplot3d import Axes3D
 import subprocess
 from PIL import Image
+import json
 
 
 def pixelate(image, size=20):
@@ -316,11 +317,23 @@ def convert_lut(paths):
             # R : index x
             # G : index y
             print("X:{0}, Y:{1}".format(index % 16, index / 16))
+            # B,G,R
             idx_lut[y][x] = (0, index / 16 * 16, index % 16 * 16)
 
     cv2.imwrite('lut/lut_face.png', face_lut)
     cv2.imwrite('lut/lut_index.png', idx_lut)
     print(idx_lut)
+
+
+def average_colors_to_json(imgPaths, jsonPath):
+    colors = images_to_average_colors(imgPaths)
+    colors = colors[:, 0:3]  # BGRA to BGR
+    # print(colors)
+    colors = colors[:, ::-1]  # BGR to RGB
+    # print(colors)
+    with open(jsonPath, 'w') as f:
+        json.dump(colors.tolist(), f)
+
 
 if __name__ == '__main__':
     paths = glob.glob('source/*.png')
@@ -331,4 +344,4 @@ if __name__ == '__main__':
 
     # make_spritesheet(paths, 16, 256, 'lut/sprite256.png')
     convert_lut(paths)
-    # make_lut512('lut/lut512.png')
+    # average_colors_to_json(paths, 'lut/sprite_colors.json')

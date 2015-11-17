@@ -8,6 +8,7 @@ uniform sampler2D spritePosition; // 256x16 LUT
 
 attribute vec3 triangleIndices;
 attribute vec3 weight;
+attribute vec2 faceUv;
 
 varying vec3 vColor;
 varying vec2 lutIndex;
@@ -69,10 +70,9 @@ vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
 vec2 lookup_face_uv(in vec4 textureColor, in sampler2D lookupTable) {
   vec2 index = lookup(textureColor, lookupTable).xy * 16.0;
   index.y += 1.0;
-  index.x = floor(index.x);
-  index.y = floor(index.y);
-  index /= 16.0;
-  return vec2(index.x, 1.0-index.y);
+  index.x = floor(index.x) / 16.0;
+  index.y = 1.0 - floor(index.y) / 16.0;
+  return index;
 }
 
 void main() {
@@ -80,7 +80,9 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(mix(position, dest.xyz, time), 1.0);
   gl_PointSize = size * (scale / abs(mvPosition.z));
   gl_Position = projectionMatrix * mvPosition;
+
   vec3 c = texture2D(faceTexture, getUV()).xyz;
   vColor = c;
   lutIndex = lookup_face_uv(vec4(c, 1), spritePosition);
+  // lutIndex = faceUv;
 }
