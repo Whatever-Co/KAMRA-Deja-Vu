@@ -213,7 +213,7 @@ class App {
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({
           id: '_vcon',
-          src: 'data/_/438726972.mp4',
+          src: 'data/_/440344979.mp4',
           width: 1280,
           height: 720,
           muted: true
@@ -222,7 +222,7 @@ class App {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.sound.position = 2090 / 24 * 1000
+        //   this.sound.position = 3390 / 24 * 1000
         // }, 1000)
       }
     })
