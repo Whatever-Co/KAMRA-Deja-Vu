@@ -328,7 +328,7 @@ def initConfig():
 			"random_y_min": -mosaicRandY,
 			"random_y_max": mosaicRandY,
 			"random_z_min": -mosaicRandZmin,
-			"random_z_max": -mosaicRandZmax
+			"random_z_max": -mosaicRandZmax,
 		}
 	}
 
@@ -352,7 +352,19 @@ def initConfig():
 		index = int(name[-1])
 		conf.append({"mesh_index": index})
 		
+	# mosaic face
+	conf = config["mosaic_face"]
+	mosaicFace = search("mosaic_face_base")
+	mosaicWeightTag = mosaicFace.GetFirstTag()
 
+	mosaicWeight = mosaicWeightTag.GetAllHighlevelData()
+	faceMosaicWeight = mosaicWeight[:eyemouthVertexIndex]
+	eyemouthMosaicWeight = mosaicWeight[eyemouthVertexIndex:]
+
+	print len(faceMosaicWeight)
+
+	conf["face_weight"] = faceMosaicWeight
+	conf["eyemouth_weight"] = eyemouthMosaicWeight
 
 def appendVertices(prop, name, vertices):
 
@@ -671,6 +683,10 @@ def main():
 	initConfig()
 
 	# duration = 1640
+
+	# with open(projDir + "/0b/data/3 - JSON/config_part.json", 'w') as outFile:
+	# 		json.dump(config["mosaic_face"], outFile, separators=(',',':'))
+	# return
 
 	if testFrame == None:
 
