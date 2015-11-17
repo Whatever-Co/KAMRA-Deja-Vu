@@ -14,7 +14,7 @@ gulp.task('webpack', () => {
     watch: developmentMode,
     entry: {
       bootstrap: './src/pc/bootstrap.js',
-      app: './src/pc/app.js'
+      app: './src/pc/page-manager.js'
       // 'sp/main': './src/sp/main.js'
     },
     output: {
