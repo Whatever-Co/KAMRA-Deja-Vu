@@ -235,7 +235,8 @@ def plot_mosaic_color(paths):
         break
 
 
-def make_lut():
+def make_lut256x16(exportPath):
+    ''' 256 x 16 LUT '''
     colors = []
     for y in range(0, 16):
         rows = []
@@ -248,7 +249,28 @@ def make_lut():
         colors.append(rows)
 
     image = np.array(colors)
-    cv2.imwrite('lut/lut.png', image)
+    if exportPath:
+        cv2.imwrite(exportPath, image)
+    return image
+
+
+def make_lut512x512(exportPath):
+    ''' 512 x 512 Basic LUT '''
+    colors = []
+    for y in range(0, 512):
+        rows = []
+        for x in range(0, 512):
+            i = (x % 64, y % 64)
+            rows.append([  # BGR
+                (y / 2 + x / 16),  # blue
+                i[1] * 4,  # green
+                i[0] * 4  # red
+            ])
+        colors.append(rows)
+
+    image = np.array(colors)
+    if exportPath:
+        cv2.imwrite(exportPath, image)
     return image
 
 
@@ -277,7 +299,8 @@ def convert_lut(paths):
     templates = templates.astype(np.float64)  # to float
 
     # get lookup table
-    img = make_lut()
+    #img = make_lut256x16('lut/lut_small.png')
+    img = make_lut512x512('lut/lut_big.png')
     imgArr = img.reshape(1, img.shape[0] * img.shape[1], img.shape[2])
     imgArr = imgArr[0]  # strip
     imgArr = imgArr.astype(np.float64)  # to float
@@ -308,3 +331,4 @@ if __name__ == '__main__':
 
     # make_spritesheet(paths, 16, 256, 'lut/sprite256.png')
     convert_lut(paths)
+    # make_lut512('lut/lut512.png')
