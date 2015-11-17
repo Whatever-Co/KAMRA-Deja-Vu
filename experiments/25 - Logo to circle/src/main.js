@@ -23,26 +23,35 @@ class Node extends THREE.Vector3 {
   constructor() {
     super()
 
-    this.linearVelocity = 10
+    this.linearVelocity = 3
     this.velocity = new THREE.Vector3()
     this.history = []
+    this.maxHistory = THREE.Math.randInt(20, 100)
 
     this.target = new THREE.Vector3()
     this.path = null
     this.positionOnPath = 0
-    this.velocityOnPath = 10
+    this.velocityOnPath = 3
+    this.maxSteeringSensitivity = 0.7
 
-    this.seed = Math.random()
+    this.noiseStrength = 8
+    if (Math.random() < 0.1) {
+      this.noiseStrength = 30
+    }
+    if (Math.random() < 0.1) {
+      this.maxSteeringSensitivity = 0.1
+    }
+    this.variation = Math.random()
   }
 
 
-  setPath(path, velocity = 10) {
+  setPath(path, velocity = 3) {
     if (path == this.path) {
       return
     }
     this.path = path
     this.positionOnPath = this.path.totalLength * Math.random()
-    this.velocityOnPath = velocity
+    this.velocityOnPath = velocity * THREE.Math.randFloat(0.9, 1.5)
     this.distanceTraveledOnPath = 0
   }
 
@@ -54,22 +63,22 @@ class Node extends THREE.Vector3 {
       if (this.positionOnPath < 0) {
         this.positionOnPath += this.path.totalLength
       }
-      let p = this.path.getPointAtLength(this.positionOnPath)
-      this.target.x = p.x + noise.simplex2(this.x * 0.005 + time, this.y * 0.004) * 5
-      this.target.y = p.y + noise.simplex2(this.x * 0.004, this.y * 0.005) * 5
+      let p = this.path.getPointAtLength2(this.positionOnPath)
+      this.target.x = p.x + noise.simplex2(this.x * 0.0001 + time + this.variation, this.y * 0.0001) * this.noiseStrength
+      this.target.y = p.y + noise.simplex2(this.x * 0.0001, this.y * 0.0001 - time) * this.noiseStrength
 
       _v1.copy(this.target).sub(this)
       let d = _v1.length()
-      let alpha = THREE.Math.mapLinear(THREE.Math.clamp(d, 0, 400), 0, 400, 0.7, 0.05)
+      let alpha = THREE.Math.mapLinear(THREE.Math.clamp(d, 0, 400), 0, 400, this.maxSteeringSensitivity, 0.05)
       let a = signedAngle(this.velocity, _v1) * alpha
 
-      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath), d * 0.03) - this.linearVelocity) * 0.1
+      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath) * 0.9, d * 0.04) - this.linearVelocity) * 0.9
       this.velocity.applyAxisAngle(PLUS_Z, a).setLength(this.linearVelocity)
     }
     this.add(this.velocity)
 
     this.history.push([this.x, this.y])
-    if (this.history.length > 30) {
+    if (this.history.length > this.maxHistory) {
       this.history.shift()
     }
   }
@@ -93,14 +102,15 @@ class App {
     this.ctx.fillStyle = 'rgb(26, 43, 52)'
     this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
 
-    this.logoPaths = Snap.parse(require('raw!./logo.svg')).selectAll('path')
+    this.logoPaths = Snap.parse(require('raw!./logo2.svg')).selectAll('path')
     this.circlePath = Snap.parse(require('raw!./face-circle.svg')).select('path')
     this.circlePath.totalLength = this.circlePath.getTotalLength()
 
+    console.time('prepare')
     this.pathPoints = []
     this.logoPaths.forEach((path) => {
       path.totalLength = path.getTotalLength()
-      let n = path.totalLength / 30
+      let n = Math.round(path.totalLength / 10)
       let l = path.totalLength / n
       for (let i = 0; i < n; i++) {
         let p = path.getPointAtLength(i * l)
@@ -108,10 +118,43 @@ class App {
         this.pathPoints.push(p)
       }
     })
+    let preparePath = (path) => {
+      let _points = []
+      let n = Math.floor(path.totalLength / 3)
+      for (let i = 0; i <= n; i++) {
+        let l = i / n * path.totalLength
+        let p = path.getPointAtLength(l)
+        p.length = l
+        _points.push(p)
+      }
+      path.getPointAtLength2 = (length) => {
+        if (length <= 0) {
+          _points[0]
+        }
+        if (length >= path.totalLength) {
+          return _.last(_points)
+        }
+        let r = 0
+        let l = _points.length - 1
+        let m = (l + r) >> 1
+        while (l - r > 1) {
+          if (_points[m].length < length) {
+            r = m
+          } else {
+            l = m
+          }
+          m = (l + r) >> 1
+        }
+        return _points[m]
+      }
+    }
+    this.logoPaths.forEach((path) => preparePath(path))
+    preparePath(this.circlePath)
+    console.timeEnd('prepare')
 
     this.nodes = []
     let center = new THREE.Vector3(Config.RENDER_WIDTH / 2, Config.RENDER_HEIGHT / 2, 0)
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       let node = new Node()
       if (Math.random() < 0.5) {
         node.x = Math.random() < 0.5 ? -100 : Config.RENDER_WIDTH + 100
@@ -120,10 +163,7 @@ class App {
         node.x = THREE.Math.randFloat(-100, Config.RENDER_WIDTH + 100)
         node.y = Math.random() < 0.5 ? -100 : Config.RENDER_HEIGHT + 100
       }
-      // node.x = Math.random() * Config.RENDER_WIDTH
-      // node.y = Math.random() * Config.RENDER_HEIGHT
-      // node.velocity.set(Math.random() - 0.5, Math.random() - 0.5, 0).setLength(10)
-      node.velocity.copy(node).sub(center).setLength(10)
+      node.velocity.copy(node).sub(center).setLength(3)
       node.visible = false
       this.nodes.push(node)
     }
@@ -132,7 +172,7 @@ class App {
       paths.push(...this.logoPaths)
       paths = _.shuffle(paths)
       this.nodes.forEach((node, i) => {
-        node.setPath(paths[i], Math.random() < 0.5 ? -10 : 10)
+        node.setPath(paths[i], Math.random() < 0.5 ? -3 : 3)
       })
     }
 
@@ -143,7 +183,7 @@ class App {
         if (++i == this.nodes.length) {
           clearInterval(interval)
         }
-      }, 50)
+      }, 10)
     }
 
     window.addEventListener('resize', this.onResize.bind(this))
@@ -155,14 +195,14 @@ class App {
         this.circleMode = !this.circleMode
         if (this.circleMode) {
           this.nodes.forEach((node) => {
-            node.setPath(this.circlePath, THREE.Math.randFloat(10, 20))
+            node.setPath(this.circlePath, THREE.Math.randFloat(10, 20) / 3)
           })
         } else {
           let paths = _.shuffle(this.pathPoints).slice(0, this.nodes.length - this.logoPaths.length).map((p) => p.path)
           paths.push(...this.logoPaths)
           paths = _.shuffle(paths)
           this.nodes.forEach((node, i) => {
-            node.setPath(paths[i], Math.random() < 0.5 ? -10 : 10)
+            node.setPath(paths[i], Math.random() < 0.5 ? -3 : 3)
           })
         }
       }
@@ -183,6 +223,8 @@ class App {
   animate(f, t) {
     TWEEN.update(t)
     this.update(f, t)
+    this.update(f, t)
+    this.update(f, t)
     this.draw(f, t)
   }
 
@@ -197,8 +239,15 @@ class App {
     this.nodes.forEach((node) => {
       if (node.visible) {
         node.update(t)
-        if (!this.circleMode && Math.random() < (node.distanceTraveledOnPath - node.path.totalLength * 3) / 5000) {
-          node.setPath(this.pathPoints[~~(Math.random() * this.pathPoints.length)].path)
+        if (!this.circleMode && Math.random() < (node.distanceTraveledOnPath - node.path.totalLength * 3) / 15000) {
+          if (this.freePath) {
+            let prev = node.path
+            node.setPath(this.freePath)
+            this.freePath = prev
+          } else {
+            this.freePath = node.path
+            node.setPath(_.sample(this.logoPaths))
+          }
         }
       }
     })
@@ -218,7 +267,7 @@ class App {
     this.nodes.forEach((node) => {
       ctx.strokeStyle = '#ffffff'
       for (let i = 0; i < node.history.length - 1; i++) {
-        ctx.globalAlpha = i / 30
+        ctx.globalAlpha = i / node.maxHistory
         ctx.beginPath()
         ctx.moveTo(node.history[i][0], node.history[i][1])
         ctx.lineTo(node.history[i + 1][0], node.history[i + 1][1])
