@@ -23,7 +23,7 @@ class Ticker extends EventEmitter {
 
   update(t) {
     this.requestId = requestAnimationFrame(this.update)
-    let currentFrame = Math.floor((this.clock ? this.clock.position : -t) / 1000 * 24)
+    let currentFrame = Math.floor((this.clock ? this.clock.position : -(t || 0)) / 1000 * 24)
     if (currentFrame != this.currentFrame) {
       let prev = this.currentFrame
       this.currentFrame = currentFrame
