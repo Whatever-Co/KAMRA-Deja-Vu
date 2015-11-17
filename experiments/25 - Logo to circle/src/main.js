@@ -2,8 +2,9 @@
 
 import $ from 'jquery'
 import 'jquery.transit'
+import _ from 'lodash'
 import 'OrbitControls'
-// import TWEEN from 'tween.js'
+import TWEEN from 'tween.js'
 // import dat from 'dat-gui'
 import Snap from 'imports-loader?this=>window,fix=>module.exports=0!snapsvg'
 import {SpatialHash} from 'spatialhash'
@@ -19,13 +20,58 @@ import './main.sass'
 
 class Node extends THREE.Vector3 {
 
-  constructor(x = 0, y = 0, z = 0) {
-    super(x, y, z)
-    this.width = this.height = 1
-    this.prev = new THREE.Vector3()
+  constructor() {
+    super()
+
+    this.linearVelocity = 10
     this.velocity = new THREE.Vector3()
-    this.connection = []
     this.history = []
+
+    this.target = new THREE.Vector3()
+    this.path = null
+    this.positionOnPath = 0
+    this.velocityOnPath = 10
+
+    this.seed = Math.random()
+  }
+
+
+  setPath(path, velocity = 10) {
+    if (path == this.path) {
+      return
+    }
+    this.path = path
+    this.positionOnPath = this.path.totalLength * Math.random()
+    this.velocityOnPath = velocity
+    this.distanceTraveledOnPath = 0
+  }
+
+
+  update(time) {
+    if (this.path) {
+      this.distanceTraveledOnPath += this.velocityOnPath
+      this.positionOnPath = (this.positionOnPath + this.velocityOnPath) % this.path.totalLength
+      if (this.positionOnPath < 0) {
+        this.positionOnPath += this.path.totalLength
+      }
+      let p = this.path.getPointAtLength(this.positionOnPath)
+      this.target.x = p.x + noise.simplex2(this.x * 0.005 + time, this.y * 0.004) * 5
+      this.target.y = p.y + noise.simplex2(this.x * 0.004, this.y * 0.005) * 5
+
+      _v1.copy(this.target).sub(this)
+      let d = _v1.length()
+      let alpha = THREE.Math.mapLinear(THREE.Math.clamp(d, 0, 400), 0, 400, 0.7, 0.05)
+      let a = signedAngle(this.velocity, _v1) * alpha
+
+      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath), d * 0.03) - this.linearVelocity) * 0.1
+      this.velocity.applyAxisAngle(PLUS_Z, a).setLength(this.linearVelocity)
+    }
+    this.add(this.velocity)
+
+    this.history.push([this.x, this.y])
+    if (this.history.length > 30) {
+      this.history.shift()
+    }
   }
 
 }
@@ -47,45 +93,87 @@ class App {
     this.ctx.fillStyle = 'rgb(26, 43, 52)'
     this.ctx.fillRect(0, 0, Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
 
-    this.spatialHash = new SpatialHash()
+    this.logoPaths = Snap.parse(require('raw!./logo.svg')).selectAll('path')
+    this.circlePath = Snap.parse(require('raw!./face-circle.svg')).select('path')
+    this.circlePath.totalLength = this.circlePath.getTotalLength()
 
-    this.waypoints = []
-    Snap.parse(require('raw!./logo.svg')).selectAll('path').forEach((el) => {
-      let total = el.getTotalLength()
-      let interval = 20
-      let n = Math.round(total / interval)
-      interval = total / n
-      let offset = this.waypoints.length
+    this.pathPoints = []
+    this.logoPaths.forEach((path) => {
+      path.totalLength = path.getTotalLength()
+      let n = path.totalLength / 30
+      let l = path.totalLength / n
       for (let i = 0; i < n; i++) {
-        let p = el.getPointAtLength(i * interval)
-        let node = new Node(p.x, p.y)
-        node.id = this.waypoints.length
-        this.waypoints.push(node)
-        this.spatialHash.insert(node)
-      }
-      for (let i = 0; i < n; i++) {
-        let node = this.waypoints[offset + i]
-        node.connection.push(this.waypoints[offset + (i + 1) % n])     // next
-        node.connection.push(this.waypoints[offset + (i + n - 1) % n]) // prev
+        let p = path.getPointAtLength(i * l)
+        p.path = path
+        this.pathPoints.push(p)
       }
     })
 
     this.nodes = []
-    for (let i = 0; i < 100; i++) {
-      let node = new Node(Config.RENDER_WIDTH * Math.random(), Config.RENDER_HEIGHT * Math.random())
-      node.velocity.set(Math.random() - 0.5, Math.random() - 0.5, 0).setLength(3)
+    let center = new THREE.Vector3(Config.RENDER_WIDTH / 2, Config.RENDER_HEIGHT / 2, 0)
+    for (let i = 0; i < 50; i++) {
+      let node = new Node()
+      if (Math.random() < 0.5) {
+        node.x = Math.random() < 0.5 ? -100 : Config.RENDER_WIDTH + 100
+        node.y = THREE.Math.randFloat(-100, Config.RENDER_HEIGHT + 100)
+      } else {
+        node.x = THREE.Math.randFloat(-100, Config.RENDER_WIDTH + 100)
+        node.y = Math.random() < 0.5 ? -100 : Config.RENDER_HEIGHT + 100
+      }
+      // node.x = Math.random() * Config.RENDER_WIDTH
+      // node.y = Math.random() * Config.RENDER_HEIGHT
+      // node.velocity.set(Math.random() - 0.5, Math.random() - 0.5, 0).setLength(10)
+      node.velocity.copy(node).sub(center).setLength(10)
+      node.visible = false
       this.nodes.push(node)
+    }
+    {
+      let paths = _.shuffle(this.pathPoints).slice(0, this.nodes.length - this.logoPaths.length).map((p) => p.path)
+      paths.push(...this.logoPaths)
+      paths = _.shuffle(paths)
+      this.nodes.forEach((node, i) => {
+        node.setPath(paths[i], Math.random() < 0.5 ? -10 : 10)
+      })
+    }
+
+    {
+      let i = 0
+      let interval = setInterval(() => {
+        this.nodes[i].visible = true
+        if (++i == this.nodes.length) {
+          clearInterval(interval)
+        }
+      }, 50)
     }
 
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
 
-    this.mouseX = 0
-    this.mouseY = 0
-    this.canvas.addEventListener('mousemove', (e) => {
-      this.mouseX = e.offsetX
-      this.mouseY = e.offsetY
+    this.circleMode = false
+    window.addEventListener('keydown', (e) => {
+      if (e.keyCode == 32) {
+        this.circleMode = !this.circleMode
+        if (this.circleMode) {
+          this.nodes.forEach((node) => {
+            node.setPath(this.circlePath, THREE.Math.randFloat(10, 20))
+          })
+        } else {
+          let paths = _.shuffle(this.pathPoints).slice(0, this.nodes.length - this.logoPaths.length).map((p) => p.path)
+          paths.push(...this.logoPaths)
+          paths = _.shuffle(paths)
+          this.nodes.forEach((node, i) => {
+            node.setPath(paths[i], Math.random() < 0.5 ? -10 : 10)
+          })
+        }
+      }
     })
+    // window.addEventListener('keyup', (e) => {
+    //   if (e.keyCode == 32) {
+    //     _.shuffle(this.logoPaths).map((p, i) => {
+    //       this.nodes[i].setPath(p)
+    //     })
+    //   }
+    // })
 
     Ticker.on('update', this.animate.bind(this))
     Ticker.start()
@@ -93,99 +181,25 @@ class App {
 
 
   animate(f, t) {
-    for (let i = 0; i < 5; i++) {
-      this.update(f, t)
-    }
+    TWEEN.update(t)
+    this.update(f, t)
     this.draw(f, t)
   }
 
 
-  update( ) {
+  lerp(p0, p1, a) {
+    return p0 + (p1 - p0) * a
+  }
+
+
+  update(f, t) {
+    t *= 0.001
     this.nodes.forEach((node) => {
-      node.prev.copy(node)
-
-      if (node.x < 0 || Config.RENDER_WIDTH < node.x) {
-        node.velocity.x *= -1
-      }
-      if (node.y < 0 || Config.RENDER_HEIGHT < node.y) {
-        node.velocity.y *= -1
-      }
-
-      let query = node.velocity.clone().multiplyScalar(5)
-      let d = Math.max(query.length(), 30)
-      query.setLength(d)
-      query.add(node)
-      query.width = query.height = d * 2
-      query.x -= d
-      query.y -= d
-      node._searchArea = query
-
-      let sorted = this.spatialHash.retrieve(query).map((p) => {
-        p._v = (p._v || new THREE.Vector3()).copy(p).sub(node)
-        p._a = signedAngle(node.velocity, p._v)
-        p._d = p._v.lengthSq()
-        return p
-      }).sort((a, b) => a._d - b._d).filter((p) => Math.abs(p._a) < Math.PI * 0.4)
-
-      if (sorted.length) { // found some nodes nearby
-        if (node.target) { // already tracked a node
-          if (sorted.indexOf(node.target) == -1) { // target passed
-            // find a nearest connected node for next target
-            let list = node.target.connection.concat()
-            let visited = {}
-            let candidate = []
-            while (list.length) {
-              let node = list.shift()
-              if (visited[node.id]) {
-                continue
-              }
-              if (sorted.indexOf(node) == -1) {
-                continue
-              }
-              visited[node.id] = true
-              candidate.push(node)
-              list.push(...node.connection)
-            }
-            node.target = candidate.length ? candidate.sort((a, b) => a._d - b._d)[0] : sorted[0]
-          }
-        } else {
-          node.target = sorted[0]
+      if (node.visible) {
+        node.update(t)
+        if (!this.circleMode && Math.random() < (node.distanceTraveledOnPath - node.path.totalLength * 3) / 5000) {
+          node.setPath(this.pathPoints[~~(Math.random() * this.pathPoints.length)].path)
         }
-        _v1.copy(node.velocity).applyAxisAngle(PLUS_Z, node.target._a)
-        node.velocity.lerp(_v1, 0.35).setLength(3)
-      } else {
-        delete node.target
-        let t = Date.now() / 1000
-        node.velocity.x += noise.simplex3((node.x - Config.RENDER_WIDTH * 0.5) * 0.0005, (node.y - Config.RENDER_HEIGHT * 0.5) * 0.001, t) * 0.2
-        node.velocity.y += noise.simplex3((node.x - Config.RENDER_WIDTH * 0.5) * 0.0005, -(node.y - Config.RENDER_HEIGHT * 0.5) * 0.001, t) * 0.2
-        node.velocity.setLength(3)
-      }
-      node._approaching = sorted
-
-      node.add(node.velocity)
-
-      /*{
-        const w = Config.RENDER_WIDTH
-        if (node.x < 0) {
-          node.x += w
-          node.prev.x += w
-        } else if (w < node.x) {
-          node.x -= w
-          node.prev.x -= w
-        }
-        const h = Config.RENDER_HEIGHT
-        if (node.y < 0) {
-          node.y += h
-          node.prev.y += h
-        } else if (h < node.y) {
-          node.y -= h
-          node.prev.y -= h
-        }
-      }*/
-
-      node.history.push([node.x, node.y])
-      if (node.history.length > 100) {
-        node.history.shift()
       }
     })
   }
@@ -201,79 +215,30 @@ class App {
     ctx.restore()
 
     ctx.save()
-    // ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-    // this.waypoints.forEach((p) => {
-    //   ctx.fillRect(p.x - 1, p.y - 1, 2, 2)
-    // })
-    // ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)'
-    // this.waypoints.forEach((p) => {
-    //   ctx.beginPath()
-    //   ctx.moveTo(p.x, p.y)
-    //   ctx.lineTo(p.connection[0].x, p.connection[0].y)
-    //   ctx.stroke()
-    // })
-    // ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)'
-    // this.waypoints.forEach((p) => {
-    //   ctx.beginPath()
-    //   ctx.moveTo(p.x + 2, p.y)
-    //   ctx.lineTo(p.connection[1].x + 2, p.connection[1].y)
-    //   ctx.stroke()
-    // })
-    ctx.restore()
-
-    // ctx.fillStyle = 'rgba(255, 255, 255, 0.03)'
-    // ctx.fillRect(this.mouseX - 50, this.mouseY - 50, 100, 100)
-    // ctx.fillStyle = '#ff0000'
-    // this.spatialHash.retrieve({x: this.mouseX - 50, y: this.mouseY - 50, width: 100, height: 100}).forEach((p) => {
-    //   ctx.fillRect(p.x - 2, p.y - 2, 4, 4)
-    // })
-
-    ctx.save()
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-    ctx.lineWidth = 2
-    // ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'
     this.nodes.forEach((node) => {
-      // ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
-      // ctx.strokeRect(node._searchArea.x, node._searchArea.y, node._searchArea.width, node._searchArea.height)
-
-      ctx.strokeStyle = 'white'
-      const n = node.history.length
-      for (let i = 0; i < n - 1; i++) {
-        ctx.globalAlpha = i / n * 0.5
+      ctx.strokeStyle = '#ffffff'
+      for (let i = 0; i < node.history.length - 1; i++) {
+        ctx.globalAlpha = i / 30
         ctx.beginPath()
         ctx.moveTo(node.history[i][0], node.history[i][1])
         ctx.lineTo(node.history[i + 1][0], node.history[i + 1][1])
         ctx.stroke()
       }
-
-      /*ctx.strokeStyle = 'green'
-      ctx.beginPath()
-      ctx.arc(node.x, node.y, 5, 0, Math.PI * 2, false)
-      ctx.stroke()
-
-      ctx.fillStyle = 'red'
-      node._approaching.forEach((p) => {
-        ctx.fillRect(p.x - 2, p.y - 2, 4, 4)
-      })
-
-      if (node.target) {
-        ctx.strokeStyle = 'red'
-        ctx.beginPath()
-        ctx.arc(node.target.x, node.target.y, 5, 0, Math.PI * 2, false)
-        ctx.stroke()
-      }*/
+      // ctx.strokeStyle = 'rgb(0, 255, 0)'
+      // ctx.beginPath()
+      // ctx.arc(node.x, node.y, 5, 0, Math.PI * 2, false)
+      // ctx.stroke()
     })
-
     ctx.restore()
+
   }
 
 
   onResize() {
-    let s = Math.min(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    let s = Math.max(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
     $(this.canvas).css({
       transformOrigin: 'left top',
-      // translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
+      translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
       scale: [s, s],
     })
   }
