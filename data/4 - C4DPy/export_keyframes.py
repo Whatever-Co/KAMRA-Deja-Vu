@@ -280,8 +280,8 @@ def initConfig():
 
 	config = {
 		"effects": {
-			"intro_overlay": {"r": 16, "g": 23, "b": 31, "a": 0.4},
-			"bgcolor": {"r": 16, "g": 23, "b": 28}
+			"intro_overlay": toRGBA(16, 23, 31, 0.4),
+			"bgcolor": toRGB(16, 23, 28)
 		},
 		"i_extra": {
 			"zoom_force": 0.88
@@ -317,7 +317,7 @@ def initConfig():
 			"camera_fov": 12,
 			"uv_in_frame": 2094,
 			"uv_out_frame": 2511,
-			"cross_section_color": {"r": 11, "g": 49, "b": 73}
+			"cross_section_color": toRGB(11, 49, 73)
 		},
 		"falling_children": [],
 		"mosaic_face": {

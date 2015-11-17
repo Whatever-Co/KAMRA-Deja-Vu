@@ -57,6 +57,23 @@ def search(name):
 # zInvMat = c4d.Matrix()
 # zInvMat.Scale(c4d.Vector(1.0, 1.0, -1.0))
 
+
+def toRGBA(r, g, b, a):
+    return {
+        "r": r / 255.0,
+        "g": g / 255.0,
+        "b": b / 255.0,
+        "a": a
+    }
+
+def toRGB(r, g, b):
+    return {
+        "r": r / 255.0,
+        "g": g / 255.0,
+        "b": b / 255.0
+    }
+
+
 def toScaleFromMatrix(m):
 
     scale = [
