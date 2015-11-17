@@ -151,12 +151,10 @@ export default class App extends EventEmitter {
     this.scene.add(this.webcam)
 
     this.webcam.addEventListener('detected', () => {
-      // console.log('detected')
       this.logo.setMode('tracker')
-      this.logo.updateVertices(this.face)
+      this.logo.updateVertices(this.face, this.camera.position.z)
     })
     this.webcam.addEventListener('lost', () => {
-      // console.log('lost')
       this.logo.setMode('circle')
     })
 

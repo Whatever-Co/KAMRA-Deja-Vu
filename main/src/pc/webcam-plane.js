@@ -62,8 +62,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.trackerCanvas.width = 320
     this.trackerCanvas.height = 180
     this.trackerContext = this.trackerCanvas.getContext('2d')
-    this.trackerCanvas.id = '_tracker-canvas'
-    document.body.appendChild(this.trackerCanvas)
+    // this.trackerCanvas.id = '_tracker-canvas'
+    // document.body.appendChild(this.trackerCanvas)
 
     this.standardFaceData = new StandardFaceData()
     this.matrixFeaturePoints = new THREE.Matrix4()
@@ -282,7 +282,7 @@ export default class WebcamPlane extends THREE.Mesh {
       let {size, center} = this.getBoundsFor(this.featurePoint3D, FACE_INDICES)
       let len = vec2.len(size)
       let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
-      let isSizeOK = 350 < len && len < 520
+      let isSizeOK = 350 < len && len < 550
       let isPositionOK = Math.abs(center[0]) < 50 && Math.abs(center[1]) < 50
       let isAngleOK = Math.abs(center[0] - pCenter[0]) < 30
       let isStable = this.tracker.getConvergence() < 50
@@ -306,16 +306,16 @@ export default class WebcamPlane extends THREE.Mesh {
     }
     // console.log(this.scoreHistory)
 
-    const WAIT_FOR_FRAMES = 10 // 2 secs
+    const WAIT_FOR_FRAMES = 50
     if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
       this.scoreHistory.shift()
     }
-    // if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
-    //   this.enableTextureUpdating = false
-    //   this.enableTracking = false
-    //   this.enableScoreChecking = false
-    //   this.dispatchEvent({type: 'complete'})
-    // }
+    if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
+      this.enableTextureUpdating = false
+      this.enableTracking = false
+      this.enableScoreChecking = false
+      this.dispatchEvent({type: 'complete'})
+    }
   }
 
 

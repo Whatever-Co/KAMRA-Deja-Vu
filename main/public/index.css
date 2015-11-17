@@ -123,6 +123,7 @@ canvas#main {
 .noise {
   background: url("images/noise.png");
   z-index: 10001;
+  opacity: 0.6;
 }
 #stats {
   position: absolute;
@@ -149,4 +150,10 @@ canvas#main {
   -webkit-transform: scale(0.3, 0.3);
       -ms-transform: scale(0.3, 0.3);
           transform: scale(0.3, 0.3);
+}
+#_tracker-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 200;
 }

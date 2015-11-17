@@ -52,8 +52,9 @@ class Node extends THREE.Vector3 {
 
   update(time) {
     if (this.path) {
-      this.distanceTraveledOnPath += this.velocityOnPath
-      this.positionOnPath = (this.positionOnPath + this.velocityOnPath) % this.path.totalLength
+      let vop = this.velocityOnPath / this.path.scale
+      this.distanceTraveledOnPath += vop
+      this.positionOnPath = (this.positionOnPath + vop) % this.path.totalLength
       if (this.positionOnPath < 0) {
         this.positionOnPath += this.path.totalLength
       }
@@ -66,7 +67,7 @@ class Node extends THREE.Vector3 {
       let alpha = THREE.Math.mapLinear(THREE.Math.clamp(d, 0, 400), 0, 400, this.maxSteeringSensitivity, 0.05)
       let a = signedAngle(this.velocity, _v1) * alpha
 
-      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath) * 0.9, d * 0.04) - this.linearVelocity) * 0.9
+      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath) * 0.98, d * 0.04) - this.linearVelocity) * 0.9
       this.velocity.applyAxisAngle(PLUS_Z, a).setLength(this.linearVelocity)
     }
     this.add(this.velocity)
@@ -92,6 +93,15 @@ class Polyline {
       this.totalLength += vertices[i % vertices.length].distanceTo(vertices[i - 1])
       this._length.push(this.totalLength)
     }
+  }
+
+
+  getTotalLength(vertices) {
+    let total = 0
+    for (let i = 1; i <= vertices.length; i++) {
+      total += vertices[i % vertices.length].distanceTo(vertices[i - 1])
+    }
+    return total
   }
 
 
@@ -155,9 +165,11 @@ export default class ParticledLogo extends THREE.Line {
       `,
       transparent: true,
       depthWrite: false,
+      depthTest: false,
       blending: THREE.AdditiveBlending,
       linewidth: 1
     }))
+    // this.renderOrder
 
     this.mode = 'logo'
 
@@ -167,12 +179,10 @@ export default class ParticledLogo extends THREE.Line {
 
   init() {
     console.time('logo data preparation')
-    this.logoPaths = Snap.parse(require('raw!./data/logo2.svg')).selectAll('path')
-    this.circlePath = Snap.parse(require('raw!./data/face-circle.svg')).select('path')
-    this.circlePath.totalLength = this.circlePath.getTotalLength()
-
     this.pathPoints = []
+    this.logoPaths = Snap.parse(require('raw!./data/logo2.svg')).selectAll('path')
     this.logoPaths.forEach((path) => {
+      path.scale = 1.0
       path.totalLength = path.getTotalLength()
       let n = Math.round(path.totalLength / 10)
       let l = path.totalLength / n
@@ -185,17 +195,29 @@ export default class ParticledLogo extends THREE.Line {
       }
     })
     this.logoPaths.forEach(this.preparePath.bind(this))
-    this.preparePath(this.circlePath)
 
     {
-      let bb = this.circlePath.getBBox()
+      let circle = Snap.parse(require('raw!./data/face-circle.svg')).select('path')
+      this.circleBBox = circle.getBBox()
       let data = new StandardFaceData()
       this.edgeIndex = data.data.back.edgeIndex
       let vertices = this.edgeIndex.reverse().map((index) => {
         let v = data.getVertex(index)
-        return new THREE.Vector3().fromArray(v).multiplyScalar(bb.height / data.bounds.size[1])
+        return new THREE.Vector3().fromArray(v).multiplyScalar(this.circleBBox.height / data.bounds.size[1])
       })
       this.trackerPath = new Polyline(vertices)
+      this.trackerPath.scale = 1.0
+      this.trackerPath._faceEdgeVertices = vertices
+      this.trackerPath._faceEdgeLength = this.trackerPath.getTotalLength(vertices)
+      let width = this.circleBBox.width * 0.5
+      let height = this.circleBBox.height * 0.5
+      this.trackerPath._circleVertices = vertices.map((v) => {
+        let a = Math.atan2(v.y, v.x)
+        return new THREE.Vector3(Math.cos(a) * width, Math.sin(a) * height)
+      })
+      this.trackerPath._circleLength = this.trackerPath.getTotalLength(this.trackerPath._circleVertices)
+      this.trackerPath.vertices = this.trackerPath._circleVertices
+      console.log({circle: this.trackerPath._circleLength, faceEdge: this.trackerPath._faceEdgeLength})
     }
 
     console.timeEnd('logo data preparation')
@@ -231,8 +253,6 @@ export default class ParticledLogo extends THREE.Line {
     this.alphaAttribute = new THREE.BufferAttribute(new Float32Array(numVertices), 1)
     this.alphaAttribute.dynamic = true
     this.geometry.addAttribute('alpha', this.alphaAttribute)
-
-    // this.setMode('tracker')
   }
 
 
@@ -284,13 +304,16 @@ export default class ParticledLogo extends THREE.Line {
         })
         break
       case 'circle':
+        this.trackerPath.vertices = this.trackerPath._circleVertices
+        this.trackerPath.scale = 1.0
         this.nodes.forEach((node) => {
-          node.setPath(this.circlePath, THREE.Math.randFloat(10, 20) / 3)
+          node.setPath(this.trackerPath, THREE.Math.randFloat(3, 7))
         })
         break
       case 'tracker':
+        this.trackerPath.vertices = this.trackerPath._faceEdgeVertices
         this.nodes.forEach((node) => {
-          node.setPath(this.trackerPath, THREE.Math.randFloat(10, 20) / 3)
+          node.setPath(this.trackerPath, THREE.Math.randFloat(3, 7))
         })
         break
       default:
@@ -300,7 +323,7 @@ export default class ParticledLogo extends THREE.Line {
   }
 
 
-  updateVertices(face) {
+  updateVertices(face, cameraZ) {
     face.updateMatrixWorld()
     _m1.getInverse(this.matrixWorld)
     let position = face.main.geometry.positionAttribute.array
@@ -308,8 +331,15 @@ export default class ParticledLogo extends THREE.Line {
       let v = this.trackerPath.vertices[i]
       v.fromArray(position, index * 3)
       v.applyMatrix4(face.main.matrixWorld)
+      let s = cameraZ / (cameraZ - v[2])
+      v[0] *= s
+      v[1] *= s
+      v[2] = 0
       v.applyMatrix4(_m1)
     })
+    let length = this.trackerPath.getTotalLength(this.trackerPath.vertices)
+    this.trackerPath.scale = length / this.trackerPath._faceEdgeLength * 0.9
+    // console.log({length, scale: this.trackerPath.scale})
   }
 
 
