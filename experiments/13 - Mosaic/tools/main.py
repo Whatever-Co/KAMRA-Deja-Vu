@@ -177,7 +177,7 @@ def plot_average_color(paths):
     for path in paths:
         # pixelate
         img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        img = pixelate(img, 20)
+        img = pixelate(img, 10)
 
         aveColor = average_color(img)
         aveColor = cv2.resize(aveColor, (img.shape[1], img.shape[0]))
@@ -197,7 +197,7 @@ def plot_dictance_color(paths):
 
     for path in paths:
         img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-        imgArr = get_validity_pixels(pixelate(img, 20))
+        imgArr = get_validity_pixels(pixelate(img, 10))
         # Export plot to tmp image
         plot_image_distance(imgArr, templates, 'tmp.png', useHsv)
         figImg = cv2.imread('tmp.png', cv2.IMREAD_UNCHANGED)
@@ -253,7 +253,6 @@ def make_lut():
 
 
 def make_spritesheet(paths, cols, size, savePath):
-    len(paths)
     sprite = Image.new("RGBA", (cols * size, cols * size))
     print(paths)
     for i, path in enumerate(paths):
@@ -307,5 +306,5 @@ if __name__ == '__main__':
     # plot_dictance_color(paths)
     # plot_mosaic_color(paths)
 
-    # make_spritesheet(paths, 16, 512, 'lut/sprite512.png')
+    # make_spritesheet(paths, 16, 256, 'lut/sprite256.png')
     convert_lut(paths)
