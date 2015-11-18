@@ -17,15 +17,58 @@ html.no-js
       canvas#main
     #page
       #loading
-        img(src='images/_/loading.png')
+        div.circle
+          canvas
+          img(src='images/loading.png')
       #top
-        image.album-info(src='images/_/album_info.png')
-        image.navi(src='images/_/navi.png')
+        .album-info
+          image(src='images/album-jacket.png')
+          .info
+            | KAMRA - Artificial Emotions
+            ul
+              li
+                a(href='https://www.google.co.jp/', target='_blank') iTunes
+              li
+                a(href='http://www.amazon.co.jp/dp/B017D2VQKA', target='_blank') Amazon
+              li
+                a(href='http://www.cdbaby.com/cd/kamra2', target='_blank') CD Baby
+        .navi
+          ul
+            li
+              a(href='#') Home
+            li
+              a(href='#about') About
+            li
+              a(href='#howto') How to play
+            li
+              | Share :
+              a
+                img(src='images/button-top-twitter.png')
+              a
+                img(src='images/button-top-facebook.png')
+            li
+              span ©KAMRA2015
+        .play_label
+          img(src='images/top-play-label.png')
         .buttons
           button.with-webcam
-            img(src='images/_/with_webcam.png')
+            img(src='images/button-play-webcam.png')
+          button.with-photo
+            img(src='images/button-play-photo.png')
           button.without-webcam
-            img(src='images/_/without_webcam.png')
+            img(src='images/button-play-sample.png')
+
+      #about
+        .navi
+          ul
+            li
+              a(href='concept') Concept
+            li
+              a(href='album') Album
+            li
+              a(href='kamra') KAMRA
+            li
+              a(href='credit') Credit
       #share
         .share-inner
           button.button-top
@@ -44,4 +87,5 @@ html.no-js
 
     script(src='libs/preloadjs-0.6.1.min.js')
     script(src='libs/soundjs-0.6.1.min.js')
+    script(src='https://use.typekit.net/hfu8yiq.js')
     script(src='bootstrap.js')
