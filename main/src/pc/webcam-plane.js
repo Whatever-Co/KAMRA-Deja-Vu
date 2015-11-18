@@ -173,7 +173,7 @@ export default class WebcamPlane extends THREE.Mesh {
     this.renderer = renderer
     this.scene = new THREE.Scene()
 
-    this.texture = new THREE.WebGLRenderTarget(2048, 1024, {stencilBuffer: false})
+    this.texture = new THREE.WebGLRenderTarget(1920, 1080, {stencilBuffer: false})
     this.material.uniforms.texture.value = this.texture
 
     this.video = document.createElement('video')
