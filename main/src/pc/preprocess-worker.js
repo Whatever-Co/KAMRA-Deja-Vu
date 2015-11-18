@@ -16,10 +16,10 @@ const convertData = (vertices) => {
   for (let i = 0; i < position.length; i += 3) {
     standardFacePoints.push([position[i], position[i + 1]])
   }
-  standardFacePoints.push([1, 1])
-  standardFacePoints.push([1, -1])
-  standardFacePoints.push([-1, -1])
-  standardFacePoints.push([-1, 1])
+  standardFacePoints.push([2, 2])
+  standardFacePoints.push([2, -2])
+  standardFacePoints.push([-2, -2])
+  standardFacePoints.push([-2, 2])
 
   let triangleIndices = Delaunay.triangulate(standardFacePoints)
 
@@ -45,6 +45,7 @@ const convertData = (vertices) => {
     })
   }
 
+  let coord = [0, 0, 0]
   const contains = (v0, v1, v2, x, y) => {
     let a = v1[0] - v0[0]
     let b = v2[0] - v0[0]
@@ -65,11 +66,14 @@ const convertData = (vertices) => {
       return null
     }
 
-    return [1 - u - v, u, v]
+    // return [1 - u - v, u, v]
+    coord[0] = 1 - u - v
+    coord[1] = u
+    coord[2] = v
+    return coord
   }
 
   let index
-  let coord
   const getTriangleIndex = (x, y) => {
     let candidate = spatialHash.retrieve({x: x * scale, y: y * scale, width: 0, height: 0})
     for (let i = 0; i < candidate.length; i++) {
@@ -81,7 +85,7 @@ const convertData = (vertices) => {
         return
       }
     }
-    console.warn('triangle not found')
+    console.warn('Triangle not found at', x, y)
     index = 0
     coord = [0, 0, 0]
   }

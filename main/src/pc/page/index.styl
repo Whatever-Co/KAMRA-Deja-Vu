@@ -6,7 +6,10 @@ html, body
   mpargin 0
   
 body
-  color white
+  font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', serif
+  font-size 14px
+  letter-spacing 0.2em
+  color rgba(255, 255, 255, 0.7)
   background-color #071520
 
 button
@@ -14,6 +17,13 @@ button
   border none
   outline none
 
+a
+  color rgba(255, 255, 255, 0.7)
+  text-decoration none
+  transition opacity 0.4s
+  &:hover
+    opacity 0.8
+    text-decoration underline
 
 #canvas-clip
   position absolute
@@ -41,27 +51,83 @@ canvas#main
   display flex
   align-items center
   justify-content center
+  .circle
+    width 400px
+    height 400px
+    display flex
+    position relative
+    align-items center
+    justify-content center
+  canvas
+    position absolute
+    width 400px
+    height 400px
+    left 0
 
 #top
   display none
   position relative
   width 100%
   height 100%
+
+  ul
+    display flex
+    list-style none
+    justify-content space-between
+    align-items flex-end
+    align-content flex-start
+    margin 12px 0 -3px -50px
+  li
+    padding 0 18px 0 10px
+    border-width 1px
+    border-color rgba(255, 255, 255, 0.7)
+    border-left-style solid
+    &:first-child
+      border-left-style none
+
   .album-info
     position absolute
+    width 382px
+    height 100px
     left 50px
-    bottom 50px - 3
+    bottom 50px
+    .info
+      position absolute
+      left 118px
+      bottom 0
+      font-size 12px
+      ul
+        margin 12px 0 -3px -50px
+      li
+        background url(images/icon_blank.png) no-repeat 90% 50%
+
   .navi
     position absolute
     right 50px
-    bottom 50px - 4
-  .buttons
-    width 100%
+    bottom 50px
+    li
+      span
+        font-size 11px
+  .play_label
     position absolute
+    width 100%
+    bottom 310px
+    text-align center
+  .buttons
+    position absolute
+    width 100%
     bottom 180px
     text-align center
     button
-      margin 0 30px
+      margin 0 20px
+      transition opacity 0.4s
+      &:hover
+        opacity 0.5
+
+#about
+  display none
+  position absolute
+  width 100%
 
 #share
   display none
@@ -96,6 +162,7 @@ canvas#main
 .noise
   background url(images/noise.png)
   z-index 10001
+  opacity 0.6
 
 
 
@@ -123,3 +190,9 @@ canvas#main
   border 3px solid #333
   transform-origin right bottom
   transform scale(0.3, 0.3)
+  
+#_tracker-canvas
+  position absolute
+  left 0
+  top 0
+  z-index 200
