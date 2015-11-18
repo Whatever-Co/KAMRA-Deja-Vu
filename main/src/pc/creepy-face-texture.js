@@ -71,10 +71,10 @@ export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
 
-    let loader = new THREE.TextureLoader()
-    loader.load('textures/creepy-remap1.png', (texture) => {
-      material.uniforms.warpTexture.value = texture
-    })
+    // let loader = new THREE.TextureLoader()
+    // loader.load('textures/creepy-remap1.png', (texture) => {
+    //   material.uniforms.warpTexture.value = texture
+    // })
   }
 
 
