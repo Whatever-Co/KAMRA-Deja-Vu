@@ -5,8 +5,8 @@ html.no-js
       meta(http-equiv='refresh' content='0; URL=sp/')
     meta(charset='utf-8')
     meta(http-equiv='x-ua-compatible', content='ie=edge')
-    title KAMRA - Deja Vu - Artifitial Intelligence
-    meta(name='description', content='')
+    title #{title}
+    meta(name='description', content='#{description}')
     meta(name='viewport', content='width=device-width, initial-scale=1')
     link(rel='apple-touch-icon', href='apple-touch-icon.png')
     link(rel='stylesheet', href='normalize.css')
@@ -27,11 +27,11 @@ html.no-js
             | KAMRA - Artificial Emotions
             ul
               li
-                a(href='https://www.google.co.jp/', target='_blank') iTunes
+                a(href='#{link.itunes}', target='_blank') iTunes
               li
-                a(href='http://www.amazon.co.jp/dp/B017D2VQKA', target='_blank') Amazon
+                a(href='#{link.amazon}', target='_blank') Amazon
               li
-                a(href='http://www.cdbaby.com/cd/kamra2', target='_blank') CD Baby
+                a(href='#{link.cdbaby}', target='_blank') CD Baby
         .navi
           ul
             li
@@ -48,27 +48,71 @@ html.no-js
                 img(src='images/button-top-facebook.png')
             li
               span ©KAMRA2015
-        .play_label
-          img(src='images/top-play-label.png')
-        .buttons
-          button.with-webcam
-            img(src='images/button-play-webcam.png')
-          button.with-photo
-            img(src='images/button-play-photo.png')
-          button.without-webcam
-            img(src='images/button-play-sample.png')
+        include ./includes/play_buttons.jade
 
       #about
+        .page
+          section(name='concept')
+            p.concept(data-i18n='concept') 白い天井の下　ここにあるのは傷んだ肉　馴染まない鉄の容れ物
+              br
+              br
+              | どちらへも振り切れない魂　「もう一度」　私は繰り返す
+              br
+              br
+              | 心は常に一定にしか動かないとしても　精一杯勢いをつけ　同じ所から 同じ方へ
+            include ./includes/play_buttons.jade
+          section(name='album')
+            img(src='images/album-jacket.jpg')
+            img.album_info(src='images/album-info.png')
+          section(name='kamra')
+            img(src='images/profile-kamra.png')
+            .info
+              p KAMRA
+                span / Yuichi Nakamura
+              ul
+                li
+                  a.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
+                li
+                  a.blank(src='#{link.twitter}' target='_blank') Twitter
+
+            p 理屈や理論ではない感覚に身を任せた音楽スタイルで、自分の世界を作り上げる。ファミコン世代に生まれ育ったために培ったメロディ感と、エレクトロニカに大きく影響を受けたリズム、2つが大きな基礎となっており、さらに2001年より、音楽制作チームinvisible designs lab.の立ち上げメンバーとなり、多くのCM音楽、ゲームサウンドトラック、サウンドロゴ等の数々の音楽制作の携わり、新たな感覚を取り入れ続ける。
+
+            hr.mini
+
+            .colum2
+              .colum
+                h3 invisi-dir.
+                p 音楽クリエイティブチーム、インビジブル・デザインズ・ラボが考える、"DIRECTION"つまりクリエイティブの「方向」です。みなさんと新しい価値の共有をテーマにした"インビジブル・デザインズ・ラボ セレクション"として、音楽を軸に多くの新しい価値の提案をするプロデュースとセレクションを行って行く予定です。
+                a(src='http://invisi-dir.com' target='_blank') http://invisi-dir.com
+              .colum
+                h3 invisible designs lab.
+                p 大切な事は見えない。見えないものには大きな価値があります。アイデアやイマジネーション、インスピレーション。それらを見える形や新しい発想で表現していく音楽を軸としたクリエイターチームです。
+                a(src='http://invisi.jp' target='_blank') http://invisi.jp
+          section(name='credit')
+            .colum2
+              for credit in credits
+                .credit
+                  img(src="images/#{credit.photo}")
+                  .info
+                    span.part #{credit.part}
+                    span.name #{credit.name}
+                    a.blank(href="#{credit.url}" target="_blank") #{credit.site}
+            include ./includes/play_buttons.jade
         .navi
           ul
             li
-              a(href='concept') Concept
+              a(href='#concept') Concept
+            li /
             li
-              a(href='album') Album
+              a(href='#album') Album
+            li /
             li
-              a(href='kamra') KAMRA
+              a(href='#kamra') KAMRA
+            li /
             li
-              a(href='credit') Credit
+              a(href='#credit') Credit
+          button.close
+            img(src='images/button-close.png')
       #share
         .share-inner
           button.button-top

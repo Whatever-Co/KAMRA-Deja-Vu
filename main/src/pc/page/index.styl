@@ -1,9 +1,13 @@
 *
   box-sizing border-box
 
+//----------------------
+// 0. Default settings
+//----------------------
+
 html, body
   padding 0
-  mpargin 0
+  margin 0
   
 body
   font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', serif
@@ -16,6 +20,9 @@ button
   background none
   border none
   outline none
+  transition opacity 0.5s
+  &:hover
+    opacity 0.5
 
 a
   color rgba(255, 255, 255, 0.7)
@@ -24,9 +31,38 @@ a
   &:hover
     opacity 0.8
     text-decoration underline
+  &.blank
+    background url(images/icon_blank.png) no-repeat 100% 50%
+//----------------------
+// 1. Common parts
+//----------------------
+
+.blur
+  transition filter 1.0s
+  filter blur(5px)
+
+button.close
+  position absolute
+  top 50px
+  right 50px
+
+.play_buttons
+  width 100%
+  text-align center
+  .buttons
+    position relative
+    width 100%
+    top 20px
+    text-align center
+    button
+      margin 0 20px
+
+//----------------------
+// 2. Elements
+//----------------------
 
 #canvas-clip
-  position absolute
+  position fixed
   left 0
   top 0
   width 100%
@@ -35,7 +71,6 @@ a
   
 canvas#main
   transform-origin left top
-
 
 #page
   position absolute
@@ -66,10 +101,10 @@ canvas#main
 
 #top
   display none
-  position relative
+  position fixed
   width 100%
   height 100%
-
+  transition filter 0.5s
   ul
     display flex
     list-style none
@@ -84,6 +119,9 @@ canvas#main
     border-left-style solid
     &:first-child
       border-left-style none
+  .play_buttons
+    position absolute
+    bottom 22%
 
   .album-info
     position absolute
@@ -108,26 +146,69 @@ canvas#main
     li
       span
         font-size 11px
-  .play_label
-    position absolute
-    width 100%
-    bottom 310px
-    text-align center
-  .buttons
-    position absolute
-    width 100%
-    bottom 180px
-    text-align center
-    button
-      margin 0 20px
-      transition opacity 0.4s
-      &:hover
-        opacity 0.5
 
 #about
   display none
   position absolute
   width 100%
+  height 100%
+  top 0
+  .navi
+    position fixed
+    width 100%
+    top 0
+    ul
+      display flex
+      list-style none
+      justify-content center
+      font-size 32px
+    li
+      padding 0 18px 0 10px
+  .page
+    position relative
+    width 940px
+    margin 100px auto 100px auto
+    .concept
+      text-align center
+    section
+      position relative
+      padding 80px 0 80px 0
+      &:not(:first-child)
+        background url(images/h-line.png) top repeat-x
+      .album_info
+        position absolute
+        margin 0 0 0 40px
+  .colum2
+    position relative
+    width 100%
+    display flex
+    flex-wrap wrap
+    align-items stretch
+    justify-content space-between
+    .colum
+      width 440px
+      min-height 310px
+      h3
+        margin 30px 0
+      a
+        position absolute
+        bottom 0
+    .credit
+      width 440px
+      display flex
+      margin 30px 0
+      .info
+        display flex
+        flex-direction column
+        justify-content center
+        align-items flex-start
+        margin 0 0 0 26px
+        .name
+          font-size 20px
+          margin 20px 0
+        a
+          padding 0 14px 0 0
+
 
 #share
   display none
@@ -190,7 +271,7 @@ canvas#main
   border 3px solid #333
   transform-origin right bottom
   transform scale(0.3, 0.3)
-  
+
 #_tracker-canvas
   position absolute
   left 0

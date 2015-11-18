@@ -79,6 +79,9 @@ gulp.task('jade', () => {
   let merged = new mergeStream()
   for (let key in paths) {
     let s = gulp.src(`./src/${key}/page/*.jade`)
+      .pipe($.data((file)=> {
+        return require(`./src/${key}/page/data.json`);
+      }))
       .pipe($.jade({pretty: developmentMode}))
       .pipe(gulp.dest(`./public/${paths[key]}`))
       .pipe(browserSync.stream())

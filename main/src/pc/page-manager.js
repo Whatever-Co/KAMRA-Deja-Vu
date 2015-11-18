@@ -14,7 +14,12 @@ class PageManager {
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
         {name: 'start', from: 'top', to: 'playing'},
+        {name: 'start', from: 'about', to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
+        {name: 'goAbout', from: 'top', to: 'about'},
+        {name: 'goHowto', from: 'top', to: 'howto'},
+        {name: 'goTop', from: 'about', to: 'top'},
+        {name: 'goTop', from: 'howto', to: 'top'},
         {name: 'goTop', from: 'share', to: 'top'}
       ],
       callbacks: {
@@ -25,24 +30,44 @@ class PageManager {
               this.fsm.playCompleted()
             })
             this.fsm.transition()
-            setTimeout(() => {
-              this.fsm.start(true)
-            }, 1000)
+            //setTimeout(() => {
+            //  this.fsm.start(true)
+            //}, 1000)
           })
           return StateMachine.ASYNC
         },
+        // top
         onentertop: () => {
           $('#top').fadeIn(1000)
         },
         onleavetop: () => {
-          $('#top').fadeOut(1000, () => {
-            this.fsm.transition()
-          })
+
+        },
+        // about
+        onenterabout: () => {
+          $('#about').fadeIn(1000)
+          $('#top').addClass('blur')
+        },
+        onleaveabout: () => {
+          $('#about').fadeOut(1000)
+          $('#top').removeClass('blur')
+        },
+        // howto
+        onenterhowto: () => {
+          $('#howto').fadeIn(1000)
+        },
+        onleavehowto: () => {
+          $('#howto').fadeOut(1000)
+        },
+        // play
+        onbeforestart: () => {
+          $('#top').fadeOut(1000)
           return StateMachine.ASYNC
         },
         onenterplaying: (e, f, t, useWebcam) => {
           this.app.start(useWebcam)
         },
+        // share
         onentershare: () => {
           $('#share').fadeIn(1000)
         },
@@ -55,8 +80,11 @@ class PageManager {
       }
     })
     $('.with-webcam').click(() => this.fsm.start(true))
+    $('.with-photo').click(() => console.warn('TODO upload page'))
     $('.without-webcam').click(() => this.fsm.start(false))
     $('.button-top').click(() => this.fsm.goTop())
+    $("a[href = '#about']").click(() => this.fsm.goAbout())
+    $("button.close").click(() => this.fsm.goTop())
 
     Ticker.start()
 
