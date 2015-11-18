@@ -131,18 +131,13 @@ class Polyline {
 
 
 
-const signedAngle = (v1, v2) => Math.atan2(v1.x * v2.y - v1.y * v2.x, v1.x * v2.x + v1.y * v2.y)
-
-const PLUS_Z = new THREE.Vector3(0, 0, 1)
-let _v1 = new THREE.Vector3()
-let _m1 = new THREE.Matrix4()
-
-export default class ParticledLogo extends THREE.Line {
+class ParticleMaterial extends THREE.ShaderMaterial {
 
   constructor() {
-    super(new THREE.BufferGeometry(), new THREE.ShaderMaterial({
+    super({
       uniforms: {
-        time: {type: 'f', value: 0}
+        time: {type: 'f', value: 0},
+        globalAlpha: {type: 'f', value: 1}
       },
       vertexShader: `
         attribute float alpha;
@@ -154,13 +149,14 @@ export default class ParticledLogo extends THREE.Line {
       `,
       fragmentShader: `
         uniform float time;
+        uniform float globalAlpha;
         varying float vAlpha;
         float rand(vec2 co){
             return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
         }
         void main() {
           if (vAlpha < 0.01) discard;
-          gl_FragColor = vec4(1, 1, 1, vAlpha * rand(gl_FragCoord.xy + vec2(time * 100., 0.)));
+          gl_FragColor = vec4(1, 1, 1, vAlpha * rand(gl_FragCoord.xy + vec2(time * 100., 0.)) * globalAlpha);
         }
       `,
       transparent: true,
@@ -168,11 +164,29 @@ export default class ParticledLogo extends THREE.Line {
       depthTest: false,
       blending: THREE.AdditiveBlending,
       linewidth: 1
-    }))
-    // this.renderOrder
+    })
+  }
 
+  set alpha(value) {
+    this.uniforms.globalAlpha.value = value
+  }
+
+}
+
+
+
+const signedAngle = (v1, v2) => Math.atan2(v1.x * v2.y - v1.y * v2.x, v1.x * v2.x + v1.y * v2.y)
+
+const PLUS_Z = new THREE.Vector3(0, 0, 1)
+let _v1 = new THREE.Vector3()
+let _m1 = new THREE.Matrix4()
+
+export default class ParticledLogo extends THREE.Line {
+
+  constructor(keyframes) {
+    super(new THREE.BufferGeometry(), new ParticleMaterial())
     this.mode = 'logo'
-
+    this.keyframes = keyframes
     this.init()
   }
 
@@ -381,13 +395,17 @@ export default class ParticledLogo extends THREE.Line {
   }
 
 
-  update(frame, time) {
-    this._updateNodes(frame, time)
-    this._updateNodes(frame, time)
-    this._updateNodes(frame, time)
+  update(currentFrame, time) {
+    this._updateNodes(currentFrame, time)
+    this._updateNodes(currentFrame, time)
+    this._updateNodes(currentFrame, time)
     this._updateGeometry()
-    if (frame % 2 == 0) {
+    if (currentFrame % 2 == 0) {
       this.material.uniforms.time.value = Math.random()
+    }
+    if (this.keyframes.i_extra.in_frame <= currentFrame && currentFrame <= this.keyframes.i_extra.out_frame) {
+      let f = currentFrame - this.keyframes.i_extra.in_frame
+      this.material.alpha = Math.pow(1 - this.keyframes.i_extra.property.webcam_fade[f], 3)
     }
   }
 
