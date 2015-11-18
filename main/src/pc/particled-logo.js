@@ -238,7 +238,7 @@ export default class ParticledLogo extends THREE.Line {
 
     let numVertices = 0
     this.nodes = []
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 300; i++) {
       let node = new Node()
       if (Math.random() < 0.5) {
         node.x = HALF_WIDTH * (Math.random() < 0.5 ? -1 : 1)
