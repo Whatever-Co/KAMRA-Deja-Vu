@@ -16,6 +16,8 @@ import FaceParticle from './face-particle'
 import './main.sass'
 
 
+
+
 export default class App {
 
   constructor() {

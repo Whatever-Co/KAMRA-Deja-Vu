@@ -7,6 +7,26 @@ import dat from 'dat-gui'
 import Config from './config'
 
 
+class FaceColor {
+  constructor(){
+    this.colors = require('./data/particle_sprite_colors.json')
+  }
+
+  findNearestColor(inColor) {
+    let currDist = Number.MAX_VALUE
+    let currIndex = -1
+    this.colors.forEach((c, i) => {
+      let d = vec3.squaredDistance(inColor, c)
+      if(d < currDist) {
+        currDist = d
+        currIndex = i
+      }
+    })
+    return {index:currIndex, color:this.colors[currIndex]}
+  }
+}
+
+
 class RandomFaceSelector {
 
   constructor(geometry) {
@@ -135,6 +155,7 @@ export default class FaceParticle extends THREE.Points {
     this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 1).setValue(0).name('Time')
     this._guiSize = this._gui.add(this.material.uniforms.size, 'value', 1, 100).name('Size')
     this._gui.add(this, 'start').name('Start')
+    this._gui.add(this, 'updateUV').name('Update UV')
   }
 
 
@@ -146,12 +167,10 @@ export default class FaceParticle extends THREE.Points {
     }).start()
   }
 
-
   update() {
     if (!this.material.uniforms.faceTexture.value) {
       this.material.uniforms.faceTexture.value = this.face.material.map
     }
-
     let data = this.dataTexture.image.data
     data.set(this.face.geometry.positionAttribute.array)
     let uv = this.face.geometry.uvAttribute
@@ -162,5 +181,33 @@ export default class FaceParticle extends THREE.Points {
     }
     this.dataTexture.needsUpdate = true
   }
+
+  updateUV() {
+    let amount = 10000
+    let faceUv = new Float32Array(amount * 2)
+    for (let i = 0; i < amount*2; i+=2) {
+      faceUv[i]   = 0.5
+      faceUv[i+1] = 0.5
+    }
+    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
+    this.testNearestColor()
+  }
+
+  testNearestColor() {
+    let facecolor = new FaceColor()
+    let cssColor = (c) => {
+      return `rgb(${c[0]},${c[1]},${c[2]})`
+    }
+    for(let i=0; i<100; ++i) {
+      let in_c = [
+        Math.floor(Math.random()*255),
+        Math.floor(Math.random()*255),
+        Math.floor(Math.random()*255)
+      ]
+      let result = facecolor.findNearestColor(in_c)    
+      console.log(`%cIN${ in_c } %cOUT${result.color}`, `background:${cssColor(in_c)}`, `background:${cssColor(result.color)}`)  
+    }
+  }
+
 
 }
