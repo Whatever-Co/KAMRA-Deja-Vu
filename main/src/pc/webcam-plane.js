@@ -2,7 +2,6 @@
 
 import $ from 'jquery'
 import {vec2, mat3} from 'gl-matrix'
-import TWEEN from 'tween.js'
 import Modernizr from 'exports?Modernizr!modernizr-custom'
 
 import StandardFaceData from './standard-face-data'
@@ -131,15 +130,15 @@ export default class WebcamPlane extends THREE.Mesh {
 
   constructor(data, camera, renderer) {
     super(
-      new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
+      new THREE.PlaneBufferGeometry(16 / 9, 1, 16 * 4, 9 * 4),
       new THREE.ShaderMaterial({
         uniforms: {
           texture: {type: 't', value: null},
-          rate: {type: 'f', value:0.0},
-          frame: {type: 'f', value:0.0},
+          rate: {type: 'f', value: 0},
+          frame: {type: 'f', value: 0.0},
           centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
-          waveForce: {type: 'f', value:0.1},
-          zoomForce: {type: 'f', value:0.3}
+          waveForce: {type: 'f', value: 0.1},
+          zoomForce: {type: 'f', value: 0.3}
         },
         vertexShader:require('./shaders/webcam-plane.vert'),
         fragmentShader:require('./shaders/webcam-plane.frag'),
@@ -438,10 +437,10 @@ export default class WebcamPlane extends THREE.Mesh {
       let w = this.trackerCanvas.width
       let h = this.trackerCanvas.height
       let v4 = new THREE.Vector4(
-        center[0] / (w*2) + 0.5,
-        center[1] / (h*2) + 0.5,
-        size[0] / (w*4),
-        size[1] / (h*4)
+        center[0] / (w * 2) + 0.5,
+        center[1] / (h * 2) + 0.5,
+        size[0] / (w * 4),
+        size[1] / (h * 4)
       )
       this.material.uniforms.centerRect.value = v4
 
@@ -535,43 +534,9 @@ export default class WebcamPlane extends THREE.Mesh {
       }
     }
 
-    // if (this.drawFaceHole) {
-    //   let autoClear = this.renderer.autoClear
-    //   this.renderer.autoClear = false
-
-    //   this.webcamPlane.visible = true
-    //   this.face.visible = true
-    //   this.face.material = this.faceEdgeMaterial
-    //   this.faceEdgeMaterial.scale = 0.99
-    //   this.faceEdgeMaterial.brightness = 1
-    //   this.renderer.render(this.scene, this.camera, this.texture, true)
-
-    //   this.webcamPlane.visible = false
-    //   for (let i = 0; i < 10; i++) {
-    //     this.faceEdgeMaterial.scale = 0.99 - i * 0.004
-    //     this.faceEdgeMaterial.brightness = 0.9 - i * 0.02
-    //     this.renderer.clearTarget(this.texture, false, true, true)
-    //     this.renderer.render(this.scene, this.camera, this.texture)
-    //   }
-
-    //   this.face.material = this.faceSpaceMaterial
-    //   this.faceSpaceMaterial.update()
-    //   this.faceSpaceMaterial.scale = 0.99 - 10 * 0.004
-    //   this.renderer.clearTarget(this.texture, false, true, true)
-    //   this.renderer.render(this.scene, this.camera, this.texture)
-
-    //   this.renderer.autoClear = autoClear
-    // } else {
-    //   this.webcamPlane.visible = true
-    //   this.face.visible = false
-    //   this.renderer.render(this.scene, this.camera, this.texture, true)
-    // }
-
-    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame, currentFrame) {
+    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame) {
       let f = currentFrame - this.data.i_extra.in_frame
-      let fade = 1 - this.data.i_extra.property.webcam_fade[f]
-      // console.log(currentFrame +':'+fade)
-      // TODO : apply fade animation instead of 'fadeout'
+      this.material.uniforms.rate.value = this.data.i_extra.property.webcam_fade[f]
     }
 
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
@@ -591,18 +556,6 @@ export default class WebcamPlane extends THREE.Mesh {
     this.face.visible = false
     this.renderer.render(this.scene, this.camera, snapshot, true)
     return snapshot
-  }
-
-
-  fadeOut() {
-    let p = {rate: 0.4, brightness: 1}
-    new TWEEN.Tween(p).to({rate: 1, brightness:0}, 8000).onUpdate(() => {
-      this.material.uniforms.rate.value = p.rate
-      // this.material.uniforms.brightness.value = p.brightness
-    }).onComplete(() => {
-      // this.visible = false
-      // this.enabled = false
-    }).start()
   }
 
   

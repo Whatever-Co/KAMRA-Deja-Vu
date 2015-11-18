@@ -15,7 +15,7 @@ const loader = window.__djv_loader
 
 class FaceFrontMaterial extends THREE.ShaderMaterial {
 
-  constructor(texture, withCurl = false) {
+  constructor(texture) {
     super({
       uniforms: {
         map: {type: 't', value: texture},
@@ -28,7 +28,8 @@ class FaceFrontMaterial extends THREE.ShaderMaterial {
       },
       vertexShader: require('./shaders/face-front.vert'),
       fragmentShader: require('./shaders/face-front.frag'),
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      transparent: true,
     })
   }
 
@@ -49,11 +50,12 @@ export default class FaceController extends THREE.Object3D {
 
     // faces
     this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
+    this.main.renderOrder = 1000
     this.main.matrixAutoUpdate = false
     this.add(this.main)
 
     this.alts = []
-    for (let i =0; i < this.data.user_alt.property.length; i++) {
+    for (let i = 0; i < this.data.user_alt.property.length; i++) {
       let alt = new THREE.Mesh(new DeformableFaceGeometry())
       alt.visible = false
       this.add(alt)
@@ -103,11 +105,11 @@ export default class FaceController extends THREE.Object3D {
     this.update = this._followWebcam.bind(this)
 
 
-    if (Config.DEV_MODE) {
-      this.main.add(new THREE.AxisHelper())
-      this.alts.forEach((face) => face.add(new THREE.AxisHelper()))
-      this.smalls.forEach((face) => face.add(new THREE.AxisHelper()))
-    }
+    // if (Config.DEV_MODE) {
+    //   this.main.add(new THREE.AxisHelper())
+    //   this.alts.forEach((face) => face.add(new THREE.AxisHelper()))
+    //   this.smalls.forEach((face) => face.add(new THREE.AxisHelper()))
+    // }
   }
 
 
@@ -158,7 +160,7 @@ export default class FaceController extends THREE.Object3D {
 
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(), true)
+    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot())
 
     let position = new THREE.Vector3()
     let quaternion = new THREE.Quaternion()
