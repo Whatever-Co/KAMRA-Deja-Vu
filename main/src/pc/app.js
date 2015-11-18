@@ -3,6 +3,7 @@
 import {EventEmitter} from 'events'
 import $ from 'jquery'
 import 'jquery.transit'
+import _ from 'lodash'
 import TWEEN from 'tween.js'
 import Stats from 'stats-js'
 
@@ -22,6 +23,10 @@ import ParticledLogo from './particled-logo'
 import WebcamPlane from './webcam-plane'
 import FaceController from './face-controller'
 
+import ColorCorrectionPass from './post-effects/color-correction'
+import ChromaticAberrationPass from './post-effects/chromatic-aberration'
+import VideoOverlayPass from './post-effects/video-overlay'
+
 
 
 export default class App extends EventEmitter {
@@ -33,6 +38,7 @@ export default class App extends EventEmitter {
     this.controllers = []
 
     this.initScene()
+    this.initPostprocessing()
 
     this.noiseLayer = $('.noise')
 
@@ -50,45 +56,6 @@ export default class App extends EventEmitter {
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
     this.renderer.setClearColor(0x071520, 1)
     this.renderer.clear()
-
-    // post-processing
-    this.composer = new THREE.EffectComposer(this.renderer)
-    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
-    {
-      let effect = new THREE.ShaderPass(THREE.FXAAShader)
-      effect.uniforms.resolution.value.set(1 / Config.RENDER_WIDTH, 1 / Config.RENDER_HEIGHT)
-      this.composer.addPass(effect)
-    }
-    {
-      this.composer.addPass(new THREE.ShaderPass({
-        uniforms: {
-          tDiffuse: {type: 't', value: null},
-          resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)}
-        },
-        vertexShader: require('./shaders/basic-transform.vert'),
-        fragmentShader: require('./shaders/chromatic-aberration.frag')
-      }))
-    }
-    {
-      let effect = new THREE.ShaderPass(THREE.VignetteShader)
-      effect.uniforms.darkness.value = 1.2
-      this.composer.addPass(effect)
-    }
-    {
-      let texture = new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))
-      texture.magFilter = texture.minFilter = THREE.NearestFilter
-      texture.generateMipmaps = false
-      texture.flipY = false
-      this.composer.addPass(new THREE.ShaderPass({
-        uniforms: {
-          tDiffuse: {type: 't', value: null},
-          tLut: {type: 't', value: texture}
-        },
-        vertexShader: require('./shaders/basic-transform.vert'),
-        fragmentShader: require('./shaders/color-correction.frag'),
-      }))
-    }
-    this.composer.passes[this.composer.passes.length - 1].renderToScreen = true
 
     // logo
     {
@@ -116,15 +83,52 @@ export default class App extends EventEmitter {
   }
 
 
-  start(useWebcam) {
-    // music
-    this.sound = createjs.Sound.createInstance('music-main')
-    this.sound.volume = 0.05
-    this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
-    this.sound.on('complete', () => {
+  initPostprocessing() {
+    this.composer = new THREE.EffectComposer(this.renderer)
+
+    // render scene
+    this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
+
+    // antialias
+    let fxaa = new THREE.ShaderPass(THREE.FXAAShader)
+    fxaa.uniforms.resolution.value.set(1 / Config.RENDER_WIDTH, 1 / Config.RENDER_HEIGHT)
+    this.composer.addPass(fxaa)
+
+    // color correction
+    this.composer.addPass(new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))))
+
+    // texture overlay
+    this.videoOverlay = new VideoOverlayPass()
+    console.log(this.videoOverlay)
+    this.videoOverlay.addEventListener('complete', () => {
       Ticker.setClock(null)
       this.emit('complete')
     })
+    this.composer.addPass(this.videoOverlay)
+    this.controllers.push(this.videoOverlay)
+
+    // chromatic aberration
+    this.composer.addPass(new ChromaticAberrationPass())
+
+    // vignette
+    let vignette = new THREE.ShaderPass(THREE.VignetteShader)
+    vignette.uniforms.darkness.value = 1.2
+    this.composer.addPass(vignette)
+
+    _.last(this.composer.passes).renderToScreen = true
+  }
+
+
+  start(useWebcam) {
+    // music
+    // this.backgroundTexture = new THREE.
+    // this.sound = createjs.Sound.createInstance('music-main')
+    // this.sound.volume = 0.05
+    // this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
+    // this.sound.on('complete', () => {
+    //   Ticker.setClock(null)
+    //   this.emit('complete')
+    // })
 
     // camera controller
     this.camera.enabled = false
@@ -162,12 +166,11 @@ export default class App extends EventEmitter {
       this.face.captureWebcam()
       this.webcam.enableTracking = false
       this.webcam.drawFaceHole = true
-      // this.webcam.fadeOut()
 
       this.camera.enabled = true
 
-      this.sound.play()
-      Ticker.setClock(this.sound)
+      this.videoOverlay.start()
+      Ticker.setClock(this.videoOverlay)
 
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({
@@ -181,8 +184,8 @@ export default class App extends EventEmitter {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.sound.position = 3390 / 24 * 1000
-        // }, 1000)
+        //   this.videoOverlay.position = 2990 / 24 * 1000
+        // }, 3000)
       }
     })
     this.controllers.push(this.webcam)

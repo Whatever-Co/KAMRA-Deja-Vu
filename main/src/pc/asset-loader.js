@@ -77,7 +77,7 @@ let manifest = [
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'colorcorrect-lut', src: 'textures/lut.png'},
-  {id: 'music-main', src: 'data/main.mp3'},
+  // {id: 'music-main', src: 'data/main.mp3'},
 ]
 
 for (let i = 0; i < 10; i++) {

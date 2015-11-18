@@ -44,7 +44,12 @@
     "no-spaced-func": 2,
     "space-after-keywords": 2,
     "eol-last": 2,
-    "comma-dangle": 0
+    "comma-dangle": 0,
+    "space-after-keywords": 1,
+    "space-before-keywords": 1,
+    "space-before-blocks": 1,
+    "space-infix-ops": 1,
+    "space-return-throw-case": 1
   },
   "env": {
     "es6": true,
