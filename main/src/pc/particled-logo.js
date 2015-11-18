@@ -231,7 +231,7 @@ export default class ParticledLogo extends THREE.Line {
       })
       this.trackerPath._circleLength = this.trackerPath.getTotalLength(this.trackerPath._circleVertices)
       this.trackerPath.vertices = this.trackerPath._circleVertices
-      console.log({circle: this.trackerPath._circleLength, faceEdge: this.trackerPath._faceEdgeLength})
+      // console.log({circle: this.trackerPath._circleLength, faceEdge: this.trackerPath._faceEdgeLength})
     }
 
     console.timeEnd('logo data preparation')

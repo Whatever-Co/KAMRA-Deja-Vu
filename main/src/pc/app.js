@@ -99,7 +99,6 @@ export default class App extends EventEmitter {
 
     // texture overlay
     this.videoOverlay = new VideoOverlayPass()
-    console.log(this.videoOverlay)
     this.videoOverlay.addEventListener('complete', () => {
       Ticker.setClock(null)
       this.emit('complete')
@@ -153,6 +152,7 @@ export default class App extends EventEmitter {
     })
 
     this.webcam.addEventListener('complete', () => {
+      console.time('capture')
       this.face.captureWebcam()
       this.webcam.enableTracking = false
       this.webcam.drawFaceHole = true
@@ -164,6 +164,7 @@ export default class App extends EventEmitter {
       // setTimeout(() => {
       //   this.videoOverlay.start()
       // }, 1000)
+      console.timeEnd('capture')
 
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({

@@ -1,5 +1,8 @@
 /* global THREE */
 
+import $ from 'jquery'
+import _ from 'lodash'
+
 import Config from './config'
 import Ticker from './ticker'
 import DeformableFaceGeometry from './deformable-face-geometry'
@@ -263,6 +266,8 @@ export default class FaceController extends THREE.Object3D {
 
       this.creepyFaceTexture.update()
 
+      this.prepareForSharing()
+
       let scale = Config.RENDER_HEIGHT / (Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * 2)
       let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
@@ -278,6 +283,75 @@ export default class FaceController extends THREE.Object3D {
     }
 
     this.update = this._update.bind(this)
+  }
+
+
+  prepareForSharing() {
+    let data = JSON.stringify(this.webcam.rawFeaturePoints)
+    let snapshot = this.webcam.takeSnapshot()
+    let cap = this.renderTargetToBlob(snapshot)
+
+    {
+      let scene = new THREE.Scene()
+      let mesh = new THREE.Mesh(this.face2.geometry, new THREE.MeshBasicMaterial({map: this.creepyFaceTexture}))
+      mesh.matrix.copy(this.face2.matrix)
+      mesh.matrixAutoUpdate = false
+      scene.add(mesh)
+      let autoClear = this.renderer.autoClear
+      this.renderer.autoClear = false
+      this.renderer.clearTarget(snapshot, false, true, true)
+      this.renderer.render(scene, this.camera, snapshot)
+      this.renderer.autoClear = autoClear
+    }
+    let kimo = this.renderTargetToBlob(snapshot)
+
+    let formData = new FormData()
+    formData.append('data', data)
+    formData.append('cap', cap)
+    formData.append('kimo', kimo)
+    $.ajax({
+      method: 'post',
+      url: 'http://kamra.invisi-dir.com/api/save/',
+      data: formData,
+      contentType: false,
+      processData: false,
+      dataType: 'json'
+    }).done((data) => {
+      console.log('success', data)
+      this.sharedURLs = data
+    }).fail((error) => {
+      console.error(error)
+    })
+  }
+
+
+  renderTargetToBlob(target) {
+    let w = target.width
+    let h = target.height
+    let buffer = new Uint8Array(w * h * 4)
+    this.renderer.readRenderTargetPixels(target, 0, 0, w, h, buffer)
+
+    let canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    document.body.appendChild(canvas)
+    let ctx = canvas.getContext('2d')
+    let imageData = ctx.createImageData(w, h)
+    imageData.data.set(buffer)
+    ctx.putImageData(imageData, 0, 0)
+    ctx.translate(0, canvas.height)
+    ctx.scale(1, -1)
+    ctx.drawImage(canvas, 0, 0)
+
+    const type = 'image/jpeg'
+    let base64 = canvas.toDataURL(type, 0.8)
+    let bin = atob(base64.replace(/^.*,/, ''))
+    buffer = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) {
+      buffer[i] = bin.charCodeAt(i)
+    }
+    let blob = new Blob([buffer.buffer], {type})
+    return blob
   }
 
 
