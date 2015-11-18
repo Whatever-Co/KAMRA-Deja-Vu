@@ -38,6 +38,12 @@ class App {
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
 
+    this.renderTarget = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
+
+    this.targetPreview = new THREE.Mesh(new THREE.PlaneGeometry(160, 90), new THREE.MeshBasicMaterial({map: this.renderTarget, color: 0xff0000}))
+    this.targetPreview.position.z = 1
+    this.scene.add(this.targetPreview)
+
     window.addEventListener('resize', this.onResize.bind(this))
     this.onResize()
   }
@@ -50,13 +56,13 @@ class App {
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
 
-    this.webcam.addEventListener('complete', this.takeSnapshot.bind(this))
+    // this.webcam.addEventListener('complete', this.takeSnapshot.bind(this))
     this.webcam.start()
 
     // face
     this.face = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face.matrixAutoUpdate = false
-    this.scene.add(this.face)
+    // this.scene.add(this.face)
 
     let gui = new dat.GUI()
     gui.add(this, 'takeSnapshot').name('Take snapshot')
@@ -94,23 +100,55 @@ class App {
   }
 
 
-  takeSnapshot() {
-    this.webcam.stop()
+  renderTargetToCanvas() {
+    // let buffer = new Uint8Array(this.renderTarget.width * this.renderTarget.height * 4)
+    let w = this.renderTarget.width
+    let h = this.renderTarget.height
+    let buffer = new Uint8Array(w * h * 4)
+    this.renderer.readRenderTargetPixels(this.renderTarget, 0, 0, w, h, buffer)
+    // console.log(buffer[0])
 
+    let canvas = document.createElement('canvas')
+    canvas.id = 'hoge'
+    canvas.width = w
+    canvas.height = h
+    // document.body.appendChild(canvas)
+    let ctx = canvas.getContext('2d')
+    let imageData = ctx.createImageData(w, h)
+    imageData.data.set(buffer)
+    ctx.putImageData(imageData, 0, 0)
+
+    return canvas
+  }
+
+
+  takeSnapshot() {
+    // this.webcam.stop()
+
+    console.time('send')
     let formData = new FormData()
     // formData.append('image', this.webcam.textureCanvas.toDataURL('image/jpeg', 0.7).split(',')[1])
-    formData.append('image2', this.toBlob(this.webcam.textureCanvas, 'image/jpeg', 0.7))
-    formData.append('data', JSON.stringify(this.webcam.featurePoint3D))
+    formData.append('data', JSON.stringify(this.webcam.rawFeaturePoints))
+    // let image = this.toBlob(this.webcam.textureCanvas, 'image/jpeg', 0.7)
+    console.time('capture and encode')
+    let image = this.toBlob(this.renderTargetToCanvas(this.renderTarget), 'image/jpeg', 0.9)
+    console.timeEnd('capture and encode')
+    formData.append('cap', image)
+    formData.append('kimo', image)
     $.ajax({
       method: 'post',
-      url: 'http://localhost:3008/save',
+      // url: 'http://localhost:3008/save',
+      url: 'http://kamra.invisi-dir.com/api/save/',
       data: formData,
       contentType: false,
-      processData: false
+      processData: false,
+      dataType: 'json'
     }).done((data) => {
       console.log('success', data)
+      console.timeEnd('send')
     }).fail((error) => {
       console.error(error)
+      console.timeEnd('send')
     })
   }
 
@@ -144,6 +182,11 @@ class App {
     }
 
     this.controls.update()
+
+    this.targetPreview.visible = false
+    this.renderer.render(this.scene, this.camera, this.renderTarget)
+
+    this.targetPreview.visible = true
     this.renderer.render(this.scene, this.camera)
   }
 
