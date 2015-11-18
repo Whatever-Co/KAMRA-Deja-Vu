@@ -78,6 +78,7 @@ let manifest = [
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'colorcorrect-lut', src: 'textures/lut.png'},
   // {id: 'music-main', src: 'data/main.mp3'},
+  {id: 'remap', src: `textures/remap_${(Math.random() * 7) | 0}.png`}
 ]
 
 for (let i = 0; i < 10; i++) {
