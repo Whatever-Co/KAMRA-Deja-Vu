@@ -423,8 +423,6 @@ export default class FaceController extends THREE.Object3D {
     if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame + 50) {
       let t = (currentFrame - this.data.mosaic.in_frame) / (this.data.mosaic.out_frame + 50 - this.data.mosaic.in_frame)
       this.particles.update(t)
-      // this.webcam.enableTracking = true
-      // this.webcam.enableScoreChecking = false
     }
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame

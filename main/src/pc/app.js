@@ -75,8 +75,8 @@ export default class App extends EventEmitter {
     if (Config.DEV_MODE) {
       // this.scene.add(new THREE.Mesh(new THREE.PlaneBufferGeometry(1000, 1000, 10, 10), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.2})))
 
-      this.stats = new Stats()
-      document.body.appendChild(this.stats.domElement)
+      // this.stats = new Stats()
+      // document.body.appendChild(this.stats.domElement)
 
       this._frameCounter = $('<div>').attr({id: '_frame-counter'}).appendTo(document.body)
     }
@@ -120,16 +120,6 @@ export default class App extends EventEmitter {
 
 
   start(useWebcam) {
-    // music
-    // this.backgroundTexture = new THREE.
-    // this.sound = createjs.Sound.createInstance('music-main')
-    // this.sound.volume = 0.05
-    // this.sound.pan = 0.0000001 // これがないと Chrome だけ音が右に寄る...?
-    // this.sound.on('complete', () => {
-    //   Ticker.setClock(null)
-    //   this.emit('complete')
-    // })
-
     // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
@@ -169,8 +159,11 @@ export default class App extends EventEmitter {
 
       this.camera.enabled = true
 
-      this.videoOverlay.start()
       Ticker.setClock(this.videoOverlay)
+      this.videoOverlay.start()
+      // setTimeout(() => {
+      //   this.videoOverlay.start()
+      // }, 1000)
 
       if (Config.DEV_MODE) {
         this._vcon = $('<video>').attr({
@@ -184,7 +177,7 @@ export default class App extends EventEmitter {
         this._vcon.play()
 
         // setTimeout(() => {
-        //   this.videoOverlay.position = 2990 / 24 * 1000
+        //   this.videoOverlay.position = 3290 / 24 * 1000
         // }, 3000)
       }
     })
@@ -197,14 +190,15 @@ export default class App extends EventEmitter {
 
     this.logo.setMode('circle')
 
-    this.webcam.init(this.face.main.geometry)
+    // this.webcam.init(this.face.main.geometry)
     this.webcam.start(useWebcam)
   }
 
 
   animate(currentFrame, time) {
+    // console.time('frame')
     if (Config.DEV_MODE) {
-      this.stats.begin()
+      // this.stats.begin()
       this._frameCounter.text(currentFrame)
     }
 
@@ -222,9 +216,10 @@ export default class App extends EventEmitter {
       this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
     }
 
-    if (Config.DEV_MODE) {
-      this.stats.end()
-    }
+    // if (Config.DEV_MODE) {
+    //   this.stats.end()
+    // }
+    // console.timeEnd('frame')
   }
 
 
