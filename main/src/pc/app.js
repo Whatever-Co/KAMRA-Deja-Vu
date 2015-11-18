@@ -118,7 +118,7 @@ export default class App extends EventEmitter {
   }
 
 
-  start(useWebcam) {
+  start(sourceType) {
     // camera controller
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
@@ -192,7 +192,7 @@ export default class App extends EventEmitter {
     this.logo.setMode('circle')
 
     // this.webcam.init(this.face.main.geometry)
-    this.webcam.start(useWebcam)
+    this.webcam.start(sourceType)
   }
 
 
