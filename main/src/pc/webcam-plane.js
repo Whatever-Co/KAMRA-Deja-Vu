@@ -17,9 +17,119 @@ const LULA = [[791.046875,507.953125],[791.453125,565.34375],[800.671875,632.640
 })
 
 
+
+class FaceEdgeMaterial extends THREE.ShaderMaterial {
+
+  constructor(map) {
+    super({
+      uniforms: {
+        scale: {type: 'f', value: 0.9},
+        brightness: {type: 'f', value: 1.0},
+        map: {type: 'f', value: map},
+      },
+      vertexShader: `
+        uniform float scale;
+        varying vec2 vUv;
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position * scale, 1.0);
+          vUv = uv;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform float brightness;
+        varying vec2 vUv;
+        void main () {
+          gl_FragColor = texture2D(map, vUv);
+          gl_FragColor.rgb *= brightness;
+          /*if (gl_FragCoord.y < 540.) {
+            gl_FragColor.rgb += pow(1.0 - gl_FragCoord.y / 540., 4.0);
+          } else {
+            gl_FragColor.rgb *= pow(1.0 - (gl_FragCoord.y - 540.) / 540., 4.0) * 0.3 + 0.7;
+          }*/
+        }
+      `
+    })
+  }
+
+  set scale(value) {
+    this.uniforms.scale.value = value
+  }
+
+  set brightness(value) {
+    this.uniforms.brightness.value = value
+  }
+
+}
+
+
+
+class FaceSpaceMaterial extends THREE.ShaderMaterial {
+
+  constructor() {
+    super({
+      uniforms: {
+        scale: {type: 'f', value: 1.0},
+        spaceMap: {type: 't', value: null},
+        min: {type: 'v2', value: new THREE.Vector2()},
+        max: {type: 'v2', value: new THREE.Vector2()},
+      },
+      vertexShader: `
+        uniform float scale;
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position * scale, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D spaceMap;
+        uniform vec2 min;
+        uniform vec2 max;
+        void main() {
+          vec2 uv = (gl_FragCoord.xy / 1024. * vec2(320., 180.) - min) / (max - min);
+          uv.y = 1.0 - uv.y;
+          gl_FragColor = texture2D(spaceMap, uv);
+        }
+      `
+    })
+
+    this.video = document.createElement('video')
+    this.video.width = this.video.height = 256
+    this.video.loop = true
+    this.video.autoplay = true
+    this.video.src = 'textures/curl_bg.mp4'
+    this.video.addEventListener('loadedmetadata', () => {
+      this.texture = new THREE.Texture(this.video)
+      this.uniforms.spaceMap.value = this.texture
+    })
+  }
+
+  update() {
+    this.texture.needsUpdate = true
+  }
+
+  set scale(value) {
+    this.uniforms.scale.value = value
+  }
+
+  set brightness(value) {
+    this.uniforms.brightness.value = value
+  }
+
+  get min() {
+    return this.uniforms.min.value
+  }
+
+  get max() {
+    return this.uniforms.max.value
+  }
+
+}
+
+
+
 export default class WebcamPlane extends THREE.Mesh {
 
-  constructor(data, camera) {
+  constructor(data, camera, renderer) {
     super(
       new THREE.PlaneBufferGeometry(16 / 9, 1, 16*4, 9*4),
       new THREE.ShaderMaterial({
@@ -39,7 +149,6 @@ export default class WebcamPlane extends THREE.Mesh {
     )
     this.renderOrder = -1000
     this.enabled = false
-    this.isComplete = false
 
     this.update = this.update.bind(this)
     this.onIntroVideoEnded = this.onIntroVideoEnded.bind(this)
@@ -47,16 +156,35 @@ export default class WebcamPlane extends THREE.Mesh {
 
     this.data = data
     this.camera = camera
+    this.renderer = renderer
+    this.scene = new THREE.Scene()
+
+    this.texture = new THREE.WebGLRenderTarget(1024, 1024, {stencilBuffer: false})
+    this.material.uniforms.texture.value = this.texture
 
     this.video = document.createElement('video')
     // document.body.appendChild(this.video)
 
-    this.textureCanvas = document.createElement('canvas')
-    this.textureCanvas.width = this.textureCanvas.height = 1024
-    this.textureContext = this.textureCanvas.getContext('2d')
-    this.texture = new THREE.CanvasTexture(this.textureCanvas)
-    this.material.uniforms.texture.value = this.texture
-    // document.body.appendChild(this.textureCanvas)
+    this.webcamCanvas = document.createElement('canvas')
+    this.webcamCanvas.width = this.webcamCanvas.height = 1024
+    this.webcamContext = this.webcamCanvas.getContext('2d')
+    this.webcamTexture = new THREE.CanvasTexture(this.webcamCanvas)
+    // document.body.appendChild(this.webcamCanvas)
+    this.webcamPlane = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), new THREE.ShaderMaterial({
+      uniforms: {
+        map: {type: 't', value: this.webcamTexture},
+      },
+      vertexShader: require('./shaders/no-transform.vert'),
+      fragmentShader: `
+        uniform sampler2D map;
+        void main() {
+          gl_FragColor = texture2D(map, gl_FragCoord.xy / 1024.);
+        }
+      `,
+      depthWrite: false,
+      depthTest: false,
+    }))
+    this.scene.add(this.webcamPlane)
 
     this.trackerCanvas = document.createElement('canvas')
     this.trackerCanvas.width = 320
@@ -73,14 +201,30 @@ export default class WebcamPlane extends THREE.Mesh {
     this.enableScoreChecking = false
     this.numTrackingIteration = 2
     this.scoreHistory = []
+
+    this.drawFaceHole = false
+  }
+
+
+  init(faceGeometry) {
+    this.faceEdgeMaterial = new FaceEdgeMaterial(this.webcamTexture)
+    this.faceSpaceMaterial = new FaceSpaceMaterial()
+    let geometry = new THREE.BufferGeometry()
+    let data = this.standardFaceData.data
+    geometry.setIndex(new THREE.Uint16Attribute(data.face.index.concat(data.rightEye.index, data.leftEye.index), 1))
+    geometry.addAttribute('position', faceGeometry.positionAttribute)
+    geometry.addAttribute('uv', faceGeometry.uvAttribute)
+    this.face = new THREE.Mesh(geometry, this.faceEdgeMaterial)
+    this.face.matrixAutoUpdate = false
+    this.scene.add(this.face)
   }
 
 
   start(useWebcam) {
     this.useWebcam = useWebcam
     if (useWebcam) {
-      this.textureContext.translate(1024, 0)
-      this.textureContext.scale(-1, 1)
+      this.webcamContext.translate(1024, 0)
+      this.webcamContext.scale(-1, 1)
       this.trackerContext.translate(this.trackerCanvas.width, 0)
       this.trackerContext.scale(-1, 1)
   
@@ -282,11 +426,11 @@ export default class WebcamPlane extends THREE.Mesh {
       let {size, center} = this.getBoundsFor(this.featurePoint3D, FACE_INDICES)
       let len = vec2.len(size)
       let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
-      let isSizeOK = 350 < len && len < 550
+      let isSizeOK = 350 < len && len < 600
       let isPositionOK = Math.abs(center[0]) < 50 && Math.abs(center[1]) < 50
       let isAngleOK = Math.abs(center[0] - pCenter[0]) < 30
       let isStable = this.tracker.getConvergence() < 50
-      $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
+      // $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
       this.dispatchEvent({type: isSizeOK && isPositionOK && isAngleOK ? 'detected' : 'lost'})
       this.scoreHistory.push(isSizeOK && isPositionOK && isAngleOK && isStable)
 
@@ -322,8 +466,8 @@ export default class WebcamPlane extends THREE.Mesh {
   updateTexture() {
     let h = this.video.videoWidth / 16 * 9
     let y = (this.video.videoHeight - h) / 2
-    this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-    this.texture.needsUpdate = true
+    this.webcamContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
+    this.webcamTexture.needsUpdate = true
 
     this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
   }
@@ -332,7 +476,11 @@ export default class WebcamPlane extends THREE.Mesh {
   update(currentFrame) {
     if (this.enableTextureUpdating) {
       this.updateTexture()
+      this.webcamPlane.visible = true
+      this.face.visible = false
+      this.renderer.render(this.scene, this.camera, this.texture, true)
     }
+
     if (this.enableTracking) {
       for (let i = 0; i < this.numTrackingIteration; i++) {
         this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
@@ -341,7 +489,83 @@ export default class WebcamPlane extends THREE.Mesh {
       if (this.enableScoreChecking) {
         this.checkCaptureScore()
       }
+
+      if (this.drawFaceHole && this.rawFeaturePoints) {
+        // this.face.geometry.init(this.rawFeaturePoints, 320, 180, this.scale.y, 2400)
+        this.face.matrix.copy(this.matrixFeaturePoints)
+
+        let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+        let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+        this.rawFeaturePoints.forEach((p) => {
+          vec2.min(min, min, p)
+          vec2.max(max, max, p)
+        })
+        let center = vec2.lerp([], min, max, 0.5)
+        let size = Math.max.apply(null, vec2.sub([], max, min)) / 2
+        vec2.sub(min, center, [size, size])
+        vec2.add(max, center, [size, size])
+        this.faceSpaceMaterial.min.set(min[0], 180 - min[1])
+        this.faceSpaceMaterial.max.set(max[0], 180 - max[1])
+
+        let autoClear = this.renderer.autoClear
+        this.renderer.autoClear = false
+
+        this.webcamPlane.visible = true
+        this.face.visible = true
+        this.face.material = this.faceEdgeMaterial
+        this.faceEdgeMaterial.scale = 0.99
+        this.faceEdgeMaterial.brightness = 1
+        this.renderer.render(this.scene, this.camera, this.texture, true)
+
+        this.webcamPlane.visible = false
+        for (let i = 0; i < 10; i++) {
+          this.faceEdgeMaterial.scale = 0.99 - i * 0.004
+          this.faceEdgeMaterial.brightness = 0.9 - i * 0.02
+          this.renderer.clearTarget(this.texture, false, true, true)
+          this.renderer.render(this.scene, this.camera, this.texture)
+        }
+
+        this.face.material = this.faceSpaceMaterial
+        this.faceSpaceMaterial.update()
+        this.faceSpaceMaterial.scale = 0.99 - 10 * 0.004
+        this.renderer.clearTarget(this.texture, false, true, true)
+        this.renderer.render(this.scene, this.camera, this.texture)
+
+        this.renderer.autoClear = autoClear
+      }
     }
+
+    // if (this.drawFaceHole) {
+    //   let autoClear = this.renderer.autoClear
+    //   this.renderer.autoClear = false
+
+    //   this.webcamPlane.visible = true
+    //   this.face.visible = true
+    //   this.face.material = this.faceEdgeMaterial
+    //   this.faceEdgeMaterial.scale = 0.99
+    //   this.faceEdgeMaterial.brightness = 1
+    //   this.renderer.render(this.scene, this.camera, this.texture, true)
+
+    //   this.webcamPlane.visible = false
+    //   for (let i = 0; i < 10; i++) {
+    //     this.faceEdgeMaterial.scale = 0.99 - i * 0.004
+    //     this.faceEdgeMaterial.brightness = 0.9 - i * 0.02
+    //     this.renderer.clearTarget(this.texture, false, true, true)
+    //     this.renderer.render(this.scene, this.camera, this.texture)
+    //   }
+
+    //   this.face.material = this.faceSpaceMaterial
+    //   this.faceSpaceMaterial.update()
+    //   this.faceSpaceMaterial.scale = 0.99 - 10 * 0.004
+    //   this.renderer.clearTarget(this.texture, false, true, true)
+    //   this.renderer.render(this.scene, this.camera, this.texture)
+
+    //   this.renderer.autoClear = autoClear
+    // } else {
+    //   this.webcamPlane.visible = true
+    //   this.face.visible = false
+    //   this.renderer.render(this.scene, this.camera, this.texture, true)
+    // }
 
     if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame, currentFrame) {
       let f = currentFrame - this.data.i_extra.in_frame
@@ -357,6 +581,16 @@ export default class WebcamPlane extends THREE.Mesh {
     }
 
     this.material.uniforms.frame.value = currentFrame
+  }
+
+
+  takeSnapshot() {
+    let snapshot = this.texture.clone()
+    this.updateTexture()
+    this.webcamPlane.visible = true
+    this.face.visible = false
+    this.renderer.render(this.scene, this.camera, snapshot, true)
+    return snapshot
   }
 
 

@@ -145,7 +145,7 @@ export default class App extends EventEmitter {
     this.controllers.push(this.camera)
 
     // webcam
-    this.webcam = new WebcamPlane(this.keyframes, this.camera)
+    this.webcam = new WebcamPlane(this.keyframes, this.camera, this.renderer)
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
@@ -161,7 +161,8 @@ export default class App extends EventEmitter {
     this.webcam.addEventListener('complete', () => {
       this.face.captureWebcam()
       this.webcam.enableTracking = false
-      this.webcam.fadeOut()
+      this.webcam.drawFaceHole = true
+      // this.webcam.fadeOut()
 
       this.camera.enabled = true
 
@@ -185,7 +186,6 @@ export default class App extends EventEmitter {
       }
     })
     this.controllers.push(this.webcam)
-    this.webcam.start(useWebcam)
 
     // face
     this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
@@ -193,6 +193,9 @@ export default class App extends EventEmitter {
     this.controllers.push(this.face)
 
     this.logo.setMode('circle')
+
+    this.webcam.init(this.face.main.geometry)
+    this.webcam.start(useWebcam)
   }
 
 

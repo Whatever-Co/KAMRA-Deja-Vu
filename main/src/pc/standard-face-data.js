@@ -24,7 +24,7 @@ export default class StandardFaceData {
 
   init() {
     let data = require('./data/face2.json')
-    console.log(data)
+    // console.log(data)
 
     let index = data.face.index.concat(data.rightEye.index, data.leftEye.index)
     let indexAttribute = new THREE.Uint16Attribute(index, 1)

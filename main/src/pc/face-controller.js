@@ -158,7 +158,7 @@ export default class FaceController extends THREE.Object3D {
 
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-    this.main.material = new FaceFrontMaterial(this.webcam.texture.clone(), true)
+    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(), true)
 
     let position = new THREE.Vector3()
     let quaternion = new THREE.Quaternion()
@@ -310,11 +310,12 @@ export default class FaceController extends THREE.Object3D {
 
       f = Math.max(this.data.user.in_frame, Math.min(this.data.user.out_frame, currentFrame))
       let props = this.data.user.property
-      this.main.geometry.applyMorph(props.morph[f])
-
       this.main.position.fromArray(props.position, f * 3)
       this.main.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
       this.main.quaternion.fromArray(props.quaternion, f * 4)
+      if (props.morph[f]) {
+        this.main.geometry.applyMorph(props.morph[f])
+      }
 
       // transition from captured position to data'
       f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
