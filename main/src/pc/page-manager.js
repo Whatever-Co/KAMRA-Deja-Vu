@@ -25,14 +25,14 @@ class PageManager {
       callbacks: {
         onleaveloadAssets: () => {
           $('#loading').fadeOut(1000, () => {
-            this.app= new App(this.keyframes)
+            this.app = new App(this.keyframes)
             this.app.on('complete', () => {
               this.fsm.playCompleted()
             })
             this.fsm.transition()
-            //setTimeout(() => {
-            //  this.fsm.start(true)
-            //}, 1000)
+            // setTimeout(() => {
+            //   this.fsm.start(true)
+            // }, 1000)
           })
           return StateMachine.ASYNC
         },
@@ -64,8 +64,8 @@ class PageManager {
           $('#top').fadeOut(1000)
           return StateMachine.ASYNC
         },
-        onenterplaying: (e, f, t, useWebcam) => {
-          this.app.start(useWebcam)
+        onenterplaying: (e, f, t, sourceType) => {
+          this.app.start(sourceType)
         },
         // share
         onentershare: () => {
@@ -79,18 +79,17 @@ class PageManager {
         },
       }
     })
-    $('.with-webcam').click(() => this.fsm.start(true))
+    $('.with-webcam').click(() => this.fsm.start('webcam'))
     $('.with-photo').click(() => console.warn('TODO upload page'))
-    $('.without-webcam').click(() => this.fsm.start(false))
-    $('.button-top').click(() => this.fsm.goTop())
-    $("a[href = '#about']").click(() => this.fsm.goAbout())
-    $("button.close").click(() => this.fsm.goTop())
+    $('.without-webcam').click(() => this.fsm.start('video'))
+    $('.button-top').click(() => location.reload())
+    $('a[href = "#about"]').click(() => this.fsm.goAbout())
+    $('button.close').click(() => this.fsm.goTop())
 
     Ticker.start()
 
     this.preprocessKeyframes()
   }
-
 
 
   preprocessKeyframes() {

@@ -250,36 +250,42 @@ export default class WebcamPlane extends THREE.Mesh {
   }
 
 
-  start(useWebcam) {
-    this.useWebcam = useWebcam
-    if (useWebcam) {
-      this.webcamContext.translate(1024, 0)
-      this.webcamContext.scale(-1, 1)
-      this.trackerContext.translate(this.trackerCanvas.width, 0)
-      this.trackerContext.scale(-1, 1)
-  
-      let options = {
-        video: {
-          mandatory: {minWidth: 640},
-          optional: [
-            {minWidth: 1280},
-            {minWidth: 1920}
-          ]
+  start(sourceType) {
+    this.sourceType = sourceType
+    switch (this.sourceType) {
+      case 'webcam':
+        this.webcamContext.translate(1024, 0)
+        this.webcamContext.scale(-1, 1)
+        this.trackerContext.translate(this.trackerCanvas.width, 0)
+        this.trackerContext.scale(-1, 1)
+    
+        let options = {
+          video: {
+            mandatory: {minWidth: 640},
+            optional: [
+              {minWidth: 1280},
+              {minWidth: 1920}
+            ]
+          }
         }
-      }
-      let gUM = Modernizr.prefixed('getUserMedia', navigator)
-      gUM(options, this.onSuccess.bind(this), this.onError.bind(this))
+        let gUM = Modernizr.prefixed('getUserMedia', navigator)
+        gUM(options, this.onSuccess.bind(this), this.onError.bind(this))
+        break
 
-    } else {
-      this.video.src = 'data/_/lula-in-1920.jpg'
-      this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
-      this.video.addEventListener('ended', this.onIntroVideoEnded)
-      this.video.play()
-      this.rawFeaturePoints = LULA
-      this.normralizeFeaturePoints()
-      this.enableTextureUpdating = true
-      this.enableTracking = false
-      this.enableScoreChecking = false
+      case 'video':
+        this.video.src = 'data/_/lula-in-1920.jpg'
+        this.video.addEventListener('loadedmetadata', this.onLoadedMetadata.bind(this))
+        this.video.addEventListener('ended', this.onIntroVideoEnded)
+        this.video.play()
+        this.rawFeaturePoints = LULA
+        this.normralizeFeaturePoints()
+        this.enableTextureUpdating = true
+        this.enableTracking = false
+        this.enableScoreChecking = false
+        break
+
+      case 'image':
+        break
     }
   }
 
@@ -320,7 +326,7 @@ export default class WebcamPlane extends THREE.Mesh {
 
 
   restart() {
-    if (!this.useWebcam) {
+    if (this.sourceType == 'video') {
       this.video.addEventListener('ended', this.onOutroVideoEnded)
       this.video.play()
     }
