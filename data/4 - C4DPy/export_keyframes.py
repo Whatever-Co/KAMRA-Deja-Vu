@@ -402,7 +402,6 @@ def addFrame(f):
 	global keyframes
 
 	# print "processing.. %04d/%04d" % (f, duration)
-
 	# c4d.StatusSetText("processing.. %04d/%04d" % (f, duration))
 
 	cameraProp = keyframes["camera"]["property"]
@@ -416,7 +415,10 @@ def addFrame(f):
 
 	if f <= keyframes["user"]["out_frame"]:
 		userProp = keyframes["user"]["property"]
-		faceVertices, eyemouthVertices = getFaceVertices(user)
+
+		# disable curl transformation
+		useCache = inFrame["A1"] <= f
+		faceVertices, eyemouthVertices = getFaceVertices(user, useCache)
 
 		userProp["position"].extend(toPosition(userOff.GetMg().off))
 		userProp["quaternion"].extend(toQuaternion(userOff.GetMg()))
@@ -648,15 +650,17 @@ def addFrame(f):
 		prop["interpolation"].append(webcamLast[c4d.ID_USERDATA,2])
 
 
-def getFaceVertices(face):
+def getFaceVertices(face, useCache=True):
 	# global morphData
 
-	faceCache = face.GetDeformCache()
+	if useCache:
+		faceObj = face.GetDeformCache()
+		if faceObj == None:
+			faceObj = face
+	else:
+		faceObj = face
 
-	if faceCache == None:
-		faceCache = face
-
-	points = faceCache.GetAllPoints()
+	points = faceObj.GetAllPoints()
 
 	facePoints = points[:eyemouthVertexIndex]
 	eyemouthPoints = points[eyemouthVertexIndex:]
