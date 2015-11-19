@@ -20,7 +20,10 @@ import 'postprocessing/EffectComposer'
 import Ticker from './ticker'
 import Config from './config'
 import ParticledLogo from './particled-logo'
-import WebcamPlane from './webcam-plane'
+import UserWebcamPlane from './user-webcam-plane'
+import UserVideoPlane from './user-video-plane'
+import UserImagePlane from './user-image-plane'
+const PLANE_CLASSES = {webcam: UserWebcamPlane, video: UserVideoPlane, shared: UserImagePlane}
 import FaceController from './face-controller'
 
 import ColorCorrectionPass from './post-effects/color-correction'
@@ -54,7 +57,7 @@ export default class App extends EventEmitter {
 
     this.renderer = new THREE.WebGLRenderer({canvas: document.querySelector('canvas#main')})
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
-    this.renderer.setClearColor(0x021827, 1)
+    this.renderer.setClearColor(0x031a29, 1)
     this.renderer.clear()
 
     // logo
@@ -138,7 +141,7 @@ export default class App extends EventEmitter {
     this.controllers.push(this.camera)
 
     // webcam
-    this.webcam = new WebcamPlane(this.keyframes, this.camera, this.renderer)
+    this.webcam = new PLANE_CLASSES[sourceType](this.keyframes, this.camera, this.renderer)
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
     this.webcam.scale.set(scale, scale, scale)
     this.scene.add(this.webcam)
