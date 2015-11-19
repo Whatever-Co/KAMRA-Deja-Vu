@@ -77,7 +77,6 @@ let manifest = [
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'colorcorrect-lut', src: 'textures/lut.png'},
-  // {id: 'music-main', src: 'data/main.mp3'},
   {id: 'remap', src: `textures/remap_${(Math.random() * 7) | 0}.png`}
 ]
 
@@ -88,6 +87,14 @@ for (let i = 0; i < 10; i++) {
   )
 }
 
+let match = location.href.match(/\/([a-z0-9]{8})\/$/)
+if (match) {
+  let id = match[1]
+  manifest.push(
+    {id: 'shared-data', src: `/${id}/data.json`},
+    {id: 'shared-image', src: `/${id}/cap.jpg`}
+  )
+}
 manifest.push({src: 'app.js'})
 
 loader.loadManifest(manifest, false)

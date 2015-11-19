@@ -114,7 +114,7 @@ class FaceSpaceMaterial extends THREE.ShaderMaterial {
   }
 
   update() {
-    if (this.prev != this.video.currentTime) {
+    if (this.texture && this.prev != this.video.currentTime) {
       // console.log(this.video.currentTime)
       this.texture.needsUpdate = true
       this.prev = this.video.currentTime
@@ -286,6 +286,24 @@ export default class WebcamPlane extends THREE.Mesh {
 
       case 'image':
         break
+
+      case 'shared':
+        let img = window.__djv_loader.getResult('shared-image')
+        this.webcamContext.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.webcamCanvas.width, this.webcamCanvas.height)
+        this.webcamTexture.needsUpdate = true
+        this.rawFeaturePoints = window.__djv_loader.getResult('shared-data')
+        this.normralizeFeaturePoints()
+        this.enableTextureUpdating = false
+        this.enableTracking = false
+        this.enableScoreChecking = false
+        this.enabled = true
+        setTimeout(() => {
+          this.dispatchEvent({type: 'detected'})
+        }, 1000)
+        setTimeout(() => {
+          this.dispatchEvent({type: 'complete'})
+        }, 3000)
+        break
     }
   }
 
@@ -330,10 +348,12 @@ export default class WebcamPlane extends THREE.Mesh {
       this.video.addEventListener('ended', this.onOutroVideoEnded)
       this.video.play()
     }
-    this.enableTextureUpdating = true
-    this.enableTracking = true
-    this.enableScoreChecking = false
-    this.numTrackingIteration = 2
+    if (this.sourceType == 'webcam') {
+      this.enableTextureUpdating = true
+      this.enableTracking = true
+      this.enableScoreChecking = false
+      this.numTrackingIteration = 2
+    }
     this.isOutro = true
   }
 

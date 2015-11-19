@@ -38,7 +38,11 @@ class PageManager {
         },
         // top
         onentertop: () => {
-          $('#top').fadeIn(1000)
+          if (window.__djv_loader.getResult('shared-data')) {
+            this.fsm.start('shared')
+          } else {
+            $('#top').fadeIn(1000)
+          }
         },
         onleavetop: () => {
 
