@@ -14,8 +14,8 @@ gulp.task('webpack', () => {
     watch: developmentMode,
     entry: {
       bootstrap: './src/pc/bootstrap.js',
-      app: './src/pc/page-manager.js'
-      // 'sp/main': './src/sp/main.js'
+      app: './src/pc/page-manager.js',
+      'sp/main': './src/sp/main.js'
     },
     output: {
       filename: '[name].js'
@@ -130,6 +130,15 @@ gulp.task('browser-sync', () => {
   })
 })
 
+gulp.task('browser-sync-sp', () => {
+  browserSync.init({
+    server: {
+      baseDir: ['./public']
+    },
+    open: false
+  })
+})
+
 
 gulp.task('release', () => {
   developmentMode = false
@@ -138,4 +147,5 @@ gulp.task('release', () => {
 
 
 gulp.task('default', ['webpack', 'jade', 'stylus', 'watch', 'server', 'browser-sync'])
+gulp.task('sp', ['webpack', 'jade', 'stylus', 'watch', 'browser-sync-sp'])
 gulp.task('build', ['release', 'webpack', 'jade', 'stylus'])
