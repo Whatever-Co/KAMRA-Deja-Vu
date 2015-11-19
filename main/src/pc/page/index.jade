@@ -52,53 +52,54 @@ html.no-js
         include ./includes/play_buttons.jade
 
       #about
-        .page
-          section(name='concept')
-            p.concept(data-i18n='concept') 白い天井の下　ここにあるのは傷んだ肉　馴染まない鉄の容れ物
-              br
-              br
-              | どちらへも振り切れない魂　「もう一度」　私は繰り返す
-              br
-              br
-              | 心は常に一定にしか動かないとしても　精一杯勢いをつけ　同じ所から 同じ方へ
-            include ./includes/play_buttons.jade
-          section(name='album')
-            img(src='images/album-jacket.jpg')
-            img.album_info(src='images/album-info.png')
-          section(name='kamra')
-            img(src='images/profile-kamra.png')
-            .info
-              p KAMRA
-                span / Yuichi Nakamura
-              ul
-                li
-                  a.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
-                li
-                  a.blank(src='#{link.twitter}' target='_blank') Twitter
+        .mask
+          .page
+            section#concept(name='concept')
+              p.concept(data-i18n='concept') 白い天井の下　ここにあるのは傷んだ肉　馴染まない鉄の容れ物
+                br
+                br
+                | どちらへも振り切れない魂　「もう一度」　私は繰り返す
+                br
+                br
+                | 心は常に一定にしか動かないとしても　精一杯勢いをつけ　同じ所から 同じ方へ
+              include ./includes/play_buttons.jade
+            section#album(name='album')
+              img(src='images/album-jacket.jpg')
+              img.album_info(src='images/album-info.png')
+            section#kamra(name='kamra')
+              img(src='images/profile-kamra.png')
+              .info
+                p KAMRA
+                  span / Yuichi Nakamura
+                ul
+                  li
+                    a.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
+                  li
+                    a.blank(src='#{link.twitter}' target='_blank') Twitter
 
-            p 理屈や理論ではない感覚に身を任せた音楽スタイルで、自分の世界を作り上げる。ファミコン世代に生まれ育ったために培ったメロディ感と、エレクトロニカに大きく影響を受けたリズム、2つが大きな基礎となっており、さらに2001年より、音楽制作チームinvisible designs lab.の立ち上げメンバーとなり、多くのCM音楽、ゲームサウンドトラック、サウンドロゴ等の数々の音楽制作の携わり、新たな感覚を取り入れ続ける。
+              p 理屈や理論ではない感覚に身を任せた音楽スタイルで、自分の世界を作り上げる。ファミコン世代に生まれ育ったために培ったメロディ感と、エレクトロニカに大きく影響を受けたリズム、2つが大きな基礎となっており、さらに2001年より、音楽制作チームinvisible designs lab.の立ち上げメンバーとなり、多くのCM音楽、ゲームサウンドトラック、サウンドロゴ等の数々の音楽制作の携わり、新たな感覚を取り入れ続ける。
 
-            hr.mini
+              hr.mini
 
-            .colum2
-              .colum
-                h3 invisi-dir.
-                p 音楽クリエイティブチーム、インビジブル・デザインズ・ラボが考える、"DIRECTION"つまりクリエイティブの「方向」です。みなさんと新しい価値の共有をテーマにした"インビジブル・デザインズ・ラボ セレクション"として、音楽を軸に多くの新しい価値の提案をするプロデュースとセレクションを行って行く予定です。
-                a(src='http://invisi-dir.com' target='_blank') http://invisi-dir.com
-              .colum
-                h3 invisible designs lab.
-                p 大切な事は見えない。見えないものには大きな価値があります。アイデアやイマジネーション、インスピレーション。それらを見える形や新しい発想で表現していく音楽を軸としたクリエイターチームです。
-                a(src='http://invisi.jp' target='_blank') http://invisi.jp
-          section(name='credit')
-            .colum2
-              for credit in credits
-                .credit
-                  img(src="images/#{credit.photo}")
-                  .info
-                    span.part #{credit.part}
-                    span.name #{credit.name}
-                    a.blank(href="#{credit.url}" target="_blank") #{credit.site}
-            include ./includes/play_buttons.jade
+              .colum2
+                .colum
+                  h3 invisi-dir.
+                  p 音楽クリエイティブチーム、インビジブル・デザインズ・ラボが考える、"DIRECTION"つまりクリエイティブの「方向」です。みなさんと新しい価値の共有をテーマにした"インビジブル・デザインズ・ラボ セレクション"として、音楽を軸に多くの新しい価値の提案をするプロデュースとセレクションを行って行く予定です。
+                  a(src='http://invisi-dir.com' target='_blank') http://invisi-dir.com
+                .colum
+                  h3 invisible designs lab.
+                  p 大切な事は見えない。見えないものには大きな価値があります。アイデアやイマジネーション、インスピレーション。それらを見える形や新しい発想で表現していく音楽を軸としたクリエイターチームです。
+                  a(src='http://invisi.jp' target='_blank') http://invisi.jp
+            section#credit(name='credit')
+              .colum2
+                for credit in credits
+                  .credit
+                    img(src="images/#{credit.photo}")
+                    .info
+                      span.part #{credit.part}
+                      span.name #{credit.name}
+                      a.blank(href="#{credit.url}" target="_blank") #{credit.site}
+              include ./includes/play_buttons.jade
         .navi
           ul
             li
@@ -116,88 +117,90 @@ html.no-js
             img(src='images/button-close.png')
 
       #howto
-        .page
-          .colum2
-            .colum
-              .header
-                .icon.webcam
-                  h3 Webカメラでの体験方法
-              .vline.after
-              p
-                img(src='images/howto-webcam-01.png')
-                .vline.before
-                .icon.step1
-                  h4 トップページで「Webcam」を選択
+        .mask
+          .page
+            .colum2
+              .colum
+                .header
+                  .icon.webcam
+                    h3 Webカメラでの体験方法
                 .vline.after
-              p
-                img(src='images/howto-webcam-02.png')
-                .vline.before
-                .icon.step2
-                  h4 カメラの使用を許可
-                .vline.after
-              p
-                img(src='images/howto-webcam-03.png')
-                .vline.before
-                .icon.step3
-                  h4 撮影準備
-                .vline
-                  ul
-                    li メガネ、帽子を取って顔の全体がはっきり見えるようにしてください。
-                    li ガイドに合わせて顔を固定してください。
-                    li 髪の毛が顔にかからないよう、顔を明るく照らしてください。
-              p
-                img(src='images/howto-webcam-04.jpg')
-                .vline.before
-                .icon.step4
-                  h4 ガイド表示に顔をあわせる
-                .vline.after
-              p
-                img(src='images/howto-webcam-05.jpg')
-                .vline.before
-                .icon.step5
-                  h4 顔が認識されると Deja vu 開始
+                p
+                  img(src='images/howto-webcam-01.png')
+                  .vline.before
+                  .icon.step1
+                    h4 トップページで「Webcam」を選択
+                  .vline.after
+                p
+                  img(src='images/howto-webcam-02.png')
+                  .vline.before
+                  .icon.step2
+                    h4 カメラの使用を許可
+                  .vline.after
+                p
+                  img(src='images/howto-webcam-03.png')
+                  .vline.before
+                  .icon.step3
+                    h4 撮影準備
+                  .vline
+                    ul
+                      li メガネ、帽子を取って顔の全体がはっきり見えるようにしてください。
+                      li ガイドに合わせて顔を固定してください。
+                      li 髪の毛が顔にかからないよう、顔を明るく照らしてください。
+                p
+                  img(src='images/howto-webcam-04.jpg')
+                  .vline.before
+                  .icon.step4
+                    h4 ガイド表示に顔をあわせる
+                  .vline.after
+                p
+                  img(src='images/howto-webcam-05.jpg')
+                  .vline.before
+                  .icon.step5
+                    h4 顔が認識されると Deja vu 開始
 
-            .colum
-              .header
-                .icon.photo
-                  h3 写真アップロードでの体験方法
-              .vline.after
-              p
-                img(src='images/howto-photo-01.png')
-                .vline.before
-                .icon.step1
-                  h4 トップページで「Photo」を選択
+              .colum
+                .header
+                  .icon.photo
+                    h3 写真アップロードでの体験方法
                 .vline.after
-              p
-                img(src='images/howto-photo-02.png')
-                .vline.before
-                .icon.step2
-                  h4 写真アップロード準備
-                .vline
-                  | 下記のような写真をアップロードしてください。
-                  ul
-                    li メガネ、帽子は被らず顔の全体がはっきり見える写真
-                    li 正面を向き、顔がまっすぐ固定された写真
-                    li 髪の毛が顔にかかっていない、顔が明るく照らされた写真
-              p
-                img(src='images/howto-photo-03.png')
-                .vline.before
-                .icon.step3
-                  h4 写真ファイルをドラッグ＆ドロップするか、クリックで選択しアップロード
-                .vline.after
-              p
-                img(src='images/howto-photo-04.jpg')
-                .vline.before
-                .icon.step4
-                  h4
-                    span 顔認証位置を確認し、
-                    span 「OK」で Deja vu 開始
+                p
+                  img(src='images/howto-photo-01.png')
+                  .vline.before
+                  .icon.step1
+                    h4 トップページで「Photo」を選択
+                  .vline.after
+                p
+                  img(src='images/howto-photo-02.png')
+                  .vline.before
+                  .icon.step2
+                    h4 写真アップロード準備
+                  .vline
+                    | 下記のような写真をアップロードしてください。
+                    ul
+                      li メガネ、帽子は被らず顔の全体がはっきり見える写真
+                      li 正面を向き、顔がまっすぐ固定された写真
+                      li 髪の毛が顔にかかっていない、顔が明るく照らされた写真
+                p
+                  img(src='images/howto-photo-03.png')
+                  .vline.before
+                  .icon.step3
+                    h4 写真ファイルをドラッグ＆ドロップするか、クリックで選択しアップロード
+                  .vline.after
+                p
+                  img(src='images/howto-photo-04.jpg')
+                  .vline.before
+                  .icon.step4
+                    h4
+                      span 顔認証位置を確認し、
+                      span 「OK」で Deja vu 開始
+            include ./includes/play_buttons.jade
         .navi
           .header
             img(src='images/howto-heading.png' width='216' height='32')
           button.close
             img(src='images/button-close.png')
-        include ./includes/play_buttons.jade
+
       #share
         .share-inner
           button.button-top
