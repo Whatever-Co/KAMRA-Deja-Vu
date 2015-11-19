@@ -199,7 +199,7 @@ export default class App extends EventEmitter {
     // console.time('frame')
     if (Config.DEV_MODE) {
       // this.stats.begin()
-      this._frameCounter.text(currentFrame)
+      //this._frameCounter.text(currentFrame)
     }
 
     this.controllers.forEach((controller) => {
@@ -213,7 +213,7 @@ export default class App extends EventEmitter {
     this.composer.render()
 
     if (currentFrame % 2 == 0) {
-      this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+      //this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
     }
 
     // if (Config.DEV_MODE) {
