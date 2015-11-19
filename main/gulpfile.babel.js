@@ -79,8 +79,8 @@ gulp.task('jade', () => {
   let merged = new mergeStream()
   for (let key in paths) {
     let s = gulp.src(`./src/${key}/page/*.jade`)
-      .pipe($.data((file)=> {
-        return require(`./src/${key}/page/data.json`);
+      .pipe($.data(() => {
+        return require(`./src/${key}/page/data.json`)
       }))
       .pipe($.jade({pretty: developmentMode}))
       .pipe(gulp.dest(`./public/${paths[key]}`))
@@ -112,12 +112,19 @@ gulp.task('watch', () => {
 })
 
 
+gulp.task('server', () => {
+  let server = require('gulp-live-server').new('dev-server.js')
+  server.start()
+  gulp.watch('dev-server.js', () => {
+    server.start()
+  })
+})
+
+
 gulp.task('browser-sync', () => {
   let gzipStatic = require('connect-gzip-static')
   browserSync.init({
-    server: {
-      baseDir: ['./public']
-    },
+    proxy: 'localhost:4000',
     open: false
   }, (err, bs) => {
     bs.addMiddleware('*', gzipStatic('./public'))
@@ -131,5 +138,5 @@ gulp.task('release', () => {
 })
 
 
-gulp.task('default', ['webpack', 'jade', 'stylus', 'watch', 'browser-sync'])
+gulp.task('default', ['webpack', 'jade', 'stylus', 'watch', 'server', 'browser-sync'])
 gulp.task('build', ['release', 'webpack', 'jade', 'stylus'])
