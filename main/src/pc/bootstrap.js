@@ -1,5 +1,6 @@
+/* global Typekit*/
+
 import loader from './asset-loader'
-import TWEEN from 'tween.js'
 
 
 let loaderCanvas = document.querySelector('#loading canvas')
@@ -11,12 +12,12 @@ let updateLoading = (rate) => {
   loaderCtx.clearRect(0, 0, 400, 400)
   loaderCtx.lineWidth = 1
 
-  loaderCtx.strokeStyle = "rgba(255, 255, 255, 0.2)"
+  loaderCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
   loaderCtx.beginPath()
   loaderCtx.arc(200, 200, 199, 0, 2 * Math.PI, false)
   loaderCtx.stroke()
 
-  loaderCtx.strokeStyle = "rgba(255, 255, 255, 0.5)"
+  loaderCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
   loaderCtx.beginPath()
   loaderCtx.arc(200, 200, 199,
     -Math.PI * 0.5,
@@ -41,6 +42,8 @@ window.__djv_loader = loader
 
 // enable font
 
-try{
-  Typekit.load({ async: true })
-} catch(e) {}
+try {
+  Typekit.load({async: true})
+} catch (e) {
+  console.warn('Typekit load error...')
+}

@@ -311,7 +311,7 @@ export default class FaceController extends THREE.Object3D {
     formData.append('kimo', kimo)
     $.ajax({
       method: 'post',
-      url: 'http://dev-kamra.invisi-dir.com/api/save/',
+      url: '/api/save/',
       data: formData,
       contentType: false,
       processData: false,

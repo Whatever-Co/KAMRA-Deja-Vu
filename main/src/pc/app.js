@@ -191,7 +191,6 @@ export default class App extends EventEmitter {
 
     this.logo.setMode('circle')
 
-    // this.webcam.init(this.face.main.geometry)
     this.webcam.start(sourceType)
   }
 
