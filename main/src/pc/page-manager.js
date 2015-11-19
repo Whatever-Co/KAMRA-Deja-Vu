@@ -90,12 +90,22 @@ class PageManager {
     $('.with-photo').click(() => console.warn('TODO upload page'))
     $('.without-webcam').click(() => this.fsm.start('video'))
     $('.button-top').click(() => location.reload())
-    $('a[href = "#about"]').click(() => this.fsm.goAbout())
-    $('a[href = "#howto"]').click(() => this.fsm.goHowto())
+    $('a[href="#about"]').click(() => this.fsm.goAbout())
+    $('a[href="#howto"]').click(() => this.fsm.goHowto())
     $('button.close').click(() => {
       location.href = '#'
       this.fsm.goTop()
     })
+    // smooth scroll
+    //$('a[href^=#]').click(function() {
+    //  let href= $(this).attr('href')
+    //  let target = $(href == '#' || href == '' ? 'html' : href)
+    //  var position = target.offset().top - 100
+    //  $('html', 'body').animate({scrollTop:position}, 500, 'swing')
+    //
+    //  return false
+    //});
+
 
     Ticker.start()
 
