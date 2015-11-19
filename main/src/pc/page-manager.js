@@ -1,9 +1,15 @@
 import $ from 'jquery'
 import StateMachine from 'javascript-state-machine'
 
+import Config from './config'
 import Ticker from './ticker'
 import PreprocessWorker from 'worker!./preprocess-worker'
 import App from './app'
+
+
+if (Config.DEV_MODE) {
+  $('head').append(`<script async src='/browser-sync/browser-sync-client.2.10.0.js'><\/script>`)
+}
 
 
 class PageManager {
@@ -13,14 +19,11 @@ class PageManager {
       initial: 'loadAssets',
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
-        {name: 'start', from: 'top', to: 'playing'},
-        {name: 'start', from: 'about', to: 'playing'},
+        {name: 'start', from: ['top', 'about'], to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goAbout', from: 'top', to: 'about'},
         {name: 'goHowto', from: 'top', to: 'howto'},
-        {name: 'goTop', from: 'about', to: 'top'},
-        {name: 'goTop', from: 'howto', to: 'top'},
-        {name: 'goTop', from: 'share', to: 'top'}
+        {name: 'goTop', from: ['about', 'howto', 'share'], to: 'top'},
       ],
       callbacks: {
         onleaveloadAssets: () => {
@@ -30,9 +33,6 @@ class PageManager {
               this.fsm.playCompleted()
             })
             this.fsm.transition()
-            // setTimeout(() => {
-            //   this.fsm.start(true)
-            // }, 1000)
           })
           return StateMachine.ASYNC
         },
@@ -41,6 +41,7 @@ class PageManager {
           if (window.__djv_loader.getResult('shared-data')) {
             this.fsm.start('shared')
           } else {
+            // this.fsm.start('webcam')
             $('#top').fadeIn(1000)
           }
         },

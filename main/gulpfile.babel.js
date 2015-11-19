@@ -125,9 +125,8 @@ gulp.task('browser-sync', () => {
   let gzipStatic = require('connect-gzip-static')
   browserSync.init({
     proxy: 'localhost:4000',
-    open: false
-  }, (err, bs) => {
-    bs.addMiddleware('*', gzipStatic('./public'))
+    middleware: gzipStatic('./public'),
+    open: false,
   })
 })
 
