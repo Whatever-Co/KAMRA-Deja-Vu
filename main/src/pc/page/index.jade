@@ -55,13 +55,14 @@ html.no-js
         .mask
           .page
             section#concept(name='concept')
-              p.concept(data-i18n='concept') 白い天井の下　ここにあるのは傷んだ肉　馴染まない鉄の容れ物
+              p.concept()
+                span(data-i18n='about.concept.1') #{about.concept.l1}
                 br
                 br
-                | どちらへも振り切れない魂　「もう一度」　私は繰り返す
+                span(data-i18n='about.concept.2') #{about.concept.l2}
                 br
                 br
-                | 心は常に一定にしか動かないとしても　精一杯勢いをつけ　同じ所から 同じ方へ
+                span(data-i18n='about.concept.3') #{about.concept.l3}
               include ./includes/play_buttons.jade
             section#album(name='album')
               img(src='images/album-jacket.jpg')
@@ -77,18 +78,18 @@ html.no-js
                   li
                     a.blank(src='#{link.twitter}' target='_blank') Twitter
 
-              p 理屈や理論ではない感覚に身を任せた音楽スタイルで、自分の世界を作り上げる。ファミコン世代に生まれ育ったために培ったメロディ感と、エレクトロニカに大きく影響を受けたリズム、2つが大きな基礎となっており、さらに2001年より、音楽制作チームinvisible designs lab.の立ち上げメンバーとなり、多くのCM音楽、ゲームサウンドトラック、サウンドロゴ等の数々の音楽制作の携わり、新たな感覚を取り入れ続ける。
+              p(data-i18n='about.kamra') #{about.kamra}
 
               hr.mini
 
               .colum2
                 .colum
                   h3 invisi-dir.
-                  p 音楽クリエイティブチーム、インビジブル・デザインズ・ラボが考える、"DIRECTION"つまりクリエイティブの「方向」です。みなさんと新しい価値の共有をテーマにした"インビジブル・デザインズ・ラボ セレクション"として、音楽を軸に多くの新しい価値の提案をするプロデュースとセレクションを行って行く予定です。
+                  p(data-i18n='about.invisidir') #{about.invisidir}
                   a(src='http://invisi-dir.com' target='_blank') http://invisi-dir.com
                 .colum
                   h3 invisible designs lab.
-                  p 大切な事は見えない。見えないものには大きな価値があります。アイデアやイマジネーション、インスピレーション。それらを見える形や新しい発想で表現していく音楽を軸としたクリエイターチームです。
+                  p(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
                   a(src='http://invisi.jp' target='_blank') http://invisi.jp
             section#credit(name='credit')
               .colum2
@@ -123,77 +124,77 @@ html.no-js
               .colum
                 .header
                   .icon.webcam
-                    h3 Webカメラでの体験方法
+                    h3(data-i18n='howto.webcam.title') #{howto.webcam.title}
                 .vline.after
                 p
                   img(src='images/howto-webcam-01.png')
                   .vline.before
                   .icon.step1
-                    h4 トップページで「Webcam」を選択
+                    h4(data-i18n='howto.webcam.s1') #{howto.webcam.s1}
                   .vline.after
                 p
                   img(src='images/howto-webcam-02.png')
                   .vline.before
                   .icon.step2
-                    h4 カメラの使用を許可
+                    h4(data-i18n='howto.webcam.s2') #{howto.webcam.s2}
                   .vline.after
                 p
                   img(src='images/howto-webcam-03.png')
                   .vline.before
                   .icon.step3
-                    h4 撮影準備
+                    h4(data-i18n='howto.webcam.s3') #{howto.webcam.s3}
                   .vline
                     ul
-                      li メガネ、帽子を取って顔の全体がはっきり見えるようにしてください。
-                      li ガイドに合わせて顔を固定してください。
-                      li 髪の毛が顔にかからないよう、顔を明るく照らしてください。
+                      li(data-i18n='howto.webcam.s3_1') #{howto.webcam.s3_1}
+                      li(data-i18n='howto.webcam.s3_2') #{howto.webcam.s3_2}
+                      li(data-i18n='howto.webcam.s3_3') #{howto.webcam.s3_3}
                 p
                   img(src='images/howto-webcam-04.jpg')
                   .vline.before
                   .icon.step4
-                    h4 ガイド表示に顔をあわせる
+                    h4(data-i18n='howto.webcam.s4') #{howto.webcam.s4}
                   .vline.after
                 p
                   img(src='images/howto-webcam-05.jpg')
                   .vline.before
                   .icon.step5
-                    h4 顔が認識されると Deja vu 開始
+                    h4(data-i18n='howto.webcam.s5') #{howto.webcam.s5}
 
               .colum
                 .header
                   .icon.photo
-                    h3 写真アップロードでの体験方法
+                    h3(data-i18n='howto.photo.title') #{howto.photo.title}
                 .vline.after
                 p
                   img(src='images/howto-photo-01.png')
                   .vline.before
                   .icon.step1
-                    h4 トップページで「Photo」を選択
+                    h4(data-i18n='howto.photo.s1') #{howto.photo.s1}
                   .vline.after
                 p
                   img(src='images/howto-photo-02.png')
                   .vline.before
                   .icon.step2
-                    h4 写真アップロード準備
+                    h4(data-i18n='howto.photo.s2') #{howto.photo.s2}
                   .vline
-                    | 下記のような写真をアップロードしてください。
+                    span(data-i18n='howto.photo.s2_0') #{howto.photo.s2_0}
                     ul
-                      li メガネ、帽子は被らず顔の全体がはっきり見える写真
-                      li 正面を向き、顔がまっすぐ固定された写真
-                      li 髪の毛が顔にかかっていない、顔が明るく照らされた写真
+                      li(data-i18n='howto.photo.s2_1') #{howto.photo.s2_1}
+                      li(data-i18n='howto.photo.s2_2') #{howto.photo.s2_2}
+                      li(data-i18n='howto.photo.s2_3') #{howto.photo.s2_3}
                 p
                   img(src='images/howto-photo-03.png')
                   .vline.before
                   .icon.step3
-                    h4 写真ファイルをドラッグ＆ドロップするか、クリックで選択しアップロード
+                    h4(data-i18n='howto.photo.s3') #{howto.photo.s3}
                   .vline.after
                 p
                   img(src='images/howto-photo-04.jpg')
                   .vline.before
                   .icon.step4
                     h4
-                      span 顔認証位置を確認し、
-                      span 「OK」で Deja vu 開始
+                      span(data-i18n='howto.photo.s4_1') #{howto.photo.s4_1}
+                      span(data-i18n='howto.photo.s4_2') #{howto.photo.s4_2}
             include ./includes/play_buttons.jade
         .navi
           .header

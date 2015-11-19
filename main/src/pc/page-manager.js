@@ -1,4 +1,7 @@
 import $ from 'jquery'
+import i18n from 'i18next-client'
+import i18nextJquery from 'i18next-jquery'
+
 import StateMachine from 'javascript-state-machine'
 
 import Config from './config'
@@ -105,6 +108,22 @@ class PageManager {
     //
     //  return false
     //});
+
+    // localise
+    i18nextJquery(i18n, $, {
+      tName: 't',
+      i18nName: 'i18n',
+      handleName: 'localize',
+      selectorAttr: 'data-i18n',
+      targetAttr: 'data-i18n-target',
+      optionsAttr: 'data-i18n-options',
+      useOptionsAttr: false,
+      parseDefaultValueFromContent: true
+    })
+    $.i18n.init({lng: 'dev'}, ()=>{
+      $('#about').localize()
+      $('#howto').localize()
+    })
 
 
     Ticker.start()
