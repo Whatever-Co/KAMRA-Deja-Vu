@@ -37,11 +37,26 @@ def main():
 
 	#===================================
 	# eyemouth
+
 	for poly in eyemouthPolygons:
 		poly.a -= eyemouthVertexIndex
 		poly.b -= eyemouthVertexIndex
 		poly.c -= eyemouthVertexIndex
 		poly.d -= eyemouthVertexIndex
+
+	# fill mouth manually
+	mouthVertexOffset = len(eyemouthPoints)
+	eyemouthPoints.extend([points[i] for i in mouthVertexIndices])
+
+	print len(eyemouthPoints)
+
+
+	for poly in mouthPolygons:
+		cpoly = c4d.CPolygon(
+			poly[0] + mouthVertexOffset,
+			poly[2] + mouthVertexOffset,
+			poly[1] + mouthVertexOffset)
+		eyemouthPolygons.append(cpoly)
 
 	eyemouthModel = getThreeJson(eyemouthPoints, eyemouthPolygons, eyemouthNormals)
 	eyemouthModel["name"] = "eyemouth"
@@ -51,17 +66,17 @@ def main():
 
 	#===================================
 	# face_hull
-	points = hullObj.GetAllPoints()
-	polygons = hullObj.GetAllPolygons()
-	normals = hullObj.CreatePhongNormals()
+	# points = hullObj.GetAllPoints()
+	# polygons = hullObj.GetAllPolygons()
+	# normals = hullObj.CreatePhongNormals()
 
-	hullModel = getThreeJson(points, polygons, normals)
-	hullModel["name"] = "face_hull"
+	# hullModel = getThreeJson(points, polygons, normals)
+	# hullModel["name"] = "face_hull"
 
-	with open("%s/0b/data/3 - JSON/face_hull.json" % (projDir), 'w') as outFile:
-		json.dump(hullModel, outFile, separators=(',',':'))
+	# with open("%s/0b/data/3 - JSON/face_hull.json" % (projDir), 'w') as outFile:
+	# 	json.dump(hullModel, outFile, separators=(',',':'))
 
-	print "END"
+	# print "END"
 
 def getThreeJson(points, polygons, normals):
 
@@ -72,16 +87,16 @@ def getThreeJson(points, polygons, normals):
 
 	for i, poly in enumerate(polygons):
 		faceArray.append(
-			FACE_VERTEX_NORMAL |
+			# FACE_VERTEX_NORMAL |
 			TRIANGLE
 		)
 
 		if poly.IsTriangle():
 			faceArray.extend([poly.a, poly.c, poly.b])
 			faceArray.extend([poly.a, poly.c, poly.b])
-			normalsForIndex[poly.a] = normals[i*3]
-			normalsForIndex[poly.b] = normals[i*3+1]
-			normalsForIndex[poly.c] = normals[i*3+2]
+			# normalsForIndex[poly.a] = normals[i*3]
+			# normalsForIndex[poly.b] = normals[i*3+1]
+			# normalsForIndex[poly.c] = normals[i*3+2]
 		else:
 			print "ERROR", i
 			return
@@ -92,10 +107,10 @@ def getThreeJson(points, polygons, normals):
 		vertexArray.extend(pt)
 
 	# normals
-	normalArray = []
-	for norm in normalsForIndex:
-		norm = toPosition(norm)
-		normalArray.extend(norm)
+	# normalArray = []
+	# for norm in normalsForIndex:
+	# 	norm = toPosition(norm)
+	# 	normalArray.extend(norm)
 
 
 	return {
@@ -103,13 +118,13 @@ def getThreeJson(points, polygons, normals):
 			"type": "Geometry",
 			"faces": len(polygons),
 			"vertices": len(points),
-			"normals": len(points),
+			# "normals": len(points),
 			"generator": "io_three",
 			"version": 3
 		},
 		"vertices": vertexArray,
 		"faces": faceArray,
-		"normals": normalArray
+		# "normals": normalArray
 	}
 
 if __name__=='__main__':

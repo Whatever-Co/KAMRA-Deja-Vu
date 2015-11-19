@@ -664,6 +664,7 @@ def getFaceVertices(face, useCache=True):
 
 	facePoints = points[:eyemouthVertexIndex]
 	eyemouthPoints = points[eyemouthVertexIndex:]
+	eyemouthPoints.extend([points[i] for i in mouthVertexIndices])
 
 	# vertices
 	faceVertices = []
