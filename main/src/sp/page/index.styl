@@ -1,2 +1,124 @@
+_MEDIA_SP()
+  @media screen and (max-width: 639px)
+    {block}
+
+
+//----------------------
+// 0. Default settings
+//----------------------
+
+
+*
+  box-sizing border-box
+
+html, body
+  padding 0
+  margin 0
+
 body
-  background-color black
+  font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', 'Hiragino Mincho ProN', serif
+  font-size 11px
+  letter-spacing 0.3em
+  color rgba(255, 255, 255, 0.7)
+  background-color #021827
+
+button
+  background none
+  border none
+  outline none
+  opacity 0.7
+  transition opacity 0.5s
+  &:hover
+    opacity 1.0
+
+a
+  color rgb(255, 255, 255)
+  text-decoration none
+  opacity 0.7
+  transition all 1.0s
+  &:hover
+    opacity 1.0
+  &.blank
+    background url(images/icon_blank.png) no-repeat 100% 50%
+
+h2
+  font-size 32px
+h3
+  font-size 18px
+
+//----------------------
+// 1. Common parts
+//----------------------
+
+
+//----------------------
+// 2. Elements
+//----------------------
+
+.youtube
+  position relative
+  display flex
+  align-items center
+  justify-content center
+  .bg
+    width 100%
+    img
+      position relative
+      width 100%
+      top 0
+      left 0
+  button
+    position absolute
+    top 50%
+    left 50%
+    transform translate(-50%,-50%)
+    +_MEDIA_SP()
+      img
+        width 61px
+        height  61px
+
+.page
+  position relative
+  max-width 640px
+  margin 0 auto
+.content
+  position relative
+  margin 0 30px 0 30px
+
+.enviroment
+  margin 25px 0 50px 0
+  padding 20px
+  background url(images/h-line.png) top repeat-x, url(images/h-line.png) bottom repeat-x, url(images/v-line.png) left repeat-y, url(images/v-line.png) right repeat-y
+  background-color rgba(255, 255, 255, 0.04)
+
+.concept
+  p
+    white-space
+      nowarap
+.album
+  position relative
+  img
+    width 100%
+
+
+.share
+  display flex
+  align-items center
+  justify-content space-around
+  margin 76px 24px 90px 24px
+  +_MEDIA_SP()
+    img
+      width 50px
+
+.footer
+  display flex
+  flex-direction column
+  align-items center
+  justify-content space-around
+  margin 0 0 50px 0
+  +_MEDIA_SP()
+    img
+      width 50%
+  .copylight
+    margin 29px 0 0 0
+

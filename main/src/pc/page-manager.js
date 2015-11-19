@@ -120,7 +120,10 @@ class PageManager {
       useOptionsAttr: false,
       parseDefaultValueFromContent: true
     })
-    $.i18n.init({lng: 'dev'}, ()=>{
+    $.i18n.init({
+      lng: 'dev',
+      debug: Config.DEV_MODE
+    }, ()=>{
       $('#about').localize()
       $('#howto').localize()
     })

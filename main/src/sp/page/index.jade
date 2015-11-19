@@ -10,4 +10,91 @@ html.no-js
     link(rel='stylesheet', href='../normalize.css')
     link(rel='stylesheet', href='index.css')
   body
+    .youtube
+      .bg
+        img(src='images/thumbnail.jpg' alt='thumbnail')
+      button
+        img(src='images/button-play.png' alt='play button')
+    .page
+      .content
+        h2 The Special Version of Music Video
+        span 下記対応環境から閲覧いただくと、あなたの顔が Deja vu する、スペシャル版 MV を体験いただけます。
+        .enviroment
+          span 動作環境
+          ul
+            li Webカメラ付きPC
+            li WebGL対応ブラウザ
+              br
+              span ・Google Chrome　・Mozilla Firefox
+              br
+              span ※いずれも最新版を推奨
+        section.concept
+          p 白い天井の下　ここにあるのは傷んだ肉
+          p 馴染まない鉄の容れ物
+          p どちらへも振り切れない魂
+          p 「もう一度」　私は繰り返す
+          p 心は常に一定にしか動かないとしても　
+          p 精一杯勢いをつけ 同じ所から 同じ方へ
+        section.album
+          img(src='images/album-jacket.jpg' alt='album jacket')
+          h3 KAMRA - Artificial Emotions
+          span Buy via:
+          ul
+            li
+              a.blank(href='#{link.itunes}', target='_blank') iTunes
+            li
+              a.blank(href='#{link.amazon}', target='_blank') Amazon
+            li
+              a.blank(href='#{link.cdbaby}', target='_blank') CD Baby
+        section.kamra
+          .photo
+            img(src='images/profile-kamra.jpg' alt='KAMRA')
+            .info
+              .name KAMRA
+              | Yuichi Nakamura
+              .social
+                a(href='#{link.soundcloud}', target='_blank') SoundCloud
+                a(href='#{link.twitter}', target='_blank') Twitter
+
+          p(data-i18n='about.kamra') #{about.kamra}
+
+        section
+          h3 invisi-dir.
+          p(data-i18n='about.invisidir') #{about.invisidir}
+          a(src='http://invisi-dir.com' target='_blank') http://invisi-dir.com
+        section
+          h3 invisible designs lab.
+          p(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
+          a(src='http://invisi.jp' target='_blank') http://invisi.jp
+        section.credit
+          .colum2
+            for credit in credits
+              .credit
+                span.part #{credit.part}
+                span.name #{credit.name}
+                a.blank(href="#{credit.url}" target="_blank") #{credit.site}
+        .share
+          button
+            img(src='images/button-twitter.png' alt='twitter')
+          button
+            img(src='images/button-facebook.png' alt='facebook')
+          button
+            img(src='images/button-line.png' alt='line')
+
+        .footer
+          button
+            img(src='images/button-back.png' alt='top')
+          img.copylight(src='images/label-copyligit.png' alt='© KAMRA2015')
+
+
+
+    .noise.overlay
+
     script(src='main.js')
+    script(src='https://use.typekit.net/#{typekit}.js')
+    script.
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', "#{GA}", 'auto');
