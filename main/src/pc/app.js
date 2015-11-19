@@ -54,7 +54,7 @@ export default class App extends EventEmitter {
 
     this.renderer = new THREE.WebGLRenderer({canvas: document.querySelector('canvas#main')})
     this.renderer.setSize(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)
-    this.renderer.setClearColor(0x071520, 1)
+    this.renderer.setClearColor(0x021827, 1)
     this.renderer.clear()
 
     // logo
