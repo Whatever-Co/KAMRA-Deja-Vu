@@ -51,18 +51,20 @@ class PageManager {
         // about
         onenterabout: () => {
           $('#about').fadeIn(1000)
-          $('#top').addClass('blur')
+          $('#top,#canvas-clip').addClass('blur')
         },
         onleaveabout: () => {
           $('#about').fadeOut(1000)
-          $('#top').removeClass('blur')
+          $('#top,#canvas-clip').removeClass('blur')
         },
         // howto
         onenterhowto: () => {
           $('#howto').fadeIn(1000)
+          $('#top,#canvas-clip').addClass('blur')
         },
         onleavehowto: () => {
           $('#howto').fadeOut(1000)
+          $('#top,#canvas-clip').removeClass('blur')
         },
         // play
         onbeforestart: () => {
@@ -89,7 +91,11 @@ class PageManager {
     $('.without-webcam').click(() => this.fsm.start('video'))
     $('.button-top').click(() => location.reload())
     $('a[href = "#about"]').click(() => this.fsm.goAbout())
-    $('button.close').click(() => this.fsm.goTop())
+    $('a[href = "#howto"]').click(() => this.fsm.goHowto())
+    $('button.close').click(() => {
+      location.href = '#'
+      this.fsm.goTop()
+    })
 
     Ticker.start()
 

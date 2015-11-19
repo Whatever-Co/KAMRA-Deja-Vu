@@ -11,8 +11,8 @@ html, body
   
 body
   font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', serif
-  font-size 14px
-  letter-spacing 0.2em
+  font-size 12px
+  letter-spacing 0.3em
   color rgba(255, 255, 255, 0.7)
   background-color #021827
 
@@ -20,20 +20,25 @@ button
   background none
   border none
   outline none
+  opacity 0.7
   transition opacity 0.5s
   &:hover
-    opacity 0.5
+    opacity 1.0
 
 a
-  color rgba(255, 255, 255, 0.7)
+  color rgba(255, 255, 255)
   text-decoration none
-  transition opacity 0.4s
+  opacity 0.7
+  transition opacity 1.0s
   &:hover
-    opacity 0.8
-    text-decoration underline
+    opacity 1.0
   &.blank
     background url(images/icon_blank.png) no-repeat 100% 50%
-    
+
+h2
+  font-size 32px
+h3
+  font-size 18px
 
 //----------------------
 // 1. Common parts
@@ -59,6 +64,18 @@ button.close
     button
       margin 0 20px
 
+.page
+  position relative
+  width 940px
+  margin 100px auto 100px auto
+
+.colum2
+  position relative
+  width 100%
+  display flex
+  flex-wrap wrap
+  align-items stretch
+  justify-content space-between
 
 //----------------------
 // 2. Elements
@@ -77,6 +94,7 @@ canvas#main
 
 #page
   position absolute
+  //position fixed
   left 0
   top 0
   width 100%
@@ -156,6 +174,42 @@ canvas#main
   width 100%
   height 100%
   top 0
+
+  .concept
+    text-align center
+  section
+    position relative
+    padding 80px 0 80px 0
+    &:not(:first-child)
+      background url(images/h-line.png) top repeat-x
+    .album_info
+      position absolute
+      margin 0 0 0 40px
+
+  .colum
+    width 440px
+    min-height 310px
+    h3
+      margin 30px 0
+    a
+      position absolute
+      bottom 0
+  .credit
+    width 440px
+    display flex
+    margin 30px 0
+    .info
+      display flex
+      flex-direction column
+      justify-content center
+      align-items flex-start
+      margin 0 0 0 26px
+      .name
+        font-size 20px
+        margin 20px 0
+      a
+        padding 0 14px 0 0
+
   .navi
     position fixed
     width 100%
@@ -167,50 +221,69 @@ canvas#main
       font-size 32px
     li
       padding 0 18px 0 10px
-  .page
-    position relative
-    width 940px
-    margin 100px auto 100px auto
-    .concept
-      text-align center
-    section
-      position relative
-      padding 80px 0 80px 0
-      &:not(:first-child)
-        background url(images/h-line.png) top repeat-x
-      .album_info
-        position absolute
-        margin 0 0 0 40px
-  .colum2
-    position relative
-    width 100%
+
+#howto
+  display none
+  .colum
+    width 420px
+    p
+      margin 0
+      padding 0
+    img
+      width 420px
+      height 236px
+      display block
+    h4
+      font-size 14px
+      span
+        display block
+        white-space nowrap
+    ul, li
+      margin 0.7em
+      padding 0
+  .vline
+    display block
+    background url(images/v-line.png) 32px 0px repeat-y
+    padding 10px 0 10px 88px
+    &.before
+      height 20px
+    &.after
+      height 40px
+  .icon
     display flex
-    flex-wrap wrap
-    align-items stretch
-    justify-content space-between
-    .colum
-      width 440px
-      min-height 310px
-      h3
-        margin 30px 0
-      a
-        position absolute
-        bottom 0
-    .credit
-      width 440px
-      display flex
-      margin 30px 0
-      .info
-        display flex
-        flex-direction column
-        justify-content center
-        align-items flex-start
-        margin 0 0 0 26px
-        .name
-          font-size 20px
-          margin 20px 0
-        a
-          padding 0 14px 0 0
+    justify-content flex-start
+    align-items center
+    height 68px
+    background-repeat no-repeat
+    background-size 68px 68px
+    padding  0 0 0 88px
+  .webcam
+    background-image url(images/howto-webcam-heading.png)
+  .photo
+    background-image url(images/howto-photo-heading.png)
+  .step1
+    background-image url(images/howto-01.png)
+  .step2
+    background-image url(images/howto-02.png)
+  .step3
+    background-image url(images/howto-03.png)
+  .step4
+    background-image url(images/howto-04.png)
+  .step5
+    background-image url(images/howto-05.png)
+
+
+
+
+  .navi
+    position fixed
+    width 100%
+    top 0
+    display flex
+    justify-content center
+    padding 50px 0 0 0
+    .header
+      display block
 
 
 #share
@@ -260,6 +333,7 @@ canvas#main
   z-index 100
 
 #_frame-counter
+  //display none // deb
   position absolute
   left 5px
   bottom 0px
