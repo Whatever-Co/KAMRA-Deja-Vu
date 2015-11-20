@@ -21,9 +21,41 @@ class App {
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
     }, ()=>{
-      console.log('hello3')
+      console.log('TODO localize')
     })
+  }
+
+  setupYoutube() {
+
+    let youtube = $('#youtube')
+    youtube.click(() => this.startYoutube())
+    youtube.css({
+      width:youtube.width(),
+      height:youtube.height()
+    })
+
+  }
+
+  startYoutube() {
+    console.log('start youtube2')
+    const videoId = 'vwfNPtnPl4E'
+    //let videoId = document.getElementById(id).getAttribute('data-video-id')
+    this.player = new YT.Player('youtube',
+      {
+        width: '100%',
+        height: '100%',
+        videoId: videoId,
+        playerVars: {
+          autohide: 1,
+          autoplay: 1,
+          loop: 1,
+          controls: 1
+        }
+      })
   }
 }
 
-new App()
+let app = new App()
+window.onYouTubeIframeAPIReady = () => {
+  app.setupYoutube()
+}

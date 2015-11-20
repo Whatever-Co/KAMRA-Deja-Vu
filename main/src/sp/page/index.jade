@@ -10,12 +10,12 @@ html.no-js
     link(rel='stylesheet', href='../normalize.css')
     link(rel='stylesheet', href='index.css')
   body
-    .youtube
+    #youtube
       .bg
         img(src='images/thumbnail.jpg' alt='thumbnail')
       button
         img(src='images/button-play.png' alt='play button')
-    .page
+    #page
       .content
         h2 The Special Version of Music Video
         span 下記対応環境から閲覧いただくと、あなたの顔が Deja vu する、スペシャル版 MV を体験いただけます。
@@ -96,6 +96,7 @@ html.no-js
 
     script(src='main.js')
     script(src='https://use.typekit.net/#{typekit}.js')
+    script(src='https://www.youtube.com/iframe_api')
     script.
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

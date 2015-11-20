@@ -1,9 +1,16 @@
 {
-  "title":"KAMRA - Deja Vu - Artifitial Intelligence",
-  "description":"",
-  "keywords":"Keywords",
+  "title":"Deja vu | KAMRA",
+  "description":"あなたの顔が Deja vu する、インタラクティブミュージックビデオ。KAMRA ニューアルバム「Artificial Emotions」発売中。",
+  "keywords":"Deja vu, デジャブ, KAMRA, Artificial Emotions, インタラクティブミュージックビデオ, Interactive music video, Invisible Designs Lab., invisi dir., dot by dot inc. ",
   "typekit":"hfu8yiq",
   "GA":"UA-70385532-1",
+  "youtubeId":"20ZWZJgixtw",
+  "social":{
+    "url":"https://kamra.invisi-dir.com/",
+    "text":"Deja vu | KAMRA\nあなたの顔が Deja vu する、インタラクティブミュージックビデオ。KAMRA ニューアルバム「Artificial Emotions」発売中。",
+    "hashtag":"KAMRA",
+    "twitter":"http://twitter.com/share?url=#{share.url}&text=#{share.text}&hashtags=#{share.hashtag}"
+  },
   "link":{
     "itunes":"https://itunes.apple.com/",
     "amazon":"http://www.amazon.co.jp/dp/B017D2VQKA",
@@ -48,7 +55,7 @@
       "photo":"profile-image.png"
     },
     {
-      "part":"Technical Director",
+      "part":"Technical Director / Programmer",
       "name":"Saqoosha",
       "site":"dot by dot inc.",
       "url":"http://dotby.jp/",
