@@ -20,17 +20,9 @@
         a(href='#howto') How to play
       li
         | Share :
-        a.button_twitter(
-          title='Twitter',
-          href='http://twitter.com/share',
-          onClick="window.open(this.href,'tweetwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
-        )
+        button.button_twitter(title='Twitter')
           img(src='images/button-top-twitter.png')
-        a(
-          title='Facebook',
-          href='http://www.facebook.com/share.php?u=#{social.url}',
-          onClick="window.open(this.href,'facebookwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
-        )
+        button.button_facebook(title='Facebook')
           img(src='images/button-top-facebook.png')
       li
         span ©KAMRA2015
