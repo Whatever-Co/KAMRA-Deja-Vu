@@ -8,6 +8,7 @@ import Config from './config'
 import Ticker from './ticker'
 import PreprocessWorker from 'worker!./preprocess-worker'
 import App from './app'
+import WebcamManager from './webcam-manager'
 
 
 if (Config.DEV_MODE) {
@@ -22,11 +23,13 @@ class PageManager {
       initial: 'loadAssets',
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
-        {name: 'start', from: ['top', 'about'], to: 'playing'},
+        {name: 'selectWebcam', from: ['top', 'about'], to: 'webcam1'},
+        {name: 'webcamOK', from: 'webcam1', to: 'webcam2'},
+        {name: 'start', from: ['top', 'webcam2'], to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goAbout', from: 'top', to: 'about'},
         {name: 'goHowto', from: 'top', to: 'howto'},
-        {name: 'goTop', from: ['about', 'howto', 'share'], to: 'top'},
+        {name: 'goTop', from: ['webcam1', 'about', 'howto', 'share'], to: 'top'},
       ],
       callbacks: {
         onleaveloadAssets: () => {
@@ -44,13 +47,43 @@ class PageManager {
           if (window.__djv_loader.getResult('shared-data')) {
             this.fsm.start('shared')
           } else {
-            // this.fsm.start('webcam')
             $('#top').fadeIn(1000)
           }
         },
-        onleavetop: () => {
-
+        onleavetop: (event, from, to) => {
+          if (to == 'webcam1' || to == 'playing') {
+            $('#top').stop().fadeOut(1000, () => {
+              this.fsm.transition()
+            })
+            return StateMachine.ASYNC
+          }
         },
+
+        // webcam
+        onenterwebcam1: () => {
+          $('#webcam-step1').fadeIn(1000)
+          WebcamManager.start(() => {
+            this.fsm.webcamOK()
+          }, () => {
+            this.fsm.goTop()
+          })
+        },
+        onleavewebcam1: () => {
+          $('#webcam-step1').stop().fadeOut(1000, () => {
+            this.fsm.transition()
+          })
+          return StateMachine.ASYNC
+        },
+        onenterwebcam2: () => {
+          $('#webcam-step2').css({display: 'flex'}).hide().fadeIn(1000)
+        },
+        onleavewebcam2: () => {
+          $('#webcam-step2').stop().fadeOut(1000, () => {
+            this.fsm.transition()
+          })
+          return StateMachine.ASYNC
+        },
+
         // about
         onenterabout: () => {
           $('#about').fadeIn(1000)
@@ -89,9 +122,10 @@ class PageManager {
         },
       }
     })
-    $('.with-webcam').click(() => this.fsm.start('webcam'))
+    $('.with-webcam').click(() => this.fsm.selectWebcam())
     $('.with-photo').click(() => console.warn('TODO upload page'))
     $('.without-webcam').click(() => this.fsm.start('video'))
+    $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
     $('.button-top').click(() => location.reload())
     $('a[href="#about"]').click(() => this.fsm.goAbout())
     $('a[href="#howto"]').click(() => this.fsm.goHowto())
