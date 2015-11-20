@@ -216,6 +216,12 @@ class PageManager {
     }, () => {
       $('#about').localize()
       $('#howto').localize()
+
+      let twitter_href = $.t('social.twitter', {
+        url: encodeURIComponent($.t('social.url')),
+        text: encodeURIComponent($.t('social.text'))
+      })
+      $('a.button_twitter').attr('href', twitter_href)
     })
 
 
