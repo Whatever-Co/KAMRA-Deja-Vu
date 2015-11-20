@@ -46,9 +46,7 @@ class PageManager {
         onleaveloadAssets: () => {
           $('#loading').fadeOut(1000, () => {
             this.app = new App(this.keyframes)
-            this.app.on('complete', () => {
-              this.fsm.playCompleted()
-            })
+            this.app.on('complete', this.fsm.playCompleted.bind(this.fsm))
             this.fsm.transition()
           })
           return StateMachine.ASYNC
@@ -157,7 +155,8 @@ class PageManager {
         },
 
         // share
-        onentershare: () => {
+        onentershare: (e, f, t, shareURL) => {
+          this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.text'), shareURL || location.href)
           $('#share').fadeIn(1000)
         },
         onleaveshare: () => {
@@ -169,7 +168,7 @@ class PageManager {
       },
       error: (eventName, from, to, args, errorCode, errorMessage) => {
         console.warn(eventName, from, to, args, errorCode, errorMessage)
-        debugger
+        if (Config.DEV_MODE) debugger
       }
     })
     $('.with-webcam').click(() => this.fsm.selectWebcam())
@@ -178,7 +177,7 @@ class PageManager {
     $('#top .play-shared button').click(() => this.fsm.start('shared'))
     $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
     $('#upload-step1 button.skip').click(() => this.fsm.skip())
-    $('#upload-step3 button.ok').click(() => this.fsm.start('image'))
+    $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
     $('.button-top').click(() => location.reload())
     $('a[href="#about"]').click(() => this.fsm.goAbout())
@@ -202,10 +201,32 @@ class PageManager {
 
     this.initLocales()
 
+      this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.text'), $.t('social.url'))
+    })
 
     Ticker.start()
 
     this.preprocessKeyframes()
+  }
+
+
+  setupShareButtons(twitter, facebook, text, url) {
+    $(twitter).click((e) => {
+      e.preventDefault()
+      ShareUtil.twitter({
+        text,
+        url,
+        hashtags: 'KAMRA',
+      })
+    })
+    $(facebook).click((e) => {
+      e.preventDefault()
+      ShareUtil.facebook({
+        app_id: '1487444688252775',
+        href: url,
+        redirect_uri: 'https://kamra.invisi-dir.com/#shared',
+      })
+    })
   }
 
 
@@ -335,5 +356,5 @@ new PageManager()
 
 window.onerror = (message, url, lineNumber, column, error) => {
   console.log({message, url, lineNumber, column, error, stack: error.stack})
-  debugger
+  // debugger
 }
