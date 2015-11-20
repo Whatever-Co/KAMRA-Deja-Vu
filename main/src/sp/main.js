@@ -15,7 +15,6 @@ class App {
 
     // smooth to top
     $('.footer button').click(() => {
-      console.log('cccc')
       $('html,body').animate({scrollTop:0}, 500, 'swing')
       return false
     })
@@ -33,11 +32,16 @@ class App {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng: 'dev',
+      //lng: 'dev',
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
     }, ()=>{
       $('#page').localize()
+      // build img src
+      let imgs = $('img.i18n')
+      imgs.attr('src', imgs.text())
+
+      // build twitter
       let twitter_href = $.t('social.twitter', {
         url: encodeURIComponent($.t('social.url')),
         text: encodeURIComponent($.t('social.text'))
