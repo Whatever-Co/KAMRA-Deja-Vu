@@ -199,30 +199,7 @@ class PageManager {
     //  return false
     //});
 
-    // localise
-    i18nextJquery(i18n, $, {
-      tName: 't',
-      i18nName: 'i18n',
-      handleName: 'localize',
-      selectorAttr: 'data-i18n',
-      targetAttr: 'data-i18n-target',
-      optionsAttr: 'data-i18n-options',
-      useOptionsAttr: false,
-      parseDefaultValueFromContent: true
-    })
-    $.i18n.init({
-      lng: 'dev',
-      debug: Config.DEV_MODE
-    }, () => {
-      $('#about').localize()
-      $('#howto').localize()
-
-      let twitter_href = $.t('social.twitter', {
-        url: encodeURIComponent($.t('social.url')),
-        text: encodeURIComponent($.t('social.text'))
-      })
-      $('a.button_twitter').attr('href', twitter_href)
-    })
+    this.initLocales()
 
 
     Ticker.start()
@@ -292,6 +269,33 @@ class PageManager {
       e.stopPropagation()
       console.log(e.dataTransfer.files)
       this.fsm.fileSelected(e.dataTransfer.files[0])
+    })
+  }
+
+  initLocales() {
+    // localise
+    i18nextJquery(i18n, $, {
+      tName: 't',
+      i18nName: 'i18n',
+      handleName: 'localize',
+      selectorAttr: 'data-i18n',
+      targetAttr: 'data-i18n-target',
+      optionsAttr: 'data-i18n-options',
+      useOptionsAttr: false,
+      parseDefaultValueFromContent: true
+    })
+    $.i18n.init({
+      lng: 'dev',
+      debug: Config.DEV_MODE
+    }, () => {
+      $('#about').localize()
+      $('#howto').localize()
+
+      let twitter_href = $.t('social.twitter', {
+        url: encodeURIComponent($.t('social.url')),
+        text: encodeURIComponent($.t('social.text'))
+      })
+      $('a.button_twitter').attr('href', twitter_href)
     })
   }
 
