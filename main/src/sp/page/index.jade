@@ -41,14 +41,17 @@ html.no-js
           ul
             li
               a.blank(href='#{link.itunes}', target='_blank') iTunes
+            li /
             li
               a.blank(href='#{link.amazon}', target='_blank') Amazon
+            li /
             li
               a.blank(href='#{link.cdbaby}', target='_blank') CD Baby
         hr
         section.kamra
           .col2
-            img.photo(src='images/profile-kamra.jpg' alt='KAMRA')
+            #profile_kamra
+            //img.photo(src='images/profile-kamra.jpg' alt='KAMRA')
             .info
               .name KAMRA
               span Yuichi Nakamura
@@ -78,11 +81,23 @@ html.no-js
                 if credit.url !== undefined
                   a.blank(href="#{credit.url}" target="_blank") #{credit.site}
         .share
-          a.button
+          a.button(
+            title='Twitter',
+            href='http://twitter.com/share',
+            onClick="window.open(this.href,'tweetwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
+          )
             img(src='images/button-twitter.png' alt='twitter')
-          a.button
+          a.button(
+            title='Facebook',
+            href='http://www.facebook.com/share.php?u=#{social.url}',
+            onClick="window.open(this.href,'facebookwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
+          )
             img(src='images/button-facebook.png' alt='facebook')
-          a.button
+          a.button.mobile_only(
+            title='Line',
+            href='line://msg/text/#{social.text}',
+            target='_blank'
+          )
             img(src='images/button-line.png' alt='line')
 
         .footer
