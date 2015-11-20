@@ -6,6 +6,23 @@ const DEV = (process.env.NODE_ENV == 'development')
 
 class App {
   constructor() {
+    this.initLocalization()
+
+    //
+    if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      $('html').addClass('mobile')
+    }
+
+
+    // misc setting
+    $('.footer button').click(() => {
+      console.log('cccc')
+      $('html,body').animate({scrollTop:0}, 500, 'swing')
+      return false
+    })
+  }
+
+  initLocalization() {
     i18nextJquery(i18n, $, {
       tName: 't',
       i18nName: 'i18n',
@@ -25,15 +42,14 @@ class App {
     })
   }
 
-  setupYoutube() {
-
+  initYoutube() {
     let youtube = $('#youtube')
     let videoId = youtube.data('videoid')
-    youtube.click(() => this.startYoutube(videoId))
     youtube.css({
       width:youtube.width(),
       height:youtube.height()
     })
+    youtube.click(() => this.startYoutube(videoId))
   }
 
   startYoutube(videoId) {
@@ -54,5 +70,5 @@ class App {
 
 let app = new App()
 window.onYouTubeIframeAPIReady = () => {
-  app.setupYoutube()
+  app.initYoutube()
 }

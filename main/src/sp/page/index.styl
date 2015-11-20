@@ -67,6 +67,12 @@ hr
 // 1. Common parts
 //----------------------
 
+.mobile_only
+  display none
+
+html.mobile
+  .mobile_only
+    display block
 
 //----------------------
 // 2. Elements
@@ -148,6 +154,14 @@ section
   width 100%
   .col2
     display flex
+  #profile_kamra
+    position relative
+    width 50%
+    min-height 130px
+    background url(images/profile-kamra.jpg) no-repeat
+    background-size contain
+    +_MEDIA_PC()
+      min-height 320px
   img
     width 50%
   .info
