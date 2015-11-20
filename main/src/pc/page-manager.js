@@ -270,11 +270,22 @@ class PageManager {
     let button = $('#upload-step2 .drop-area')
     let file = $('#upload-step2 .image-file')
 
-    button.on('click', file.click())
+    button.on('click', () => file.click())
     file.on('change', (e) => {
       e.preventDefault()
       e.stopPropagation()
       this.fsm.fileSelected(file[0].files[0])
+    })
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'copy'
+    }, false)
+    window.addEventListener('drop', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log(e.dataTransfer.files)
+      this.fsm.fileSelected(e.dataTransfer.files[0])
     })
   }
 
