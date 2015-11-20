@@ -9,7 +9,9 @@
     "url":"https://kamra.invisi-dir.com/",
     "text":"Deja vu | KAMRA\nあなたの顔が Deja vu する、インタラクティブミュージックビデオ。KAMRA ニューアルバム「Artificial Emotions」発売中。",
     "hashtag":"KAMRA",
-    "twitter":"http://twitter.com/share?url=#{share.url}&text=#{share.text}&hashtags=#{share.hashtag}"
+    "twitter":"http://twitter.com/share?url=#{share.url}&text=#{share.text}&hashtags=#{share.hashtag}",
+    "twitter_user":"@KAMRA_invisidir",
+    "facebook_appid":"1487444688252775"
   },
   "link":{
     "itunes":"https://itunes.apple.com/",

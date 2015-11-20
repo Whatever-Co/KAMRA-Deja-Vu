@@ -12,9 +12,9 @@ html.no-js
     link(rel='apple-touch-icon', href='apple-touch-icon.png')
     link(rel='stylesheet', href='normalize.css')
     link(rel='stylesheet', href='index.css')
+    include ./includes/og.jade
     script.
       if (location.hash == '#shared') window.close()
-
   body
     #canvas-clip
       canvas#main
