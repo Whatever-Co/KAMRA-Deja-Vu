@@ -51,6 +51,12 @@ h2
   font-size 17px
 h3
   font-size 15px
+.s9
+  font-size 9px
+.s14
+  font-size 14px
+.s19
+  font-size 19px
 
 hr
   border 0
@@ -61,6 +67,21 @@ hr
     width 15px
     text-align left
     margin-left 0
+
++_MEDIA_PC()
+  body
+    font-size 11px*2
+  h2
+    font-size 17px*2
+  h3
+    font-size 15px*2
+  .s9
+    font-size 9px*2
+  .s14
+    font-size 14px*2
+  .s19
+    font-size 19px*2
+
 
 
 //----------------------
@@ -86,6 +107,7 @@ html.mobile
   align-items center
   justify-content center
   margin 30px auto 0 auto
+  z-index 10002
   +_MEDIA_PC()
     margin 60px auto 0 auto
   .bg
@@ -123,7 +145,6 @@ html.mobile
     margin 10 0
     padding 0
   li
-    font-size 9px
     padding-left 20px
     &.check
       background url(images/icon-check.png) left center no-repeat
@@ -133,6 +154,8 @@ section
   margin 38px 0 38px 0
 
 .concept
+  img
+    width 100%
   p
     white-space
       nowarap
@@ -146,8 +169,6 @@ section
     justify-content space-between
     padding 0
     list-style-type none
-  a
-    font-size 14px
 
 .kamra
   position relative
@@ -166,13 +187,8 @@ section
     width 50%
   .info
     margin 0 0 0 20px
-  span
-    font-size 10px
-  .name
-    font-size 19px
   .social
     margin 20px 0 0 0
-    font-size 11px
 
 
 
@@ -216,7 +232,7 @@ section.credits
 
 
 .overlay
-  position absolute
+  position fixed
   left 0
   top 0
   width 100%
