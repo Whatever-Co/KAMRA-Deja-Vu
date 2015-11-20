@@ -1,0 +1,65 @@
+#about
+  .mask
+    .page
+      section#concept(name='concept')
+        p.concept()
+          span(data-i18n='about.concept.1') #{about.concept.l1}
+          br
+          br
+          span(data-i18n='about.concept.2') #{about.concept.l2}
+          br
+          br
+          span(data-i18n='about.concept.3') #{about.concept.l3}
+        include ./play_buttons.jade
+      section#album(name='album')
+        img(src='images/album-jacket.jpg')
+        img.album_info(src='images/album-info.png')
+      section#kamra(name='kamra')
+        img(src='images/profile-kamra.png')
+        .info
+          p KAMRA
+            span / Yuichi Nakamura
+          ul
+            li
+              a.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
+            li
+              a.blank(src='#{link.twitter}' target='_blank') Twitter
+
+        p(data-i18n='about.kamra') #{about.kamra}
+
+        hr.mini
+
+        .colum2
+          .colum
+            h3 invisi-dir.
+            p(data-i18n='about.invisidir') #{about.invisidir}
+            a.blank(href='http://invisi-dir.com' target='_blank') http://invisi-dir.com
+          .colum
+            h3 invisible designs lab.
+            p(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
+            a.blank(href='http://invisi.jp' target='_blank') http://invisi.jp
+      section#credit(name='credit')
+        .colum2
+          for credit in credits
+            .credit
+              img(src="images/#{credit.photo}")
+              .info
+                span.part #{credit.part}
+                span.name #{credit.name}
+                a.blank(href="#{credit.url}" target="_blank") #{credit.site}
+        include ./play_buttons.jade
+  .navi
+    ul
+      li
+        a(href='#concept') Concept
+      li /
+      li
+        a(href='#album') Album
+      li /
+      li
+        a(href='#kamra') KAMRA
+      li /
+      li
+        a(href='#credit') Credit
+    button.close
+      img(src='images/button-close.png')

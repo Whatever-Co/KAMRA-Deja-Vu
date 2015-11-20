@@ -1,0 +1,29 @@
+#top
+  .album-info
+    image(src='images/album-jacket.png')
+    .info
+      | KAMRA - Artificial Emotions
+      ul
+        li
+          a(href='#{link.itunes}', target='_blank') iTunes
+        li
+          a(href='#{link.amazon}', target='_blank') Amazon
+        li
+          a(href='#{link.cdbaby}', target='_blank') CD Baby
+  .navi
+    ul
+      li
+        a(href='#') Home
+      li
+        a(href='#about') About
+      li
+        a(href='#howto') How to play
+      li
+        | Share :
+        a
+          img(src='images/button-top-twitter.png')
+        a
+          img(src='images/button-top-facebook.png')
+      li
+        span ©KAMRA2015
+  include ./play_buttons.jade
