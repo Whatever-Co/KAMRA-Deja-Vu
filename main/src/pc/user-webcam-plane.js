@@ -2,9 +2,9 @@
 
 // import $ from 'jquery'
 import {vec2} from 'gl-matrix'
-import Modernizr from 'exports?Modernizr!modernizr-custom'
 
 import UserPlaneBase from './user-plane-base'
+import WebcamManager from './webcam-manager'
 
 const FACE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
 const PARTS_INDICES = [23, 24, 25, 26, 28, 29, 30, 33, 34, 35, 36, 37, 38, 39, 40]
@@ -15,8 +15,6 @@ export default class UserWebcamPlane extends UserPlaneBase {
   constructor(...args) {
     super(...args)
 
-    this.onSuccess = this.onSuccess.bind(this)
-    this.onError = this.onError.bind(this)
     this.onLoadedMetadata = this.onLoadedMetadata.bind(this)
 
     this.numTrackingIteration = 2
@@ -35,35 +33,13 @@ export default class UserWebcamPlane extends UserPlaneBase {
     this.trackerContext.translate(this.trackerCanvas.width, 0)
     this.trackerContext.scale(-1, 1)
 
-    let options = {
-      video: {
-        mandatory: {minWidth: 640},
-        optional: [
-          {minWidth: 1280},
-          {minWidth: 1920}
-        ]
-      }
-    }
-    let gUM = Modernizr.prefixed('getUserMedia', navigator)
-    gUM(options, this.onSuccess, this.onError)
-  }
-
-
-  onSuccess(stream) {
-    this.stream = stream
     this.video = document.createElement('video')
-    this.video.src = window.URL.createObjectURL(stream)
+    this.video.src = window.URL.createObjectURL(WebcamManager.stream)
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()
     this.enableTextureUpdating = true
     this.enableTracking = true
     this.enableScoreChecking = true
-  }
-
-
-  onError(error) {
-    console.error(error)  
-    debugger
   }
 
 
@@ -122,7 +98,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
       let len = vec2.len(size)
       let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
       let isSizeOK = 350 < len && len < 600
-      let isPositionOK = Math.abs(center[0]) < 100 && Math.abs(center[1]) < 100
+      let isPositionOK = Math.abs(center[0]) < 150 && Math.abs(center[1]) < 150
       let isAngleOK = Math.abs(center[0] - pCenter[0]) < 30
       let isStable = this.tracker.getConvergence() < 100
       // $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
