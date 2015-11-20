@@ -10,7 +10,6 @@ _MEDIA_PC()
 // 0. Default settings
 //----------------------
 
-
 *
   box-sizing border-box
 
@@ -73,11 +72,16 @@ hr
 // 2. Elements
 //----------------------
 
-.youtube
+#youtube
   position relative
+  width 100%
+  max-width 640px
   display flex
   align-items center
   justify-content center
+  margin 30px auto 0 auto
+  +_MEDIA_PC()
+    margin 60px auto 0 auto
   .bg
     width 100%
     img
@@ -95,7 +99,7 @@ hr
         width 61px
         height  61px
 
-.page
+#page
   position relative
   max-width 640px
   margin 0 auto
