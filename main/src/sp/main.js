@@ -28,18 +28,15 @@ class App {
   setupYoutube() {
 
     let youtube = $('#youtube')
-    youtube.click(() => this.startYoutube())
+    let videoId = youtube.data('videoid')
+    youtube.click(() => this.startYoutube(videoId))
     youtube.css({
       width:youtube.width(),
       height:youtube.height()
     })
-
   }
 
-  startYoutube() {
-    console.log('start youtube2')
-    const videoId = 'vwfNPtnPl4E'
-    //let videoId = document.getElementById(id).getAttribute('data-video-id')
+  startYoutube(videoId) {
     this.player = new YT.Player('youtube',
       {
         width: '100%',
