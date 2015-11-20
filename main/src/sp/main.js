@@ -8,13 +8,12 @@ class App {
   constructor() {
     this.initLocalization()
 
-    //
+    // is mobile?
     if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       $('html').addClass('mobile')
     }
 
-
-    // misc setting
+    // smooth to top
     $('.footer button').click(() => {
       console.log('cccc')
       $('html,body').animate({scrollTop:0}, 500, 'swing')
@@ -38,7 +37,12 @@ class App {
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
     }, ()=>{
-      console.log('TODO localize')
+      $('#page').localize()
+      let twitter_href = $.t('social.twitter', {
+        url: encodeURIComponent($.t('social.url')),
+        text: encodeURIComponent($.t('social.text'))
+      })
+      $('a.button_twitter').attr('href', twitter_href)
     })
   }
 
