@@ -201,12 +201,56 @@ class PageManager {
 
     this.initLocales()
 
-      this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.text'), $.t('social.url'))
-    })
-
     Ticker.start()
 
     this.preprocessKeyframes()
+  }
+
+
+  initUploads() {
+    let button = $('#upload-step2 .drop-area')
+    let file = $('#upload-step2 .image-file')
+
+    button.on('click', () => file.click())
+    file.on('change', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      this.fsm.fileSelected(file[0].files[0])
+    })
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'copy'
+    }, false)
+    window.addEventListener('drop', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log(e.dataTransfer.files)
+      this.fsm.fileSelected(e.dataTransfer.files[0])
+    })
+  }
+
+  initLocales() {
+    // localise
+    i18nextJquery(i18n, $, {
+      tName: 't',
+      i18nName: 'i18n',
+      handleName: 'localize',
+      selectorAttr: 'data-i18n',
+      targetAttr: 'data-i18n-target',
+      optionsAttr: 'data-i18n-options',
+      useOptionsAttr: false,
+      parseDefaultValueFromContent: true
+    })
+    $.i18n.init({
+      lng: 'dev',
+      debug: Config.DEV_MODE
+    }, () => {
+      $('#about').localize()
+      $('#howto').localize()
+
+      this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.text'), $.t('social.url'))
+    })
   }
 
 
@@ -268,57 +312,6 @@ class PageManager {
       console.timeEnd('morph data processing')
       this.fsm.loadComplete()
     }
-  }
-
-
-  initUploads() {
-    let button = $('#upload-step2 .drop-area')
-    let file = $('#upload-step2 .image-file')
-
-    button.on('click', () => file.click())
-    file.on('change', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      this.fsm.fileSelected(file[0].files[0])
-    })
-    window.addEventListener('dragover', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      e.dataTransfer.dropEffect = 'copy'
-    }, false)
-    window.addEventListener('drop', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      console.log(e.dataTransfer.files)
-      this.fsm.fileSelected(e.dataTransfer.files[0])
-    })
-  }
-
-  initLocales() {
-    // localise
-    i18nextJquery(i18n, $, {
-      tName: 't',
-      i18nName: 'i18n',
-      handleName: 'localize',
-      selectorAttr: 'data-i18n',
-      targetAttr: 'data-i18n-target',
-      optionsAttr: 'data-i18n-options',
-      useOptionsAttr: false,
-      parseDefaultValueFromContent: true
-    })
-    $.i18n.init({
-      lng: 'dev',
-      debug: Config.DEV_MODE
-    }, () => {
-      $('#about').localize()
-      $('#howto').localize()
-
-      let twitter_href = $.t('social.twitter', {
-        url: encodeURIComponent($.t('social.url')),
-        text: encodeURIComponent($.t('social.text'))
-      })
-      $('a.button_twitter').attr('href', twitter_href)
-    })
   }
 
 
