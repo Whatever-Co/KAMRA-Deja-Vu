@@ -10,6 +10,7 @@ import PreprocessWorker from 'worker!./preprocess-worker'
 import App from './app'
 import WebcamManager from './webcam-manager'
 import FaceDetector from './face-detector'
+import ShareUtil from './share-util'
 
 
 if (Config.DEV_MODE) {
