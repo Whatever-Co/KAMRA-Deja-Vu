@@ -9,6 +9,7 @@ import Ticker from './ticker'
 import PreprocessWorker from 'worker!./preprocess-worker'
 import App from './app'
 import WebcamManager from './webcam-manager'
+import FaceDetector from './face-detector'
 
 
 if (Config.DEV_MODE) {
@@ -23,9 +24,18 @@ class PageManager {
       initial: 'loadAssets',
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
+
         {name: 'selectWebcam', from: ['top', 'about'], to: 'webcam1'},
         {name: 'webcamOK', from: 'webcam1', to: 'webcam2'},
-        {name: 'start', from: ['top', 'webcam2'], to: 'playing'},
+        
+        {name: 'selectUpload', from: ['top', 'about'], to: 'upload1'},
+        {name: 'skip', from: 'upload1', to: 'upload2'},
+        {name: 'fileSelected', from: 'upload2', to: 'upload2process'},
+        {name: 'detected', from: 'upload2process', to: 'upload3'},
+        {name: 'failure', from: 'upload2process', to: 'upload2'},
+        {name: 'retry', from: 'upload3', to: 'upload2'},
+
+        {name: 'start', from: ['top', 'webcam2', 'upload3'], to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goAbout', from: 'top', to: 'about'},
         {name: 'goHowto', from: 'top', to: 'howto'},
@@ -45,13 +55,17 @@ class PageManager {
         // top
         onentertop: () => {
           if (window.__djv_loader.getResult('shared-data')) {
-            this.fsm.start('shared')
-          } else {
-            $('#top').fadeIn(1000)
+            $('#top .play_buttons').hide()
+            $('#top .play-shared').show()
+            this.app.prepareForImage(
+              window.__djv_loader.getResult('shared-image'),
+              window.__djv_loader.getResult('shared-data')
+            )
           }
+          $('#top').delay(500).fadeIn(1000)
         },
         onleavetop: (event, from, to) => {
-          if (to == 'webcam1' || to == 'playing') {
+          if (to == 'webcam1' || to == 'upload1' || to == 'playing') {
             $('#top').stop().fadeOut(1000, () => {
               this.fsm.transition()
             })
@@ -84,6 +98,35 @@ class PageManager {
           return StateMachine.ASYNC
         },
 
+        // upload
+        onenterupload1: () => {
+          $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
+        },
+        onleaveupload1: () => {
+          $('#upload-step1').stop().fadeOut(1000, () => {
+            this.fsm.transition()
+          })
+          return StateMachine.ASYNC
+        },
+        onenterupload2: () => {
+          $('#upload-step2').css({display: 'flex'}).hide().fadeIn(1000)
+        },
+        onleaveupload2: () => {
+          $('#upload-step2').stop().fadeOut(1000)
+        },
+        onenterupload2process: (e, f, t, file) => {
+          this.processImageFile(file)
+        },
+        onenterupload3: () => {
+          $('#upload-step3').css({display: 'flex'}).hide().fadeIn(1000)
+        },
+        onleaveupload3: () => {
+          $('#upload-step3').stop().fadeOut(1000, () => {
+            this.fsm.transition()
+          })
+          return StateMachine.ASYNC
+        },
+
         // about
         onenterabout: () => {
           $('#about').fadeIn(1000)
@@ -102,14 +145,16 @@ class PageManager {
           $('#howto').fadeOut(1000)
           $('#top,#canvas-clip').removeClass('blur')
         },
+
         // play
-        onbeforestart: () => {
-          $('#top').fadeOut(1000)
-          return StateMachine.ASYNC
-        },
+        // onbeforestart: () => {
+        //   $('#top').fadeOut(1000)
+        //   return StateMachine.ASYNC
+        // },
         onenterplaying: (e, f, t, sourceType) => {
           this.app.start(sourceType)
         },
+
         // share
         onentershare: () => {
           $('#share').fadeIn(1000)
@@ -120,12 +165,20 @@ class PageManager {
           })
           return StateMachine.ASYNC
         },
+      },
+      error: (eventName, from, to, args, errorCode, errorMessage) => {
+        console.warn(eventName, from, to, args, errorCode, errorMessage)
+        debugger
       }
     })
     $('.with-webcam').click(() => this.fsm.selectWebcam())
-    $('.with-photo').click(() => console.warn('TODO upload page'))
+    $('.with-photo').click(() => this.fsm.selectUpload())
     $('.without-webcam').click(() => this.fsm.start('video'))
+    $('#top .play-shared button').click(() => this.fsm.start('shared'))
     $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
+    $('#upload-step1 button.skip').click(() => this.fsm.skip())
+    $('#upload-step3 button.ok').click(() => this.fsm.start('image'))
+    $('#upload-step3 button.retry').click(() => this.fsm.retry())
     $('.button-top').click(() => location.reload())
     $('a[href="#about"]').click(() => this.fsm.goAbout())
     $('a[href="#howto"]').click(() => this.fsm.goHowto())
@@ -133,6 +186,9 @@ class PageManager {
       location.href = '#'
       this.fsm.goTop()
     })
+
+    this.initUploads()
+
     // smooth scroll
     //$('a[href^=#]').click(function() {
     //  let href= $(this).attr('href')
@@ -157,7 +213,7 @@ class PageManager {
     $.i18n.init({
       lng: 'dev',
       debug: Config.DEV_MODE
-    }, ()=>{
+    }, () => {
       $('#about').localize()
       $('#howto').localize()
     })
@@ -209,7 +265,53 @@ class PageManager {
     }
   }
 
+
+  initUploads() {
+    let button = $('#upload-step2 .drop-area')
+    let file = $('#upload-step2 .image-file')
+
+    button.on('click', file.click())
+    file.on('change', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      this.fsm.fileSelected(file[0].files[0])
+    })
+  }
+
+
+  processImageFile(file) {
+    this.readAsDataURL(file).then((url) => {
+      let image = new Image()
+      image.onload = () => {
+        let detector = new FaceDetector()
+        detector.once('detected', (points) => {
+          this.app.prepareForImage(image, points, true)
+          this.fsm.detected()
+        })
+        detector.detect(image)
+      }
+      image.src = url
+    })
+  }
+
+
+  readAsDataURL(file) {
+    return new Promise((resolve) => {
+      let reader = new FileReader()
+      reader.onload = (e) => {
+        resolve(e.target.result)
+      }
+      reader.readAsDataURL(file)
+    })
+  }
+
+
 }
 
 
 new PageManager()
+
+window.onerror = (message, url, lineNumber, column, error) => {
+  console.log({message, url, lineNumber, column, error, stack: error.stack})
+  debugger
+}

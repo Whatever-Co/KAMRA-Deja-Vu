@@ -51,6 +51,9 @@
             <button class="without-webcam"><img src="images/button-play-sample.png" width="100" height="100"></button>
           </div>
         </div>
+        <div class="play-shared">
+          <button><img src="images/play-button.png" width="80"></button>
+        </div>
       </div>
       <div id="webcam-step1">
         <div class="attention"><img src="images/up-arrow.png" width="16"><span>リクエストを許可して下さい</span><img src="images/up-arrow.png" width="16"></div>
@@ -58,6 +61,21 @@
       </div>
       <div id="webcam-step2"><img src="images/webcam-2.png" width="1080">
         <button class="skip"><img src="images/skip.png" width="76.5"></button>
+      </div>
+      <div id="upload-step1">
+        <p>下記のような写真をアップロードしてください。</p><img src="images/upload-1.png" width="1080">
+        <button class="skip"><img src="images/skip.png" width="76.5"></button>
+      </div>
+      <div id="upload-step2">
+        <button class="drop-area"><img src="images/upload-2.png" width="400"></button>
+        <input type="file" accept="image/*" class="image-file">
+      </div>
+      <div id="upload-step3">
+        <p>この顔で再生します。よろしいですか？</p>
+        <div class="buttons">
+          <button class="ok"><img src="images/upload-ok.png" width="80"></button>
+          <button class="retry"><img src="images/upload-retry.png" width="80"></button>
+        </div>
       </div>
       <div id="about">
         <div class="mask">
@@ -70,6 +88,9 @@
                   <button class="with-photo"><img src="images/button-play-photo.png" width="100" height="100"></button>
                   <button class="without-webcam"><img src="images/button-play-sample.png" width="100" height="100"></button>
                 </div>
+              </div>
+              <div class="play-shared">
+                <button><img src="images/play-button.png" width="80"></button>
               </div>
             </section>
             <section id="album" name="album"><img src="images/album-jacket.jpg"><img src="images/album-info.png" class="album_info"></section>
@@ -148,6 +169,9 @@
                   <button class="with-photo"><img src="images/button-play-photo.png" width="100" height="100"></button>
                   <button class="without-webcam"><img src="images/button-play-sample.png" width="100" height="100"></button>
                 </div>
+              </div>
+              <div class="play-shared">
+                <button><img src="images/play-button.png" width="80"></button>
               </div>
             </section>
           </div>
@@ -266,6 +290,9 @@
                 <button class="without-webcam"><img src="images/button-play-sample.png" width="100" height="100"></button>
               </div>
             </div>
+            <div class="play-shared">
+              <button><img src="images/play-button.png" width="80"></button>
+            </div>
           </div>
         </div>
         <div class="navi">
@@ -291,5 +318,12 @@
     <script src="libs/soundjs-0.6.1.min.js"></script>
     <script src="https://use.typekit.net/hfu8yiq.js"></script>
     <script src="bootstrap.js"></script>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', "UA-70385532-1", 'auto');    
+    </script>
   </body>
 </html>
