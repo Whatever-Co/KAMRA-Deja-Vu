@@ -2,6 +2,9 @@ _MEDIA_SP()
   @media screen and (max-width: 639px)
     {block}
 
+_MEDIA_PC()
+  @media screen and (min-width: 640px)
+    {block}
 
 //----------------------
 // 0. Default settings
@@ -16,9 +19,8 @@ html, body
   margin 0
 
 body
-  font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', 'Hiragino Mincho ProN', serif
+  font-family "adobe-garamond-pro", Garamond, YuMincho, "游明朝", "Hiragino Mincho ProN", "Roboto Slab", serif
   font-size 11px
-  letter-spacing 0.3em
   color rgba(255, 255, 255, 0.7)
   background-color #021827
 
@@ -31,6 +33,9 @@ button
   &:hover
     opacity 1.0
 
+p
+  letter-spacing 0.2em
+
 a
   color rgb(255, 255, 255)
   text-decoration none
@@ -39,12 +44,25 @@ a
   &:hover
     opacity 1.0
   &.blank
-    background url(images/icon_blank.png) no-repeat 100% 50%
+    background url(images/icon_blank.png) no-repeat right center
+    background-size 10px 8px
+    padding 0 16px 0 0
 
 h2
-  font-size 32px
+  font-size 17px
 h3
-  font-size 18px
+  font-size 15px
+
+hr
+  border 0
+  height 1px
+  background url(images/h-line.png) repeat-x 0 0
+  background-size 100% 1px
+  &.mini
+    width 15px
+    text-align left
+    margin-left 0
+
 
 //----------------------
 // 1. Common parts
@@ -90,6 +108,19 @@ h3
   padding 20px
   background url(images/h-line.png) top repeat-x, url(images/h-line.png) bottom repeat-x, url(images/v-line.png) left repeat-y, url(images/v-line.png) right repeat-y
   background-color rgba(255, 255, 255, 0.04)
+  ul
+    list-style-type none
+    margin 10 0
+    padding 0
+  li
+    font-size 9px
+    padding-left 20px
+    &.check
+      background url(images/icon-check.png) left center no-repeat
+      background-size 10px 8px
+
+section
+  margin 38px 0 38px 0
 
 .concept
   p
@@ -99,7 +130,50 @@ h3
   position relative
   img
     width 100%
+  ul
+    display flex
+    align-items center
+    justify-content space-between
+    padding 0
+    list-style-type none
+  a
+    font-size 14px
 
+.kamra
+  position relative
+  width 100%
+  .col2
+    display flex
+  img
+    width 50%
+  .info
+    margin 0 0 0 20px
+  span
+    font-size 10px
+  .name
+    font-size 19px
+  .social
+    margin 20px 0 0 0
+    font-size 11px
+
+
+
+
+section.credits
+  .col2
+    display flex
+    flex-wrap wrap
+    align-items stretch
+    justify-content space-between
+  // only sp?
+  .credit
+    width 120px
+    letter-spacing 0em
+    margin 0 0 36px 0
+    .name
+      font-size 12px
+    +_MEDIA_PC()
+      width 240px
 
 .share
   display flex
@@ -122,3 +196,17 @@ h3
   .copylight
     margin 29px 0 0 0
 
+
+.overlay
+  position absolute
+  left 0
+  top 0
+  width 100%
+  height 100%
+  z-index 10000
+  pointer-events none
+
+.noise
+  background url(/images/noise.png)
+  z-index 10001
+  opacity 0.6
