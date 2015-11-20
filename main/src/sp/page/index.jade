@@ -70,7 +70,7 @@ html.no-js
             for credit in credits
               .credit
                 .part #{credit.part}
-                .name #{credit.name}
+                .name.s12 #{credit.name}
                 if credit.url !== undefined
                   a.blank(href="#{credit.url}" target="_blank") #{credit.site}
         .share
