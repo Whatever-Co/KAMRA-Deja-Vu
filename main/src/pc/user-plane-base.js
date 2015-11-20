@@ -411,9 +411,15 @@ export default class UserImagePlane extends THREE.Mesh {
   }
 
 
+  updateTexture() {
+    console.warn('No need to updateTexture?')
+    // debugger
+  }
+
+
   takeSnapshot() {
     let snapshot = this.texture.clone()
-    // this.updateTexture()
+    this.updateTexture()
     this.webcamPlane.visible = true
     this.face.visible = false
     this.renderer.render(this.scene, this.camera, snapshot, true)
