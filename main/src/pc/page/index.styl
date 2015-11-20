@@ -64,7 +64,7 @@ button.close
     text-align center
     button
       margin 0 20px
-
+      
 .mask
   position fixed
   width 100%
@@ -152,6 +152,13 @@ canvas#main
   .play_buttons
     position absolute
     bottom 22%
+    // display none
+  .play-shared
+    display none
+    position absolute
+    bottom 22%
+    width 100%
+    text-align center
 
   .album-info
     position absolute
@@ -178,6 +185,7 @@ canvas#main
         font-size 11px
 
 @import 'webcam'
+@import 'upload'
 
 #about
   display none

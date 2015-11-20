@@ -52,6 +52,22 @@ export default class App extends EventEmitter {
   initScene() {
     this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
     this.camera.position.z = this.keyframes.camera.property.position[2]
+    this.camera.enabled = false
+    this.camera.update = (currentFrame) => {
+      if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
+        let f = currentFrame - this.keyframes.camera.in_frame
+        let props = this.keyframes.camera.property
+        this.camera.fov = props.fov[f]
+        this.camera.updateProjectionMatrix()
+        this.camera.position.fromArray(props.position, f * 3)
+        this.camera.quaternion.fromArray(props.quaternion, f * 4)
+
+        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+        this.webcam.scale.set(scale, scale, scale)
+        this.webcam.rotation.z = this.camera.rotation.z
+      }
+    }
+    this.controllers.push(this.camera)
 
     this.scene = new THREE.Scene()
 
@@ -121,25 +137,93 @@ export default class App extends EventEmitter {
   }
 
 
-  start(sourceType) {
-    // camera controller
-    this.camera.enabled = false
-    this.camera.update = (currentFrame) => {
-      if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
-        let f = currentFrame - this.keyframes.camera.in_frame
-        let props = this.keyframes.camera.property
-        this.camera.fov = props.fov[f]
-        this.camera.updateProjectionMatrix()
-        this.camera.position.fromArray(props.position, f * 3)
-        this.camera.quaternion.fromArray(props.quaternion, f * 4)
+  initSourcePlane(clazz) {
+    this.webcam = new clazz(this.keyframes, this.camera, this.renderer)
+    let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
+    this.webcam.scale.set(scale, scale, scale)
+    this.scene.add(this.webcam)
+    this.controllers.push(this.webcam)
+  }
 
-        let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-        this.webcam.scale.set(scale, scale, scale)
-        this.webcam.rotation.z = this.camera.rotation.z
-      }
+
+  prepareForImage(image, featurePoints, focusFaceEdge = false) {
+    if (!this.webcam) {
+      this.initSourcePlane(UserImagePlane)
     }
-    this.controllers.push(this.camera)
+    this.webcam.init(image, featurePoints)
 
+    if (!this.face) {
+      this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
+      this.scene.add(this.face)
+      this.controllers.push(this.face)
+    }
+
+    if (focusFaceEdge) {
+      this.face.main.geometry.deform(this.webcam.normalizedFeaturePoints)
+      this.face.main.matrix.copy(this.webcam.matrixFeaturePoints)
+      this.logo.setMode('tracker')
+      this.logo.updateVertices(this.face, this.camera.position.z)
+    }
+  }
+
+
+  start(sourceType) {
+    if (!this.webcam) {
+      this.initSourcePlane(PLANE_CLASSES[sourceType])
+    }
+    this.webcam.addEventListener('detected', () => {
+      this.logo.setMode('tracker')
+      this.logo.updateVertices(this.face, this.camera.position.z)
+    })
+    this.webcam.addEventListener('lost', () => this.logo.setMode('circle'))
+    this.webcam.addEventListener('complete', this.onWebcamComplete.bind(this))
+
+    if (!this.face) {
+      this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
+      this.scene.add(this.face)
+      this.controllers.push(this.face)
+    }
+
+    if (sourceType == 'webcam' || sourceType == 'video') {
+      this.logo.setMode('circle')
+    }
+    this.webcam.start()
+  }
+
+
+  onWebcamComplete() {
+    console.time('capture')
+    this.face.captureWebcam()
+    this.webcam.enableTracking = false
+    this.webcam.drawFaceHole = true
+
+    this.camera.enabled = true
+
+    Ticker.setClock(this.videoOverlay)
+    // this.videoOverlay.start()
+    setTimeout(() => {
+      this.videoOverlay.start()
+    })
+    console.timeEnd('capture')
+
+    if (Config.DEV_MODE) {
+      this._vcon = $('<video>').attr({
+        id: '_vcon',
+        src: 'data/_/440344979.mp4',
+        width: 1280,
+        height: 720,
+        muted: true
+      }).appendTo('body')[0]
+      this._vcon.currentTime = 2 / 24
+      this._vcon.play()
+      // setTimeout(() => {
+      //   this.videoOverlay.position = 3290 / 24 * 1000
+      // }, 3000)
+    }
+  }
+
+
+  /*start_(sourceType) {
     // webcam
     this.webcam = new PLANE_CLASSES[sourceType](this.keyframes, this.camera, this.renderer)
     let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
@@ -195,14 +279,14 @@ export default class App extends EventEmitter {
     this.logo.setMode('circle')
 
     this.webcam.start(sourceType)
-  }
+  }*/
 
 
   animate(currentFrame, time) {
     // console.time('frame')
     if (Config.DEV_MODE) {
       // this.stats.begin()
-      //this._frameCounter.text(currentFrame)
+      this._frameCounter.text(currentFrame)
     }
 
     this.controllers.forEach((controller) => {
@@ -216,7 +300,7 @@ export default class App extends EventEmitter {
     this.composer.render()
 
     if (currentFrame % 2 == 0) {
-      //this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+      this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
     }
 
     // if (Config.DEV_MODE) {
