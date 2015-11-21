@@ -35,11 +35,6 @@ class FaceEdgeMaterial extends THREE.ShaderMaterial {
         void main () {
           gl_FragColor = texture2D(map, vUv);
           gl_FragColor.rgb *= brightness;
-          /*if (gl_FragCoord.y < 540.) {
-            gl_FragColor.rgb += pow(1.0 - gl_FragCoord.y / 540., 4.0);
-          } else {
-            gl_FragColor.rgb *= pow(1.0 - (gl_FragCoord.y - 540.) / 540., 4.0) * 0.3 + 0.7;
-          }*/
         }
       `
     })
@@ -201,7 +196,7 @@ export default class UserImagePlane extends THREE.Mesh {
     {
       let geometry = new DeformableFaceGeometry()
       let data = this.standardFaceData.data
-      geometry.setIndex(new THREE.Uint16Attribute(data.face.index.concat(data.rightEye.index, data.leftEye.index), 1))
+      geometry.setIndex(new THREE.Uint16Attribute(data.face.index.concat(data.rightEye.index, data.leftEye.index, data.mouth.index), 1))
       this.face = new THREE.Mesh(geometry, this.faceEdgeMaterial)
       this.face.matrixAutoUpdate = false
       this.scene.add(this.face)
@@ -224,8 +219,10 @@ export default class UserImagePlane extends THREE.Mesh {
     Ticker.addFrameEvent(this.data.o2_extra.in_frame, () => {
       this.faceSpaceMaterial.video.play()
     })
-    Ticker.addFrameEvent(this.data.o2_extra.out_frame, () => {
+    Ticker.addFrameEvent(3590, () => {
       this.faceSpaceMaterial.video.pause()
+      this.drawFaceHole = false
+      this.updateWebcamPlane()
     })
   }
 

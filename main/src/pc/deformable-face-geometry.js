@@ -159,6 +159,11 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
   }
 
 
+  fillMouth() {
+    this.setIndex(this.standardFace.mouthIncludedIndex)
+  }
+
+
   deform(featurePoints) {
     let displacement = featurePoints.map((p, i) => {
       let fp = this.standardFace.getFeatureVertex(i)
