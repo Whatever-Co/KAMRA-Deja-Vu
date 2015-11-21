@@ -28,7 +28,7 @@ vec3 rotateZ(vec3 p, float psi) {
 const float rotZ = -30. * PI / 180.;
 
 void main() {
-  if (scaleZ < 1.0 && curlStrength > 0.0) {
+  if (scaleZ < 1.0 || curlStrength > 0.0 || curlRotateX > 0.0) {
     vec3 p = (modelMatrix * vec4(position, 1.0)).xyz;
     p.xy /= (cameraZ - p.z * (1. - scaleZ)) / cameraZ;
     p.z *= scaleZ;
