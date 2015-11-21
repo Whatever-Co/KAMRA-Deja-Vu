@@ -142,9 +142,9 @@ export default class UserImagePlane extends THREE.Mesh {
           texture: {type: 't', value: null},
           rate: {type: 'f', value: 0},
           frame: {type: 'f', value: 0.0},
-          centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
-          waveForce: {type: 'f', value: 0.1},
-          zoomForce: {type: 'f', value: 0.3}
+          faceCenter: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+          faceRadius: {type: 'f', value: 0.5},
+          waveForce: {type: 'f', value: 0.03},
         },
         vertexShader:require('./shaders/webcam-plane.vert'),
         fragmentShader:require('./shaders/webcam-plane.frag'),
@@ -161,7 +161,12 @@ export default class UserImagePlane extends THREE.Mesh {
     this.renderer = renderer
     this.scene = new THREE.Scene()
 
-    this.texture = new THREE.WebGLRenderTarget(1920, 1080, {stencilBuffer: false})
+    this.texture = new THREE.WebGLRenderTarget(2048, 1024, {
+      wrapS: THREE.MirroredRepeatWrapping,
+      wrapT: THREE.MirroredRepeatWrapping,
+      stencilBuffer: false,
+    })
+
     this.material.uniforms.texture.value = this.texture
 
     this.webcamCanvas = document.createElement('canvas')
@@ -407,6 +412,20 @@ export default class UserImagePlane extends THREE.Mesh {
         q[2] = p[2] * scale
         return q
       })
+    }
+
+    // calc center and size of raw points
+    {
+      let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+      let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+      this.rawFeaturePoints.forEach((p) => {
+        vec2.min(min, min, p)
+        vec2.max(max, max, p)
+      })
+      let center = vec2.lerp([], min, max, 0.5)
+      this.material.uniforms.faceCenter.value.set(center[0] / 320, center[1] / 180)
+      let size = vec2.sub([], max, min)
+      this.material.uniforms.faceRadius.value = Math.max(size[0], size[1]) / 180 * 1.1
     }
   }
 
