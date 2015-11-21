@@ -44,7 +44,7 @@ class App {
       // build twitter
       let twitter_href = $.t('social.twitter', {
         url: encodeURIComponent($.t('social.url')),
-        text: encodeURIComponent($.t('social.text'))
+        text: encodeURIComponent($.t('social.top_text'))
       })
       $('a.button_twitter').attr('href', twitter_href)
     })

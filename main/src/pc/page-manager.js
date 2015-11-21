@@ -156,7 +156,7 @@ class PageManager {
 
         // share
         onentershare: (e, f, t, shareURL) => {
-          this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.text'), shareURL || location.href)
+          this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.share_text'), shareURL || location.href)
           $('#share').fadeIn(1000)
         },
         onleaveshare: () => {
@@ -249,7 +249,7 @@ class PageManager {
       $('#about').localize()
       $('#howto').localize()
 
-      this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.text'), $.t('social.url'))
+      this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }
 
