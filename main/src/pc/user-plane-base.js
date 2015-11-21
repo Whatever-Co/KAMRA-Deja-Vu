@@ -298,16 +298,16 @@ export default class UserImagePlane extends THREE.Mesh {
     this.renderer.render(this.scene, this.camera, this.texture, true)
 
     this.webcamPlane.visible = false
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 8; i++) {
       this.faceEdgeMaterial.scale = 0.99 - i * 0.004
-      this.faceEdgeMaterial.brightness = 0.9 - i * 0.02
+      this.faceEdgeMaterial.brightness = 0.8 - i * 0.05
       this.renderer.clearTarget(this.texture, false, true, true)
       this.renderer.render(this.scene, this.camera, this.texture)
     }
 
     this.face.material = this.faceSpaceMaterial
     this.faceSpaceMaterial.update()
-    this.faceSpaceMaterial.scale = 0.99 - 10 * 0.004
+    this.faceSpaceMaterial.scale = 0.99 - 8 * 0.004
     this.renderer.clearTarget(this.texture, false, true, true)
     this.renderer.render(this.scene, this.camera, this.texture)
 
