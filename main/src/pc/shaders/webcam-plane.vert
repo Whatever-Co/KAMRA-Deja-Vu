@@ -7,7 +7,6 @@ uniform float faceRadius;
 uniform float waveForce;
 
 varying vec2 vUv;
-varying float vBrightness;
 
 #pragma glslify: noise3d = require(glsl-noise/simplex/3d)
 
@@ -34,6 +33,5 @@ void main() {
 #else
   vUv = _uv;
 #endif
-  vBrightness = (1.0 - rate);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }

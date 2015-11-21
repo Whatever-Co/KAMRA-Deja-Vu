@@ -2,6 +2,7 @@
 
 // import $ from 'jquery'
 import {vec2} from 'gl-matrix'
+import TWEEN from 'tween.js'
 
 import UserPlaneBase from './user-plane-base'
 import WebcamManager from './webcam-manager'
@@ -38,8 +39,14 @@ export default class UserWebcamPlane extends UserPlaneBase {
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()
     this.enableTextureUpdating = true
-    this.enableTracking = true
-    this.enableScoreChecking = true
+    this.enableTracking = false
+    this.enableScoreChecking = false
+
+    this.alpha = 0
+    new TWEEN.Tween(this).to({alpha: 1}, 2000).delay(200).start().onComplete(() => {
+      this.enableTracking = true
+      this.enableScoreChecking = true
+    })
   }
 
 
@@ -77,7 +84,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
       }
     }
 
-    if (this.enableTracking || this.drawFaceHole) {
+    if (this.enableTextureUpdating || this.enableTracking || this.drawFaceHole) {
       this.updateWebcamPlane()
       this.updateFaceHole()
     }

@@ -120,7 +120,8 @@ export default class App extends EventEmitter {
     this.composer.addPass(fxaa)
 
     // color correction
-    // this.composer.addPass(new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))))
+    this.colorCorrection = new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut')))
+    this.composer.addPass(this.colorCorrection)
 
     // texture overlay
     this.videoOverlay = new VideoOverlayPass()
@@ -193,6 +194,8 @@ export default class App extends EventEmitter {
       this.logo.setMode('circle')
     }
     this.webcam.start()
+
+    this.colorCorrection.setEnabled(true)
   }
 
 
