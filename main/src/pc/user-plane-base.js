@@ -207,12 +207,6 @@ export default class UserImagePlane extends THREE.Mesh {
 
     this.matrixFeaturePoints = new THREE.Matrix4()
 
-    // this.enableTextureUpdating = false
-    // this.enableTracking = false
-    // this.enableScoreChecking = false
-    // this.numTrackingIteration = 2
-    // this.scoreHistory = []
-
     this.drawFaceHole = false
     this.isOutro = false
     this.enabled = false

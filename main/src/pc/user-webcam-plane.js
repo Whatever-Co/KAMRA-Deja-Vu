@@ -1,4 +1,4 @@
-/* global THREE clm pModel */
+/* global clm pModel */
 
 // import $ from 'jquery'
 import {vec2} from 'gl-matrix'

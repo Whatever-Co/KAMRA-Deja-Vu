@@ -51,7 +51,7 @@ export default class App extends EventEmitter {
 
   initScene() {
     this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
-    this.camera.position.z = this.keyframes.camera.property.position[2]
+    this.camera.position.fromArray(this.keyframes.camera.property.position)
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
@@ -206,15 +206,16 @@ export default class App extends EventEmitter {
     console.timeEnd('capture')
 
     if (Config.DEV_MODE) {
-      this._vcon = $('<video>').attr({
-        id: '_vcon',
-        src: 'data/_/440344979.mp4',
-        width: 1280,
-        height: 720,
-        muted: true
-      }).appendTo('body')[0]
-      this._vcon.currentTime = 2 / 24
-      this._vcon.play()
+      // this._vcon = $('<video>').attr({
+      //   id: '_vcon',
+      //   src: 'data/_/440344979.mp4',
+      //   width: 1280,
+      //   height: 720,
+      //   muted: true
+      // }).appendTo('body')[0]
+      // this._vcon.currentTime = 2 / 24
+      // this._vcon.play()
+      
       // setTimeout(() => {
       //   this.videoOverlay.position = 3290 / 24 * 1000
       // }, 3000)
