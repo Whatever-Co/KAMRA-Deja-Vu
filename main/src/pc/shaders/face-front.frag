@@ -1,11 +1,11 @@
 uniform vec2 clipRange;
 uniform sampler2D map;
 
-varying vec4 vPos;
+varying vec4 vWorldPos;
 varying vec2 vUv;
 
 void main() {
-  if (vPos.y < clipRange.x || clipRange.y < vPos.y) discard;
+  if (vWorldPos.y < clipRange.x || clipRange.y < vWorldPos.y) discard;
   
   vec4 c = texture2D(map, vUv);
   if (!gl_FrontFacing) {

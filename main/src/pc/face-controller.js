@@ -18,16 +18,17 @@ const loader = window.__djv_loader
 
 class FaceFrontMaterial extends THREE.ShaderMaterial {
 
-  constructor(texture) {
+  constructor(texture, cameraZ) {
     super({
       uniforms: {
         map: {type: 't', value: texture},
         clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
-        scaleZ: {type: 'f', value: 1.0},
-        curlStrength: {type: 'f', value: 1.0},
-        curlRadius: {type: 'f', value: 0.2},
-        curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
-        curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
+        cameraZ: {type: 'f', value: cameraZ},
+        inverseModelMatrix: {type: 'm4', value: new THREE.Matrix4()},
+        scaleZ: {type: 'f', value: 1},
+        curlOffset: {type: 'f', value: 300},
+        curlStrength: {type: 'f', value: 0},
+        curlRotateX: {type: 'f', value: 0}
       },
       vertexShader: require('./shaders/face-front.vert'),
       fragmentShader: require('./shaders/face-front.frag'),
@@ -163,7 +164,7 @@ export default class FaceController extends THREE.Object3D {
 
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot())
+    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(), this.camera.position.z)
 
     let position = new THREE.Vector3()
     let quaternion = new THREE.Quaternion()
@@ -301,7 +302,6 @@ export default class FaceController extends THREE.Object3D {
       console.log('shareData', this.shareData)
     }
 
-
     this.update = this._update.bind(this)
   }
 
@@ -330,12 +330,9 @@ export default class FaceController extends THREE.Object3D {
 
 
   _update(currentFrame) {
-    // intro
+    // main face
     {
-      let f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
-      let scaleZ = this.data.i_extra.property.scale_z[f]
-
-      f = Math.max(this.data.user.in_frame, Math.min(this.data.user.out_frame, currentFrame))
+      let f = Math.max(this.data.user.in_frame, Math.min(this.data.user.out_frame, currentFrame))
       let props = this.data.user.property
       this.main.position.fromArray(props.position, f * 3)
       this.main.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
@@ -343,72 +340,67 @@ export default class FaceController extends THREE.Object3D {
       if (props.morph[f]) {
         this.main.geometry.applyMorph(props.morph[f])
       }
+      let uniforms = this.main.material.uniforms
+      uniforms.scaleZ.value = 1
+      uniforms.curlStrength.value = 0
+      uniforms.curlRotateX.value = 0
+    }
+
+    // intro
+    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame) {
+      let f = currentFrame - this.data.i_extra.in_frame
+      let props = this.data.i_extra.property
 
       // transition from captured position to data'
-      f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
-      let blend = 1 - this.data.i_extra.property.interpolation[f]
-
-      this.main.material.uniforms.scaleZ.value = scaleZ
-      if (scaleZ < 1) {
-        // Apply curl morph
-        let material = this.main.material
-        let strength = this.data.i_extra.property.curl_strength[f]
-        let rotation = this.data.i_extra.property.curl_rotation[f]
-        let offset = this.data.i_extra.property.curl_offset[f]
-
-        //console.log(`strength:${strength} offset:${offset} z:${scaleZ}`)
-        offset = this._remap(offset, 90, 300, -1.0, 1.0)
-        let mat = new THREE.Matrix4()
-        mat.multiply(new THREE.Matrix4().makeTranslation(offset, 0, 0))
-        mat.multiply(new THREE.Matrix4().makeRotationZ(1.1))
-        let invMat = new THREE.Matrix4().getInverse(mat)
-        material.uniforms.curlPushMatrix.value = mat
-        material.uniforms.curlPopMatrix.value = invMat
-        material.uniforms.curlStrength.value = this._remap(strength, 0.0, 4.73, 0.0, 1.0)
-      }
+      let blend = 1 - props.interpolation[f]
       if (blend > 0) {
         this.main.position.lerp(this.initialTransform.position, blend)
         this.main.scale.lerp(this.initialTransform.scale, blend)
         this.main.quaternion.slerp(this.initialTransform.quaternion, blend)
       }
+      this.main.updateMatrixWorld()
+
+      // curl shader params
+      let uniforms = this.main.material.uniforms
+      uniforms.inverseModelMatrix.value.getInverse(this.main.matrixWorld)
+      uniforms.scaleZ.value = props.scale_z[f]
+      uniforms.curlOffset.value = props.curl_offset[f]
+      uniforms.curlStrength.value = props.curl_strength[f]
+      uniforms.curlRotateX.value = props.curl_rotation[f]
     }
 
     // alts
-    {
-      if (this.data.user_alt.in_frame <= currentFrame && currentFrame <= this.data.user_alt.out_frame) {
-        let f = currentFrame - this.data.user_alt.in_frame
-        this.data.user_alt.property.forEach((props, i) => {
-          let face = this.alts[i]
-          face.visible = props.enabled[f]
-          if (face.visible) {
-            face.position.fromArray(props.position, f * 3)
-            face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
-            face.quaternion.fromArray(props.quaternion, f * 4)
-            if (props.morph[f]) {
-              face.geometry.applyMorph(props.morph[f])
-            }
+    if (this.data.user_alt.in_frame <= currentFrame && currentFrame <= this.data.user_alt.out_frame) {
+      let f = currentFrame - this.data.user_alt.in_frame
+      this.data.user_alt.property.forEach((props, i) => {
+        let face = this.alts[i]
+        face.visible = props.enabled[f]
+        if (face.visible) {
+          face.position.fromArray(props.position, f * 3)
+          face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
+          face.quaternion.fromArray(props.quaternion, f * 4)
+          if (props.morph[f]) {
+            face.geometry.applyMorph(props.morph[f])
           }
-        })
-      }
+        }
+      })
     }
 
     // spawn children
-    {
-      if (this.data.user_children.in_frame <= currentFrame && currentFrame <= this.data.user_children.out_frame) {
-        let f = currentFrame - this.data.user_children.in_frame
-        this.data.user_children.property.forEach((props, i) => {
-          let face = this.smalls[i]
-          face.visible = this.smallsEnabled[i].enabled_in_frame <= currentFrame
-          if (face.visible) {
-            face.position.fromArray(props.position, f * 3)
-            face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
-            face.quaternion.fromArray(props.quaternion, f * 4)
-            if (props.morph[f]) {
-              face.geometry.applyMorph(props.morph[f])
-            }
+    if (this.data.user_children.in_frame <= currentFrame && currentFrame <= this.data.user_children.out_frame) {
+      let f = currentFrame - this.data.user_children.in_frame
+      this.data.user_children.property.forEach((props, i) => {
+        let face = this.smalls[i]
+        face.visible = this.smallsEnabled[i].enabled_in_frame <= currentFrame
+        if (face.visible) {
+          face.position.fromArray(props.position, f * 3)
+          face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
+          face.quaternion.fromArray(props.quaternion, f * 4)
+          if (props.morph[f]) {
+            face.geometry.applyMorph(props.morph[f])
           }
-        })
-      }
+        }
+      })
     }
 
     // slicing
