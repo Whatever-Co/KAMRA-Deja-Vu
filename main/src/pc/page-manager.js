@@ -341,7 +341,6 @@ class PageManager {
     })
   }
 
-
 }
 
 
