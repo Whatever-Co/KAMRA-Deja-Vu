@@ -344,7 +344,9 @@ class PageManager {
 }
 
 
-new PageManager()
+window.__djv_loader.on('complete', () => {
+  new PageManager()
+})
 
 window.onerror = (message, url, lineNumber, column, error) => {
   console.log({message, url, lineNumber, column, error, stack: error.stack})
