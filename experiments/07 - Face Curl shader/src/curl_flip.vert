@@ -1,46 +1,41 @@
-const float PI = 3.14159265;
+const float PI = 3.141592653589793;
 
 uniform float scaleZ;
+uniform float curlOffset;
 uniform float curlStrength;
-uniform float curlRadius;
-uniform mat4 curlPushMatrix;
-uniform mat4 curlPopMatrix;
 
 varying vec2 vUv;
 
 
-vec4 getCurlPosition() {
-  vec3 p = position;
-  p.z *= scaleZ;
-
-  // push matrix
-  vec4 p1 = curlPushMatrix * vec4(p, 1.0);
-  vec4 p2 = p1;
-  float theta = p1.x / curlRadius;
-  if(theta < 0.0) {
-    float tx = curlRadius * sin(theta);
-    float ty = p1.y;
-    float tz = p1.z + curlRadius * (1.0 - cos(theta));
-    p2 = vec4(tx, ty, tz, 1.0);
-  }
-
-  // pop matrix
-  vec4 backedp = curlPopMatrix * p2;
-
-  // mix
-  float mixRate = max((curlStrength - scaleZ), 0.0);
-  backedp = mix(vec4(p.x, p.y, p.z, 1), backedp, mixRate);
-
-  vec4 mvPosition = modelViewMatrix * backedp;
-  return projectionMatrix * mvPosition;
+vec3 rotateZ(vec3 p, float psi) {
+  float c = cos(psi);
+  float s = sin(psi);
+  return vec3(p.x * c - p.y * s, p.x * s + p.y * c, p.z);
 }
 
+
 void main() {
-  if(scaleZ < 1.0) {
-    gl_Position = getCurlPosition();
-  }
-  else {
+  if (scaleZ < 1.0) {
+    vec3 p = (modelMatrix * vec4(position, 1.0)).xyz;
+    p.z *= scaleZ;
+    p.xy *= (500.0 - p.z) / 500.0;
+
+    p = rotateZ(p, -30. * PI / 180.);
+
+    float r = 200. / curlStrength;
+    float a = (p.y - (curlOffset - 200.)) / r;
+    if (a > 0.) {
+      p.y = sin(a) * r + (curlOffset - 200.);
+      p.z = r - cos(a) * r;
+    }
+
+    p = rotateZ(p, 30. * PI / 180.);
+
+    gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+
+  } else {
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
+
   vUv = uv;
 }
