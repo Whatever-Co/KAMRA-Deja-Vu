@@ -85,6 +85,12 @@ export default class App extends EventEmitter {
       this.scene.add(this.logo)
       this.controllers.push(this.logo)
       this.logo.enabled = true
+      Ticker.addFrameEvent(50, () => {
+        this.logo.hide().then(() => {
+          this.scene.remove(this.logo)
+          this.logo.enabled = false
+        })
+      })
     }
 
     //
