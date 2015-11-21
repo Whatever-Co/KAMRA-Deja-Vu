@@ -75,7 +75,9 @@ export default class UserWebcamPlane extends UserPlaneBase {
       if (this.enableScoreChecking) {
         this.checkCaptureScore()
       }
+    }
 
+    if (this.enableTracking || this.drawFaceHole) {
       this.updateWebcamPlane()
       this.updateFaceHole()
     }

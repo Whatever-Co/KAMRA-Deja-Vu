@@ -54,7 +54,6 @@ export default class FaceController extends THREE.Object3D {
 
     // faces
     this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
-    this.main.renderOrder = 1000
     this.main.matrixAutoUpdate = false
     this.add(this.main)
 
@@ -171,6 +170,9 @@ export default class FaceController extends THREE.Object3D {
     let scale = new THREE.Vector3()
     this.main.matrix.decompose(position, quaternion, scale)
     this.initialTransform = {position, quaternion, scale}
+    // this.main.position.copy(position)
+    // this.main.quaternion.copy(quaternion)
+    // this.main.scale.copy(scale)
     this.main.matrixAutoUpdate = true
 
     this.alts.forEach((face) => {
@@ -347,8 +349,9 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // intro
-    if (this.data.i_extra.in_frame <= currentFrame && currentFrame <= this.data.i_extra.out_frame) {
-      let f = currentFrame - this.data.i_extra.in_frame
+    if (currentFrame <= this.data.i_extra.out_frame) {
+      // let f = currentFrame - this.data.i_extra.in_frame
+      let f = Math.max(this.data.i_extra.in_frame, Math.min(this.data.i_extra.out_frame, currentFrame))
       let props = this.data.i_extra.property
 
       // transition from captured position to data'
@@ -358,9 +361,9 @@ export default class FaceController extends THREE.Object3D {
         this.main.scale.lerp(this.initialTransform.scale, blend)
         this.main.quaternion.slerp(this.initialTransform.quaternion, blend)
       }
-      this.main.updateMatrixWorld()
 
       // curl shader params
+      this.main.updateMatrixWorld()
       let uniforms = this.main.material.uniforms
       uniforms.inverseModelMatrix.value.getInverse(this.main.matrixWorld)
       uniforms.scaleZ.value = props.scale_z[f]

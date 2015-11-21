@@ -88,6 +88,8 @@ class FaceSpaceMaterial extends THREE.ShaderMaterial {
     })
 
     this.video = document.createElement('video')
+    // this.video.id = '_tracker-canvas'
+    // document.body.appendChild(this.video)
     this.video.width = this.video.height = 256
     this.video.loop = true
     this.video.autoplay = true
