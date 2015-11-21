@@ -15,6 +15,7 @@ export default class StandardFaceData {
     this.data = original.data // shared with all instances
 
     this.index = original.indexAttribute.clone()
+    this.mouthIncludedIndex = original.mouthIncludedIndexAttribute.clone()
     this.position = original.positionAttribute.clone()
 
     this.bounds = _.clone(original.bounds)
@@ -28,6 +29,7 @@ export default class StandardFaceData {
 
     let index = data.face.index.concat(data.rightEye.index, data.leftEye.index)
     let indexAttribute = new THREE.Uint16Attribute(index, 1)
+    let mouthIncludedIndexAttribute = new THREE.Uint16Attribute(index.concat(data.mouth.index), 1)
     let positionAttribute = new THREE.Float32Attribute(data.face.position, 3)
 
     let min = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE]
@@ -42,7 +44,7 @@ export default class StandardFaceData {
     let bounds = {min, max, size: vec3.sub([], max, min), center: vec3.lerp([], min, max, 0.5)}
     let size = vec2.len(bounds.size)
 
-    original = {data, indexAttribute, positionAttribute, bounds, size}
+    original = {data, indexAttribute, mouthIncludedIndexAttribute, positionAttribute, bounds, size}
 
     data.back.edgeIndex = _.uniq(data.back.index).map((index) => {
       let v = this.getVertex(index)
