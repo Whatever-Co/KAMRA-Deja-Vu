@@ -69,7 +69,7 @@ export default class DeformedUVTexture extends THREE.WebGLRenderTarget {
     }
 
     let geometry = new THREE.BufferGeometry()
-    geometry.setIndex(standardFace.index)
+    geometry.setIndex(standardFace.mouthIncludedIndex)
     geometry.addAttribute('position', new THREE.Float32Attribute(uvs, 3))
     geometry.addAttribute('uv', faceGeometry.uvAttribute)
     let material = new THREE.ShaderMaterial({

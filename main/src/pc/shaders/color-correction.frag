@@ -1,5 +1,6 @@
 uniform sampler2D tDiffuse;
 uniform sampler2D tLut;
+uniform float blend;
 
 varying vec2 vUv;
 
@@ -42,5 +43,6 @@ vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
 }
 
 void main() {
-  gl_FragColor = lookup(texture2D(tDiffuse, vUv), tLut);
+  vec4 c = texture2D(tDiffuse, vUv);
+  gl_FragColor = mix(c, lookup(c, tLut), blend);
 }

@@ -1,4 +1,4 @@
-/* global THREE createjs */
+/* global THREE */
 
 import {EventEmitter} from 'events'
 import $ from 'jquery'
@@ -51,7 +51,7 @@ export default class App extends EventEmitter {
 
   initScene() {
     this.camera = new THREE.PerspectiveCamera(this.keyframes.camera.property.fov[0], 16 / 9, 10, 10000)
-    this.camera.position.z = this.keyframes.camera.property.position[2]
+    this.camera.position.fromArray(this.keyframes.camera.property.position)
     this.camera.enabled = false
     this.camera.update = (currentFrame) => {
       if (this.keyframes.camera.in_frame <= currentFrame && currentFrame <= this.keyframes.camera.out_frame) {
@@ -85,6 +85,12 @@ export default class App extends EventEmitter {
       this.scene.add(this.logo)
       this.controllers.push(this.logo)
       this.logo.enabled = true
+      Ticker.addFrameEvent(50, () => {
+        this.logo.hide().then(() => {
+          this.scene.remove(this.logo)
+          this.logo.enabled = false
+        })
+      })
     }
 
     //
@@ -114,14 +120,12 @@ export default class App extends EventEmitter {
     this.composer.addPass(fxaa)
 
     // color correction
-    this.composer.addPass(new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))))
+    this.colorCorrection = new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut')))
+    this.composer.addPass(this.colorCorrection)
 
     // texture overlay
     this.videoOverlay = new VideoOverlayPass()
-    this.videoOverlay.addEventListener('complete', () => {
-      Ticker.setClock(null)
-      this.emit('complete')
-    })
+    this.videoOverlay.addEventListener('complete', this.onVideoComplete.bind(this))
     this.composer.addPass(this.videoOverlay)
     this.controllers.push(this.videoOverlay)
 
@@ -168,6 +172,8 @@ export default class App extends EventEmitter {
 
 
   start(sourceType) {
+    this.sourceType = sourceType
+
     if (!this.webcam) {
       this.initSourcePlane(PLANE_CLASSES[sourceType])
     }
@@ -184,10 +190,12 @@ export default class App extends EventEmitter {
       this.controllers.push(this.face)
     }
 
-    if (sourceType == 'webcam' || sourceType == 'video') {
+    if (this.sourceType == 'webcam' || this.sourceType == 'video') {
       this.logo.setMode('circle')
     }
     this.webcam.start()
+
+    this.colorCorrection.setEnabled(true)
   }
 
 
@@ -207,15 +215,16 @@ export default class App extends EventEmitter {
     console.timeEnd('capture')
 
     if (Config.DEV_MODE) {
-      this._vcon = $('<video>').attr({
-        id: '_vcon',
-        src: 'data/_/440344979.mp4',
-        width: 1280,
-        height: 720,
-        muted: true
-      }).appendTo('body')[0]
-      this._vcon.currentTime = 2 / 24
-      this._vcon.play()
+      // this._vcon = $('<video>').attr({
+      //   id: '_vcon',
+      //   src: 'data/_/440344979.mp4',
+      //   width: 1280,
+      //   height: 720,
+      //   muted: true
+      // }).appendTo('body')[0]
+      // this._vcon.currentTime = 2 / 24
+      // this._vcon.play()
+      
       // setTimeout(() => {
       //   this.videoOverlay.position = 3290 / 24 * 1000
       // }, 3000)
@@ -223,63 +232,36 @@ export default class App extends EventEmitter {
   }
 
 
-  /*start_(sourceType) {
-    // webcam
-    this.webcam = new PLANE_CLASSES[sourceType](this.keyframes, this.camera, this.renderer)
-    let scale = Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z * 2
-    this.webcam.scale.set(scale, scale, scale)
-    this.scene.add(this.webcam)
+  onVideoComplete() {
+    Ticker.setClock(null)
 
-    this.webcam.addEventListener('detected', () => {
-      this.logo.setMode('tracker')
-      this.logo.updateVertices(this.face, this.camera.position.z)
-    })
-    this.webcam.addEventListener('lost', () => {
-      this.logo.setMode('circle')
-    })
-
-    this.webcam.addEventListener('complete', () => {
-      console.time('capture')
-      this.face.captureWebcam()
-      this.webcam.enableTracking = false
-      this.webcam.drawFaceHole = true
-
-      this.camera.enabled = true
-
-      Ticker.setClock(this.videoOverlay)
-      this.videoOverlay.start()
-      // setTimeout(() => {
-      //   this.videoOverlay.start()
-      // }, 1000)
-      console.timeEnd('capture')
-
-      if (Config.DEV_MODE) {
-        this._vcon = $('<video>').attr({
-          id: '_vcon',
-          src: 'data/_/440344979.mp4',
-          width: 1280,
-          height: 720,
-          muted: true
-        }).appendTo('body')[0]
-        this._vcon.currentTime = 2 / 24
-        this._vcon.play()
-
-        // setTimeout(() => {
-        //   this.videoOverlay.position = 3290 / 24 * 1000
-        // }, 3000)
-      }
-    })
-    this.controllers.push(this.webcam)
-
-    // face
-    this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
-    this.scene.add(this.face)
-    this.controllers.push(this.face)
-
-    this.logo.setMode('circle')
-
-    this.webcam.start(sourceType)
-  }*/
+    if (this.sourceType == 'webcam' || this.sourceType == 'uploaded') {
+      let formData = new FormData()
+      formData.append('data', JSON.stringify(this.face.shareData.data))
+      formData.append('cap', this.renderTargetToBlob(this.face.shareData.cap))
+      formData.append('kimo', this.renderTargetToBlob(this.face.shareData.kimo))
+      $.ajax({
+        method: 'post',
+        url: '/api/save/',
+        data: formData,
+        contentType: false,
+        processData: false,
+        dataType: 'json'
+      }).done((data, status) => {
+        console.log('success', data, status)
+        if (status == 'success' && data && data.status == 201) {
+          this.emit('complete', data.data.detail_url)
+        } else {
+          this.emit('complete')
+        }
+      }).fail((error) => {
+        console.error(error)
+        this.emit('complete')
+      })
+    } else {
+      this.emit('complete')
+    }
+  }
 
 
   animate(currentFrame, time) {
@@ -317,6 +299,36 @@ export default class App extends EventEmitter {
       scale: [s, s],
       translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2]
     })
+  }
+
+
+  renderTargetToBlob(target) {
+    let w = target.width
+    let h = target.height
+    let buffer = new Uint8Array(w * h * 4)
+    this.renderer.readRenderTargetPixels(target, 0, 0, w, h, buffer)
+
+    let canvas = document.createElement('canvas')
+    canvas.width = w
+    canvas.height = h
+    document.body.appendChild(canvas)
+    let ctx = canvas.getContext('2d')
+    let imageData = ctx.createImageData(w, h)
+    imageData.data.set(buffer)
+    ctx.putImageData(imageData, 0, 0)
+    ctx.translate(0, canvas.height)
+    ctx.scale(1, -1)
+    ctx.drawImage(canvas, 0, 0)
+
+    const type = 'image/jpeg'
+    let base64 = canvas.toDataURL(type, 0.8)
+    let bin = atob(base64.replace(/^.*,/, ''))
+    buffer = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) {
+      buffer[i] = bin.charCodeAt(i)
+    }
+    let blob = new Blob([buffer.buffer], {type})
+    return blob
   }
 
 }

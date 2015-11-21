@@ -12,7 +12,9 @@ html.no-js
     link(rel='apple-touch-icon', href='apple-touch-icon.png')
     link(rel='stylesheet', href='normalize.css')
     link(rel='stylesheet', href='index.css')
-
+    include ./includes/og.jade
+    script.
+      if (location.hash == '#shared') window.close()
   body
     #canvas-clip
       canvas#main
@@ -28,19 +30,7 @@ html.no-js
 
       include ./includes/about.jade
       include ./includes/howto.jade
-      #share
-        .share-inner
-          button.button-top
-            img(src='images/button-top.png')
-          .share-buttons
-            img(src='images/share-this.png')
-            div
-              button.button-twitter
-                img(src='images/button-twitter.png')
-              button.button-facebook
-                img(src='images/button-facebook.png')
-          button.button-replay
-            img(src='images/button-replay.png')
+      include ./includes/share.jade
 
     .noise.overlay
 

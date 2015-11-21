@@ -7,9 +7,6 @@ require('babel/polyfill');
 require('./main.sass');
 document.body.innerHTML = require('./body.jade')();
 
-import {mat4, vec3} from 'gl-matrix';
-
-
 const THREE = require('three');
 window.THREE = THREE; // export to global
 require('OrbitControls');
@@ -21,55 +18,67 @@ const requestAnimationFrameAsync = () => new Promise(resolve => requestAnimation
 async function main() {
   //==============
   // Scene
-  let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-  camera.position.z = 4;
+  let camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 5000);
+  camera.position.z = 1000;
+  // camera.position.set(300, 200, 300).setLength(500);
 
   let scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 100, 600);
+  // scene.fog = new THREE.Fog(0x000000, 100, 600);
 
   let renderer = new THREE.WebGLRenderer({antialias: true});
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x1a2b34);
 
   let container = document.querySelector('.container');
   container.appendChild(renderer.domElement);
 
-  let controls = new THREE.OrbitControls(camera);
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
   //==============
   // Model
   let texture = new THREE.ImageUtils.loadTexture('uvcheck.png');
+  texture.anisotropy = renderer.getMaxAnisotropy();
   let material = new THREE.ShaderMaterial({
     vertexShader:require('raw!./curl_flip.vert'),
     fragmentShader:require('raw!./curl_flip.frag'),
     side: THREE.DoubleSide,
     uniforms: {
       texture: {type: 't', value: texture},
-      scaleZ: {type: 'f', value:0.0},
-      curlStrength: {type: 'f', value:0.5},
-      curlRadius: {type: 'f', value:0.2},
-      curlPushMatrix: {type: 'm4', value:new THREE.Matrix4()},
-      curlPopMatrix: {type: 'm4', value:new THREE.Matrix4()}
+      cameraZ: {type: 'f', value: camera.position.z},
+      inverseModelMatrix: {type: 'm4', value: new THREE.Matrix4()},
+      scaleZ: {type: 'f', value: 0.001},
+      curlOffset: {type: 'f', value: 0.001},
+      curlStrength: {type: 'f', value: THREE.Math.degToRad(270)},
+      curlRotateX: {type: 'f', value: 0.001}
     }
   });
 
   let geometry = new THREE.JSONLoader().parse(require('./face.json')).geometry;
+  geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 40 / 150));
   let mesh = new THREE.Mesh( geometry, material);
+  mesh.scale.set(150, 150, 150);
   scene.add(mesh);
+  mesh.updateMatrixWorld();
+  material.uniforms.inverseModelMatrix.value.getInverse(mesh.matrixWorld);
+  {
+    mesh.geometry.computeBoundingBox();
+    let bbox = mesh.geometry.boundingBox;
+    mesh.localToWorld(bbox.min);
+    mesh.localToWorld(bbox.max);
+    console.log(bbox.min, bbox.max, bbox.max.clone().sub(bbox.min));
+  }
 
-  let param = {
-    rotasionZ:0.5,
-    offsetX:0.0
-  };
+  scene.add(new THREE.AxisHelper(100));
 
   //==============
   // dat GUI
   let gui = new dat.GUI();
   gui.add(material, 'wireframe');
-  gui.add(material.uniforms.curlStrength, 'value', 0.0, 1.0).name('curlStrength');
-  gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.2).name('zScale');
-  gui.add(material.uniforms.curlRadius, 'value', 0.1, 1.0).name('radius');
-  gui.add(param, 'rotasionZ', 0.0, 3.14);
-  gui.add(param, 'offsetX', -1.0, 1.0);
+  gui.add(mesh.position, 'x', -300, 300);
+  let scaleZ = gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.0, 0.01).name('Scale Z').setValue(0);
+  gui.add(material.uniforms.curlOffset, 'value', 90, 300, 0.1).name('Curl Offset').setValue(200);
+  gui.add(material.uniforms.curlStrength, 'value', 0, Math.PI * 2, 0.001).name('Curl Strength');
+  gui.add(material.uniforms.curlRotateX, 'value', 0, Math.PI * 2, 0.001).name('Curl Rotate X').setValue(0);
 
   //==============
   // Events
@@ -84,17 +93,11 @@ async function main() {
   const loop = true;
   while(loop) {
     await requestAnimationFrameAsync();
-
-    // update matrix
-    let mat = new THREE.Matrix4();
-    mat.multiply(new THREE.Matrix4().makeTranslation(param.offsetX, 0, 0));
-    mat.multiply(new THREE.Matrix4().makeRotationZ(param.rotasionZ));
-
-    let invMat = new THREE.Matrix4().getInverse(mat);
-
-    material.uniforms.curlPushMatrix.value = mat;
-    material.uniforms.curlPopMatrix.value = invMat;
-
+    let t = Date.now() / 1000;
+    // mesh.position.x = Math.cos(t * 1.2) * 300;
+    // scaleZ.setValue(Math.sin(t * 3) * 0.7 + 0.5);
+    mesh.updateMatrixWorld();
+    material.uniforms.inverseModelMatrix.value.getInverse(mesh.matrixWorld);
     renderer.render(scene, camera);
     controls.update();
   }

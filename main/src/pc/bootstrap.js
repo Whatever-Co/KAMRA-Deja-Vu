@@ -8,6 +8,9 @@ loaderCanvas.width = 400
 loaderCanvas.height = 400
 let loaderCtx = loaderCanvas.getContext('2d')
 let updateLoading = (rate) => {
+  // Estimate final worker task
+  rate *= 0.95
+
   loaderCtx.save()
   loaderCtx.clearRect(0, 0, 400, 400)
   loaderCtx.lineWidth = 1

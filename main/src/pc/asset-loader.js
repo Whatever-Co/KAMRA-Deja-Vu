@@ -67,6 +67,7 @@ const ids = _.shuffle([
 
 let loader = new createjs.LoadQueue()
 loader.installPlugin(createjs.Sound)
+loader.setMaxConnections(10)
 
 let min = Config.DEV_MODE ? '.min' : ''
 let manifest = [

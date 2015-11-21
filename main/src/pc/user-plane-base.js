@@ -35,11 +35,6 @@ class FaceEdgeMaterial extends THREE.ShaderMaterial {
         void main () {
           gl_FragColor = texture2D(map, vUv);
           gl_FragColor.rgb *= brightness;
-          /*if (gl_FragCoord.y < 540.) {
-            gl_FragColor.rgb += pow(1.0 - gl_FragCoord.y / 540., 4.0);
-          } else {
-            gl_FragColor.rgb *= pow(1.0 - (gl_FragCoord.y - 540.) / 540., 4.0) * 0.3 + 0.7;
-          }*/
         }
       `
     })
@@ -88,6 +83,8 @@ class FaceSpaceMaterial extends THREE.ShaderMaterial {
     })
 
     this.video = document.createElement('video')
+    // this.video.id = '_tracker-canvas'
+    // document.body.appendChild(this.video)
     this.video.width = this.video.height = 256
     this.video.loop = true
     this.video.autoplay = true
@@ -140,11 +137,12 @@ export default class UserImagePlane extends THREE.Mesh {
       new THREE.ShaderMaterial({
         uniforms: {
           texture: {type: 't', value: null},
+          alpha: {type: 'f', value: 1},
           rate: {type: 'f', value: 0},
           frame: {type: 'f', value: 0.0},
-          centerRect: {type: 'v4', value: new THREE.Vector4(0.4, 0.4, 0.2, 0.2)},
-          waveForce: {type: 'f', value: 0.1},
-          zoomForce: {type: 'f', value: 0.3}
+          faceCenter: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
+          faceRadius: {type: 'f', value: 0.5},
+          waveForce: {type: 'f', value: 0.03},
         },
         vertexShader:require('./shaders/webcam-plane.vert'),
         fragmentShader:require('./shaders/webcam-plane.frag'),
@@ -161,7 +159,12 @@ export default class UserImagePlane extends THREE.Mesh {
     this.renderer = renderer
     this.scene = new THREE.Scene()
 
-    this.texture = new THREE.WebGLRenderTarget(1920, 1080, {stencilBuffer: false})
+    this.texture = new THREE.WebGLRenderTarget(2048, 1024, {
+      wrapS: THREE.MirroredRepeatWrapping,
+      wrapT: THREE.MirroredRepeatWrapping,
+      stencilBuffer: false,
+    })
+
     this.material.uniforms.texture.value = this.texture
 
     this.webcamCanvas = document.createElement('canvas')
@@ -194,7 +197,7 @@ export default class UserImagePlane extends THREE.Mesh {
     {
       let geometry = new DeformableFaceGeometry()
       let data = this.standardFaceData.data
-      geometry.setIndex(new THREE.Uint16Attribute(data.face.index.concat(data.rightEye.index, data.leftEye.index), 1))
+      geometry.setIndex(new THREE.Uint16Attribute(data.face.index.concat(data.rightEye.index, data.leftEye.index, data.mouth.index), 1))
       this.face = new THREE.Mesh(geometry, this.faceEdgeMaterial)
       this.face.matrixAutoUpdate = false
       this.scene.add(this.face)
@@ -202,17 +205,20 @@ export default class UserImagePlane extends THREE.Mesh {
 
     this.matrixFeaturePoints = new THREE.Matrix4()
 
-    // this.enableTextureUpdating = false
-    // this.enableTracking = false
-    // this.enableScoreChecking = false
-    // this.numTrackingIteration = 2
-    // this.scoreHistory = []
-
     this.drawFaceHole = false
     this.isOutro = false
     this.enabled = false
 
     this.initFrameEvent()
+  }
+
+
+  get alpha() {
+    return this.material.uniforms.alpha.value
+  }
+
+  set alpha(value) {
+    this.material.uniforms.alpha.value = value
   }
 
 
@@ -223,8 +229,10 @@ export default class UserImagePlane extends THREE.Mesh {
     Ticker.addFrameEvent(this.data.o2_extra.in_frame, () => {
       this.faceSpaceMaterial.video.play()
     })
-    Ticker.addFrameEvent(this.data.o2_extra.out_frame, () => {
+    Ticker.addFrameEvent(3590, () => {
       this.faceSpaceMaterial.video.pause()
+      this.drawFaceHole = false
+      this.updateWebcamPlane()
     })
   }
 
@@ -297,16 +305,16 @@ export default class UserImagePlane extends THREE.Mesh {
     this.renderer.render(this.scene, this.camera, this.texture, true)
 
     this.webcamPlane.visible = false
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 8; i++) {
       this.faceEdgeMaterial.scale = 0.99 - i * 0.004
-      this.faceEdgeMaterial.brightness = 0.9 - i * 0.02
+      this.faceEdgeMaterial.brightness = 0.8 - i * 0.05
       this.renderer.clearTarget(this.texture, false, true, true)
       this.renderer.render(this.scene, this.camera, this.texture)
     }
 
     this.face.material = this.faceSpaceMaterial
     this.faceSpaceMaterial.update()
-    this.faceSpaceMaterial.scale = 0.99 - 10 * 0.004
+    this.faceSpaceMaterial.scale = 0.99 - 8 * 0.004
     this.renderer.clearTarget(this.texture, false, true, true)
     this.renderer.render(this.scene, this.camera, this.texture)
 
@@ -408,12 +416,32 @@ export default class UserImagePlane extends THREE.Mesh {
         return q
       })
     }
+
+    // calc center and size of raw points
+    {
+      let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+      let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+      this.rawFeaturePoints.forEach((p) => {
+        vec2.min(min, min, p)
+        vec2.max(max, max, p)
+      })
+      let center = vec2.lerp([], min, max, 0.5)
+      this.material.uniforms.faceCenter.value.set(center[0] / 320, center[1] / 180)
+      let size = vec2.sub([], max, min)
+      this.material.uniforms.faceRadius.value = Math.max(size[0], size[1]) / 180 * 1.1
+    }
+  }
+
+
+  updateTexture() {
+    console.warn('No need to updateTexture?')
+    // debugger
   }
 
 
   takeSnapshot() {
     let snapshot = this.texture.clone()
-    // this.updateTexture()
+    this.updateTexture()
     this.webcamPlane.visible = true
     this.face.visible = false
     this.renderer.render(this.scene, this.camera, snapshot, true)
