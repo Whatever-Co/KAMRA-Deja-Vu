@@ -1,7 +1,8 @@
-/* global THREE clm pModel */
+/* global clm pModel */
 
 // import $ from 'jquery'
 import {vec2} from 'gl-matrix'
+import TWEEN from 'tween.js'
 
 import UserPlaneBase from './user-plane-base'
 import WebcamManager from './webcam-manager'
@@ -38,8 +39,14 @@ export default class UserWebcamPlane extends UserPlaneBase {
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()
     this.enableTextureUpdating = true
-    this.enableTracking = true
-    this.enableScoreChecking = true
+    this.enableTracking = false
+    this.enableScoreChecking = false
+
+    this.alpha = 0
+    new TWEEN.Tween(this).to({alpha: 1}, 2000).delay(200).start().onComplete(() => {
+      this.enableTracking = true
+      this.enableScoreChecking = true
+    })
   }
 
 
@@ -75,7 +82,9 @@ export default class UserWebcamPlane extends UserPlaneBase {
       if (this.enableScoreChecking) {
         this.checkCaptureScore()
       }
+    }
 
+    if (this.enableTextureUpdating || this.enableTracking || this.drawFaceHole) {
       this.updateWebcamPlane()
       this.updateFaceHole()
     }
@@ -104,18 +113,6 @@ export default class UserWebcamPlane extends UserPlaneBase {
       // $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
       this.dispatchEvent({type: isSizeOK && isPositionOK && isAngleOK ? 'detected' : 'lost'})
       this.scoreHistory.push(isSizeOK && isPositionOK && isAngleOK && isStable)
-
-      // update center position of shader
-      let w = this.trackerCanvas.width
-      let h = this.trackerCanvas.height
-      let v4 = new THREE.Vector4(
-        center[0] / (w * 2) + 0.5,
-        center[1] / (h * 2) + 0.5,
-        size[0] / (w * 4),
-        size[1] / (h * 4)
-      )
-      this.material.uniforms.centerRect.value = v4
-
     } else {
       this.scoreHistory.push(false)
     }

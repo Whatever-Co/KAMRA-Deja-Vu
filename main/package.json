@@ -52,6 +52,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development gulp",
+    "sp": "NODE_ENV=development gulp sp",
     "build": "gulp build"
   }
 }

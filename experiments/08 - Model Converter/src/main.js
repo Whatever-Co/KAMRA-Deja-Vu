@@ -23,6 +23,7 @@ class App {
 
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(window.innerWidth, window.innerHeight)
+    this.renderer.setClearColor(0x1a2b34)
 
     const container = document.querySelector('.container')
     container.appendChild(this.renderer.domElement)
@@ -40,8 +41,9 @@ class App {
 
 
   convert() {
-    let data = encodeURIComponent(JSON.stringify(this.face.export()))
-    $(`<a class="download" href="data:application/json,${data}" download="face2.json">Download JSON</a>`).appendTo(document.body)
+    let data = this.face.export()
+    console.log(data)
+    $(`<a class="download" href="data:application/json,${encodeURIComponent(JSON.stringify(data))}" download="face2.json">Download JSON</a>`).appendTo(document.body)
   }
 
 
@@ -61,5 +63,8 @@ class App {
 
 }
 
+window.onerror = (e) => {
+  debugger
+}
 
 new App()

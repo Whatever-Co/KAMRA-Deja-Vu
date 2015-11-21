@@ -6,6 +6,21 @@ const DEV = (process.env.NODE_ENV == 'development')
 
 class App {
   constructor() {
+    this.initLocalization()
+
+    // is mobile?
+    if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      $('html').addClass('mobile')
+    }
+
+    // smooth to top
+    $('.footer button').click(() => {
+      $('html,body').animate({scrollTop:0}, 500, 'swing')
+      return false
+    })
+  }
+
+  initLocalization() {
     i18nextJquery(i18n, $, {
       tName: 't',
       i18nName: 'i18n',
@@ -17,13 +32,51 @@ class App {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng: 'dev',
+      //lng: 'dev',
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
     }, ()=>{
-      console.log('hello3')
+      $('#page').localize()
+      // build img src
+      let imgs = $('img.i18n')
+      imgs.attr('src', imgs.text())
+
+      // build twitter
+      let twitter_href = $.t('social.twitter', {
+        url: encodeURIComponent($.t('social.url')),
+        text: encodeURIComponent($.t('social.text'))
+      })
+      $('a.button_twitter').attr('href', twitter_href)
     })
+  }
+
+  initYoutube() {
+    let youtube = $('#youtube')
+    let videoId = youtube.data('videoid')
+    youtube.css({
+      width:youtube.width(),
+      height:youtube.height()
+    })
+    youtube.click(() => this.startYoutube(videoId))
+  }
+
+  startYoutube(videoId) {
+    this.player = new YT.Player('youtube',
+      {
+        width: '100%',
+        height: '100%',
+        videoId: videoId,
+        playerVars: {
+          autohide: 1,
+          autoplay: 1,
+          loop: 1,
+          controls: 1
+        }
+      })
   }
 }
 
-new App()
+let app = new App()
+window.onYouTubeIframeAPIReady = () => {
+  app.initYoutube()
+}

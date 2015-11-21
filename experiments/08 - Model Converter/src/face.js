@@ -32,6 +32,23 @@ export default class extends THREE.Mesh {
   constructor(tracker) {
     let geometry = new THREE.JSONLoader().parse(require('./data/face.json')).geometry
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true, transparent: true, opacity: 0.3})
+    /*let material = new THREE.ShaderMaterial({
+      vertexShader: `
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+        }
+      `,
+      fragmentShader: `
+        void main() {
+          if (gl_FrontFacing) {
+            gl_FragColor = vec4(1.000, 0.358, 0.529, 1.000);
+          } else {
+            gl_FragColor = vec4(0.216, 0.478, 0.741, 1.000);
+          }
+        }
+      `,
+      wireframe: true,
+    })*/
     super(geometry, material)
 
     this.tracker = tracker
@@ -207,6 +224,31 @@ export default class extends THREE.Mesh {
 
 
   initEyeMouth() {
+    let data = require('./data/eyemouth.json')
+    let n = data.faces.length / data.metadata.faces
+    let faces = []
+    for (let i = 0; i < data.faces.length; i += n) {
+      faces.push(...data.faces.slice(i, i + 4))
+    }
+    data.faces = faces
+
+    let geometry = new THREE.JSONLoader().parse(data).geometry
+
+    let indices = geometry.vertices.map((v) => {
+      let index = this.findNearestIndex(this.geometry.vertices, v)
+      v.copy(this.geometry.vertices[index])
+      // v.z += 0.1
+      v.followVertex = index
+      return index
+    })
+    // console.log(indices)
+
+    this.eyemouth = new THREE.Mesh(geometry, this.material)
+    // this.eyemouth.position.z += 0.3
+    this.add(this.eyemouth)
+  }
+
+  initEyeMouth_() {
     let geometry = new THREE.JSONLoader().parse(require('./data/eyemouth.json')).geometry
 
     let indices = geometry.vertices.map((v) => {
@@ -216,7 +258,7 @@ export default class extends THREE.Mesh {
       v.followVertex = index
       return index
     })
-    console.log(indices)
+    // console.log(indices)
 
     this.eyemouth = new THREE.Mesh(geometry, this.material)
     this.add(this.eyemouth)
@@ -233,7 +275,7 @@ export default class extends THREE.Mesh {
       v.followVertex = index
       return index
     })
-    console.log(indices)
+    // console.log(indices)
 
     this.back = new THREE.Mesh(geometry, this.material)
     this.add(this.back)
@@ -274,18 +316,24 @@ export default class extends THREE.Mesh {
       face: this.exportFace(),
       rightEye: this.exportRightEye(),
       leftEye: this.exportLeftEye(),
-      back: this.exportBack()
-      // mouth: this.exportMouth()
+      mouth: this.exportMouth(),
+      back: this.exportBack(),
     }
   }
 
 
-  exportFace() {
+  exportPosition(vertices) {
     let position = []
-    let offset = 40 / 150
-    this.geometry.vertices.forEach((v) => {
+    const offset = 40 / 150
+    vertices.forEach((v) => {
       position.push(parseFloat(v.x.toPrecision(4)), parseFloat(v.y.toPrecision(4)), parseFloat((v.z + offset).toPrecision(4)))
     })
+    return position
+  }
+
+
+  exportFace() {
+    let position = this.exportPosition(this.geometry.vertices)
 
     let index = []
     this.geometry.faces.forEach((f) => {

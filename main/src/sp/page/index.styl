@@ -10,7 +10,6 @@ _MEDIA_PC()
 // 0. Default settings
 //----------------------
 
-
 *
   box-sizing border-box
 
@@ -21,6 +20,7 @@ html, body
 body
   font-family "adobe-garamond-pro", Garamond, YuMincho, "游明朝", "Hiragino Mincho ProN", "Roboto Slab", serif
   font-size 11px
+  letter-spacing 0.2em
   color rgba(255, 255, 255, 0.7)
   background-color #021827
 
@@ -40,7 +40,7 @@ a
   color rgb(255, 255, 255)
   text-decoration none
   opacity 0.7
-  transition all 1.0s
+  transition opacity 1.0s
   &:hover
     opacity 1.0
   &.blank
@@ -52,6 +52,14 @@ h2
   font-size 17px
 h3
   font-size 15px
+.s9
+  font-size 9px
+.s12
+  font-size 12px
+.s14
+  font-size 14px
+.s19
+  font-size 19px
 
 hr
   border 0
@@ -63,21 +71,50 @@ hr
     text-align left
     margin-left 0
 
++_MEDIA_PC()
+  body
+    font-size 11px*2
+  h2
+    font-size 17px*2
+  h3
+    font-size 15px*2
+  .s9
+    font-size 9px*2
+  .s12
+    font-size 12px*2
+  .s14
+    font-size 14px*2
+  .s19
+    font-size 19px*2
+
+
 
 //----------------------
 // 1. Common parts
 //----------------------
 
+.mobile_only
+  display none
+
+html.mobile
+  .mobile_only
+    display block
 
 //----------------------
 // 2. Elements
 //----------------------
 
-.youtube
+#youtube
   position relative
+  width 100%
+  max-width 640px
   display flex
   align-items center
   justify-content center
+  margin 30px auto 0 auto
+  z-index 10002
+  +_MEDIA_PC()
+    margin 60px auto 0 auto
   .bg
     width 100%
     img
@@ -95,7 +132,7 @@ hr
         width 61px
         height  61px
 
-.page
+#page
   position relative
   max-width 640px
   margin 0 auto
@@ -113,7 +150,6 @@ hr
     margin 10 0
     padding 0
   li
-    font-size 9px
     padding-left 20px
     &.check
       background url(images/icon-check.png) left center no-repeat
@@ -123,6 +159,8 @@ section
   margin 38px 0 38px 0
 
 .concept
+  img
+    width 100%
   p
     white-space
       nowarap
@@ -130,31 +168,37 @@ section
   position relative
   img
     width 100%
+  h3
+    letter-spacing 0.1em
   ul
     display flex
     align-items center
     justify-content space-between
     padding 0
     list-style-type none
-  a
-    font-size 14px
+    letter-spacing 0.1em
 
 .kamra
   position relative
   width 100%
   .col2
     display flex
+  #profile_kamra
+    position relative
+    width 50%
+    min-height 130px
+    background url(images/profile-kamra.jpg) no-repeat
+    background-size contain
+    +_MEDIA_PC()
+      min-height 320px
   img
     width 50%
   .info
     margin 0 0 0 20px
-  span
-    font-size 10px
-  .name
-    font-size 19px
   .social
     margin 20px 0 0 0
-    font-size 11px
+  p
+    margin 20px 0 0 0
 
 
 
@@ -170,8 +214,6 @@ section.credits
     width 120px
     letter-spacing 0em
     margin 0 0 36px 0
-    .name
-      font-size 12px
     +_MEDIA_PC()
       width 240px
 
@@ -198,7 +240,7 @@ section.credits
 
 
 .overlay
-  position absolute
+  position fixed
   left 0
   top 0
   width 100%

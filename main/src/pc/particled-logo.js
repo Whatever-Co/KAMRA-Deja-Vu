@@ -4,6 +4,7 @@ import _ from 'lodash'
 import Snap from 'imports-loader?this=>window,fix=>module.exports=0!snapsvg'
 import {Noise} from 'noisejs'
 const noise = new Noise(Math.random())
+import TWEEN from 'tween.js'
 
 import Config from './config'
 const HALF_WIDTH = Config.RENDER_WIDTH / 2
@@ -18,6 +19,7 @@ class Node extends THREE.Vector3 {
     super()
 
     this.linearVelocity = 3
+    this.linearVelocityEasing = 0.9
     this.velocity = new THREE.Vector3()
     this.history = []
     this.maxHistory = THREE.Math.randInt(50, 120)
@@ -67,7 +69,7 @@ class Node extends THREE.Vector3 {
       let alpha = THREE.Math.mapLinear(THREE.Math.clamp(d, 0, 400), 0, 400, this.maxSteeringSensitivity, 0.05)
       let a = signedAngle(this.velocity, _v1) * alpha
 
-      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath) * 0.98, d * 0.04) - this.linearVelocity) * 0.9
+      this.linearVelocity += (Math.max(Math.abs(this.velocityOnPath) * 0.98, d * 0.04) - this.linearVelocity) * this.linearVelocityEasing
       this.velocity.applyAxisAngle(PLUS_Z, a).setLength(this.linearVelocity)
     }
     this.add(this.velocity)
@@ -171,6 +173,10 @@ class ParticleMaterial extends THREE.ShaderMaterial {
     this.uniforms.globalAlpha.value = value
   }
 
+  get alpha() {
+    return this.uniforms.globalAlpha.value
+  }
+
 }
 
 
@@ -185,6 +191,7 @@ export default class ParticledLogo extends THREE.Line {
 
   constructor(keyframes) {
     super(new THREE.BufferGeometry(), new ParticleMaterial())
+    this.renderOrder = 10000
     this.mode = 'logo'
     this.keyframes = keyframes
     this.init()
@@ -223,15 +230,21 @@ export default class ParticledLogo extends THREE.Line {
       this.trackerPath.scale = 1.0
       this.trackerPath._faceEdgeVertices = vertices
       this.trackerPath._faceEdgeLength = this.trackerPath.getTotalLength(vertices)
+
       let width = this.circleBBox.width * 0.5
       let height = this.circleBBox.height * 0.5
       this.trackerPath._circleVertices = vertices.map((v) => {
         let a = Math.atan2(v.y, v.x)
         return new THREE.Vector3(Math.cos(a) * width, Math.sin(a) * height)
       })
-      this.trackerPath._circleLength = this.trackerPath.getTotalLength(this.trackerPath._circleVertices)
+
+      let r = Math.sqrt(HALF_WIDTH * HALF_WIDTH + HALF_HEIGHT * HALF_HEIGHT) * 1.1
+      this.trackerPath._largeCircleVertices = vertices.map((v) => {
+        let a = Math.atan2(v.y, v.x)
+        return new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r)
+      })
+
       this.trackerPath.vertices = this.trackerPath._circleVertices
-      // console.log({circle: this.trackerPath._circleLength, faceEdge: this.trackerPath._faceEdgeLength})
     }
 
     console.timeEnd('logo data preparation')
@@ -330,10 +343,26 @@ export default class ParticledLogo extends THREE.Line {
           node.setPath(this.trackerPath, THREE.Math.randFloat(3, 7))
         })
         break
+      case 'out':
+        this.trackerPath.vertices = this.trackerPath._largeCircleVertices
+        this.trackerPath.scale = 5.0
+        this.nodes.forEach((node) => {
+          node.setPath(this.trackerPath, THREE.Math.randFloat(3, 7))
+          node.linearVelocityEasing = 0.005
+        })
+        break
       default:
         return
     }
     this.mode = mode
+  }
+
+
+  hide() {
+    return new Promise((resolved) => {
+      this.setMode('out')
+      new TWEEN.Tween(this.material).to({alpha: 0}, 3000).delay(2000).easing(TWEEN.Easing.Cubic.Out).start().onComplete(resolved)
+    })
   }
 
 
@@ -402,10 +431,6 @@ export default class ParticledLogo extends THREE.Line {
     this._updateGeometry()
     if (currentFrame % 2 == 0) {
       this.material.uniforms.time.value = Math.random()
-    }
-    if (this.keyframes.i_extra.in_frame <= currentFrame && currentFrame <= this.keyframes.i_extra.out_frame) {
-      let f = currentFrame - this.keyframes.i_extra.in_frame
-      this.material.alpha = Math.pow(1 - this.keyframes.i_extra.property.webcam_fade[f], 3)
     }
   }
 

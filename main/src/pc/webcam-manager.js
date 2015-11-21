@@ -14,7 +14,6 @@ class WebcamManager extends EventEmitter {
         ]
       }
     }, (stream) => {
-      console.log(stream)
       this.stream = stream
       onSuccess()
     }, (error) => {

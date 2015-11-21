@@ -6,51 +6,48 @@ html.no-js
     title KAMRA - Deja Vu - Artifitial Intelligence
     meta(name='description', content='')
     meta(name='viewport', content='width=device-width, initial-scale=1')
-    link(rel='apple-touch-icon', href='apple-touch-icon.png')
     link(rel='stylesheet', href='../normalize.css')
     link(rel='stylesheet', href='index.css')
+    include ./includes/og.jade
   body
-    .youtube
+    #youtube(data-videoid='#{youtubeId}')
       .bg
         img(src='images/thumbnail.jpg' alt='thumbnail')
       button
         img(src='images/button-play.png' alt='play button')
-    .page
+    #page
       .content
         h2 The Special Version of Music Video
-        span 下記対応環境から閲覧いただくと、あなたの顔が Deja vu する、スペシャル版 MV を体験いただけます。
+        span(data-i18n='support.description') #{support.description}
         .enviroment
-          span 動作環境
-          ul
-            li.check Webカメラ付きPC
-            li.check WebGL対応ブラウザ
-            li ・Google Chrome ・Mozilla Firefox
-            li ※いずれも最新版を推奨
+          span(data-i18n='support.envitoments') #{support.envitoments}
+          ul.s9
+            li.check(data-i18n='support.env1') #{support.env1}
+            li.check(data-i18n='support.env2') #{support.env2}
+            li(data-i18n='support.env3') #{support.env3}
+            li(data-i18n='support.env4') #{support.env4}
         hr.mini
         section.concept
-          p 白い天井の下　ここにあるのは傷んだ肉
-          p 馴染まない鉄の容れ物
-          p どちらへも振り切れない魂
-          p 「もう一度」　私は繰り返す
-          p 心は常に一定にしか動かないとしても　
-          p 精一杯勢いをつけ 同じ所から 同じ方へ
+          img.i18n(src='images/concept_ja.png', data-i18n='about.conceptimg', alt='concept')
         section.album
           img(src='images/album-jacket.jpg' alt='album jacket')
           h3 KAMRA - Artificial Emotions
           span Buy via:
-          ul
+          ul.s14
             li
               a.blank(href='#{link.itunes}', target='_blank') iTunes
+            li /
             li
               a.blank(href='#{link.amazon}', target='_blank') Amazon
+            li /
             li
               a.blank(href='#{link.cdbaby}', target='_blank') CD Baby
         hr
         section.kamra
           .col2
-            img.photo(src='images/profile-kamra.jpg' alt='KAMRA')
+            #profile_kamra
             .info
-              .name KAMRA
+              .name.s19 KAMRA
               span Yuichi Nakamura
               .social
                 a.blank(href='#{link.soundcloud}', target='_blank') SoundCloud
@@ -74,15 +71,27 @@ html.no-js
             for credit in credits
               .credit
                 .part #{credit.part}
-                .name #{credit.name}
+                .name.s12 #{credit.name}
                 if credit.url !== undefined
                   a.blank(href="#{credit.url}" target="_blank") #{credit.site}
         .share
-          a.button
+          a.button.button_twitter(
+            title='Twitter',
+            href='http://twitter.com/share',
+            onClick="window.open(this.href,'tweetwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
+          )
             img(src='images/button-twitter.png' alt='twitter')
-          a.button
+          a.button(
+            title='Facebook',
+            href='http://www.facebook.com/share.php?u=#{social.url}',
+            onClick="window.open(this.href,'facebookwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
+          )
             img(src='images/button-facebook.png' alt='facebook')
-          a.button
+          a.button.mobile_only(
+            title='Line',
+            href='line://msg/text/#{social.text}',
+            target='_blank'
+          )
             img(src='images/button-line.png' alt='line')
 
         .footer
@@ -96,6 +105,7 @@ html.no-js
 
     script(src='main.js')
     script(src='https://use.typekit.net/#{typekit}.js')
+    script(src='https://www.youtube.com/iframe_api')
     script.
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
