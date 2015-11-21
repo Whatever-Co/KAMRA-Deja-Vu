@@ -44,9 +44,11 @@ async function main() {
     side: THREE.DoubleSide,
     uniforms: {
       texture: {type: 't', value: texture},
-      scaleZ: {type: 'f', value: 0.01},
-      curlOffset: {type: 'f', value: 0},
-      curlStrength: {type: 'f', value: THREE.Math.degToRad(270)}
+      cameraZ: {type: 'f', value: camera.position.z},
+      scaleZ: {type: 'f', value: 0.001},
+      curlOffset: {type: 'f', value: 0.001},
+      curlStrength: {type: 'f', value: THREE.Math.degToRad(270)},
+      curlRotateX: {type: 'f', value: 0.001}
     }
   });
 
@@ -70,9 +72,10 @@ async function main() {
   // dat GUI
   let gui = new dat.GUI();
   gui.add(material, 'wireframe');
-  gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.0, 0.01).name('Scale Z').setValue(0);
+  let scaleZ = gui.add(material.uniforms.scaleZ, 'value', 0.0, 1.0, 0.01).name('Scale Z').setValue(0);
   gui.add(material.uniforms.curlOffset, 'value', 90, 300, 0.1).name('Curl Offset').setValue(300);
   gui.add(material.uniforms.curlStrength, 'value', 0, Math.PI * 2, 0.001).name('Curl Strength');
+  gui.add(material.uniforms.curlRotateX, 'value', 0, Math.PI * 2, 0.001).name('Curl Rotate X').setValue(0);
 
   //==============
   // Events
@@ -87,6 +90,7 @@ async function main() {
   const loop = true;
   while(loop) {
     await requestAnimationFrameAsync();
+    // scaleZ.setValue(Math.sin(Date.now() / 500) * 0.7 + 0.5);
     renderer.render(scene, camera);
     controls.update();
   }
