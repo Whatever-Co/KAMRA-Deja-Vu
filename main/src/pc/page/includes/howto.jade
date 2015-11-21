@@ -1,7 +1,7 @@
 #howto
   .mask
     .page
-      .colum2
+      section.colum2
         .colum
           .header
             .icon.webcam
@@ -77,6 +77,11 @@
                 span(data-i18n='howto.photo.s4_1') #{howto.photo.s4_1}
                 span(data-i18n='howto.photo.s4_2') #{howto.photo.s4_2}
       include ./play_buttons.jade
+      hr
+      section#disclaimer(name='disclaimer')
+        h3(data-i18n='disclaimer.title') #{disclaimer.title}
+        pre(data-i18n='disclaimer.text') #{disclaimer.text}
+
   .navi
     .header
       img(src='images/howto-heading.png' width='216' height='32')
