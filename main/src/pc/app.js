@@ -224,11 +224,13 @@ export default class App extends EventEmitter {
       // }).appendTo('body')[0]
       // this._vcon.currentTime = 2 / 24
       // this._vcon.play()
-      
-      // setTimeout(() => {
-      //   this.videoOverlay.position = 3290 / 24 * 1000
-      // }, 3000)
     }
+    setTimeout(() => {
+      let t = parseInt(location.hash.substr(1))
+      if (!isNaN(t)) {
+        this.videoOverlay.position = t / 24 * 1000
+      }
+    }, 3000)
   }
 
 
