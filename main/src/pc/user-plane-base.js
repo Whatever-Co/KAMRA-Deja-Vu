@@ -137,6 +137,7 @@ export default class UserImagePlane extends THREE.Mesh {
       new THREE.ShaderMaterial({
         uniforms: {
           texture: {type: 't', value: null},
+          alpha: {type: 'f', value: 1},
           rate: {type: 'f', value: 0},
           frame: {type: 'f', value: 0.0},
           faceCenter: {type: 'v2', value: new THREE.Vector2(0.5, 0.5)},
@@ -209,6 +210,15 @@ export default class UserImagePlane extends THREE.Mesh {
     this.enabled = false
 
     this.initFrameEvent()
+  }
+
+
+  get alpha() {
+    return this.material.uniforms.alpha.value
+  }
+
+  set alpha(value) {
+    this.material.uniforms.alpha.value = value
   }
 
 
