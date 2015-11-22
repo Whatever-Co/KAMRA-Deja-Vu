@@ -80,14 +80,16 @@ class FeaturePointEditor {
             this.translatePoints(0, 10 * scale)
           }
           break
-        // case 84:
-        //   this.scalePoints(1.05)
-        //   break
         default:
           return
       }
       e.preventDefault()
       this.update()
+    })
+
+    document.addEventListener('copy', (e) => {
+      e.preventDefault()
+      e.clipboardData.setData('text/plain', JSON.stringify(this.dump()))
     })
   }
 
@@ -363,6 +365,7 @@ class FeaturePointEditor {
       return [scrollLeft + c.left + 6, scrollTop + c.top + 6]
     })
     console.log(JSON.stringify(points))
+    return points
   }
 
 
