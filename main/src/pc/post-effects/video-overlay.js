@@ -10,16 +10,14 @@ export default class VideoOverlay extends THREE.ShaderPass {
       uniforms: {
         tDiffuse: {type: 't', value: null},
         overlay: {type: 't', value: null},
-        resolution: {type: 'v2', value: new THREE.Vector2(Config.RENDER_WIDTH, Config.RENDER_HEIGHT)}
       },
       vertexShader: require('../shaders/basic-transform.vert'),
       fragmentShader: `
         uniform sampler2D tDiffuse;
         uniform sampler2D overlay;
-        uniform vec2 resolution;
+        varying vec2 vUv;
         void main() {
-          vec2 uv = gl_FragCoord.xy / resolution;
-          gl_FragColor = max(texture2D(tDiffuse, uv), texture2D(overlay, uv));
+          gl_FragColor = max(texture2D(tDiffuse, vUv), texture2D(overlay, vUv));
         }
       `
     })
