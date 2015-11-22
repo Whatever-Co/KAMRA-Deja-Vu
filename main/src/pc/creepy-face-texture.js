@@ -65,7 +65,6 @@ export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
     this.scene.add(this.webcam)
 
     let uvTexture = new DeformedUVTexture(this.renderer, this.baseFace.geometry)
-    this.baseFace.geometry.addAttribute('uv2', uvTexture.uvAttribute)
     let material = new FacePartsDuplicateMaterial(this.baseWebcam.webcamTexture, warpTexture, uvTexture)
     this.face = new THREE.Mesh(this.baseFace.geometry, material)
     this.face.matrixAutoUpdate = false
