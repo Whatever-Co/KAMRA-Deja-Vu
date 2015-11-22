@@ -15,6 +15,7 @@ import 'postprocessing/ShaderPass'
 import 'postprocessing/MaskPass'
 import 'postprocessing/RenderPass'
 // import 'postprocessing/BokehPass'
+import 'postprocessing/TexturePass'
 import 'postprocessing/EffectComposer'
 
 import Ticker from './ticker'
@@ -241,7 +242,7 @@ export default class App extends EventEmitter {
       let formData = new FormData()
       formData.append('data', JSON.stringify(this.face.shareData.data))
       formData.append('cap', this.renderTargetToBlob(this.face.shareData.cap))
-      formData.append('kimo', this.renderTargetToBlob(this.face.shareData.kimo))
+      formData.append('kimo', this.renderTargetToBlob(this.applyPostEffect(this.face.shareData.kimo)))
       $.ajax({
         method: 'post',
         url: '/api/save/',
@@ -301,6 +302,33 @@ export default class App extends EventEmitter {
       scale: [s, s],
       translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2]
     })
+  }
+
+
+  applyPostEffect(target) {
+    let result = target.clone()
+    let composer = new THREE.EffectComposer(this.renderer, result)
+    composer.addPass(new THREE.TexturePass(target))
+
+    // antialias
+    let fxaa = new THREE.ShaderPass(THREE.FXAAShader)
+    fxaa.uniforms.resolution.value.set(1 / target.width, 1 / target.height)
+    composer.addPass(fxaa)
+
+    // color correction
+    composer.addPass(this.colorCorrection)
+
+    // chromatic aberration
+    composer.addPass(new ChromaticAberrationPass())
+
+    // vignette
+    let vignette = new THREE.ShaderPass(THREE.VignetteShader)
+    vignette.uniforms.darkness.value = 1.2
+    composer.addPass(vignette)
+
+    composer.render()
+
+    return result
   }
 
 
