@@ -11,3 +11,5 @@ Thumbs.db
 **/*.log
 **/*.blend?
 main/public/data/_
+**/riri*
+**/lula*
