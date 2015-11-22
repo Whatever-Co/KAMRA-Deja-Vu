@@ -439,8 +439,8 @@ export default class UserImagePlane extends THREE.Mesh {
   }
 
 
-  takeSnapshot() {
-    let snapshot = this.texture.clone()
+  takeSnapshot(width = 1024, height = 1024) {
+    let snapshot = new THREE.WebGLRenderTarget(width, height, {stencilBuffer: false})
     this.updateTexture()
     this.webcamPlane.visible = true
     this.face.visible = false
