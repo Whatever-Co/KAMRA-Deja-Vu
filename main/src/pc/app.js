@@ -313,7 +313,7 @@ export default class App extends EventEmitter {
     let canvas = document.createElement('canvas')
     canvas.width = w
     canvas.height = h
-    document.body.appendChild(canvas)
+    // document.body.appendChild(canvas)
     let ctx = canvas.getContext('2d')
     let imageData = ctx.createImageData(w, h)
     imageData.data.set(buffer)
