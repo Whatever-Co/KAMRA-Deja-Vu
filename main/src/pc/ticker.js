@@ -31,8 +31,8 @@ class Ticker extends EventEmitter {
       let d = currentFrame - prev
       if (d > 0) {
         for (let f = prev + 1; f <= currentFrame; f++) {
-          if (typeof(this.frameEvents[f]) == 'function') {
-            this.frameEvents[f]()
+          if (this.frameEvents[f]) {
+            this.frameEvents[f].forEach((callback) => callback())
           }
         }
       }
@@ -47,7 +47,10 @@ class Ticker extends EventEmitter {
 
 
   addFrameEvent(frame, callback) {
-    this.frameEvents[frame] = callback
+    if (!this.frameEvents.hasOwnProperty(frame)) {
+      this.frameEvents[frame] = []
+    }
+    this.frameEvents[frame].push(callback)
   }
 
 }
