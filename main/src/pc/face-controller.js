@@ -177,7 +177,7 @@ export default class FaceController extends THREE.Object3D {
 
   captureWebcam() {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
-    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(), this.camera.position.z)
+    this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(1024, 1024), this.camera.position.z)
     this.mouth.material = this.main.material
 
     let position = new THREE.Vector3()
@@ -185,9 +185,6 @@ export default class FaceController extends THREE.Object3D {
     let scale = new THREE.Vector3()
     this.main.matrix.decompose(position, quaternion, scale)
     this.initialTransform = {position, quaternion, scale}
-    // this.main.position.copy(position)
-    // this.main.quaternion.copy(quaternion)
-    // this.main.scale.copy(scale)
     this.main.matrixAutoUpdate = true
 
     this.alts.forEach((face) => {
@@ -301,8 +298,8 @@ export default class FaceController extends THREE.Object3D {
     // prepare for sharing
     {
       let data = _.cloneDeep(this.webcam.rawFeaturePoints)
-      let cap = this.webcam.takeSnapshot()
-      let kimo = this.webcam.takeSnapshot()
+      let cap = this.webcam.takeSnapshot(1280, 720)
+      let kimo = this.webcam.takeSnapshot(1280, 720)
 
       let scene = new THREE.Scene()
       let mesh = new THREE.Mesh(this.face2.geometry, new THREE.MeshBasicMaterial({map: this.creepyFaceTexture}))
@@ -316,7 +313,6 @@ export default class FaceController extends THREE.Object3D {
       this.renderer.autoClear = autoClear
 
       this.shareData = {data, cap, kimo}
-      console.log('shareData', this.shareData)
     }
 
     this.update = this._update.bind(this)
