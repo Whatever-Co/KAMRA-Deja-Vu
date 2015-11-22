@@ -91,6 +91,10 @@ class FeaturePointEditor {
       e.preventDefault()
       e.clipboardData.setData('text/plain', JSON.stringify(this.dump()))
     })
+    document.addEventListener('paste', (e) => {
+      e.preventDefault()
+      this.setPoints(JSON.parse(e.clipboardData.getData('text/plain')))
+    })
   }
 
 
@@ -192,17 +196,22 @@ class FeaturePointEditor {
   loadPoints(file) {
     let reader = new FileReader()
     reader.onload = (e) => {
-      let data = JSON.parse(reader.result)
-      data.forEach((p, i) => {
+      this.setPoints(JSON.parse(reader.result))
+    }
+    reader.readAsText(file)
+  }
+
+
+  setPoints(points) {
+    if (Array.isArray(points) && points.length == 80) {
+      points.forEach((p, i) => {
         let dot = this.editPoints[i]
         dot.css({left: `${p[0] - 6}px`, top: `${p[1] - 6}px`, opacity: 0.5})
       })
-      this.cropTexture()
-      this.face.applyTexture(this.texture, this.textureCoords)
-      this.face.applyMorph()
-      this.setupDownloadData()
+      this.update()
+    } else {
+      console.warn('Invalid data')
     }
-    reader.readAsText(file)
   }
 
 
