@@ -206,7 +206,7 @@ export default class FaceController extends THREE.Object3D {
 
       this.slicedFaces = []
 
-      let order = [5, 6, 3, 0, -1, 2, 7, 1, 4]
+      let order = [4, 5, 1, 0, -1, 7, 3, 2, 6]
       for (let i = 0; i < 9; i++) {
         let frontGeometry
         let frontMaterial
@@ -235,18 +235,18 @@ export default class FaceController extends THREE.Object3D {
         sliced.scale.set(SCALE, SCALE, SCALE)
         for (let i = 0; i < clipRanges.length - 1; i++) {
           let slice = new THREE.Object3D()
-          slice.position.z = -0.1
+          slice.position.z = -0.15
           sliced.add(slice)
 
           let front = new THREE.Mesh(frontGeometry, frontMaterial.clone())
-          front.position.z = 0.1
+          front.position.z = 0.15
           let clipMin = clipRanges[i + 1]
           let clipMax = clipRanges[i]
           front.material.uniforms.clipRange.value.set(clipMin, clipMax)
           slice.add(front)
 
           let back = new THREE.Mesh(backGeometry, backMaterial.clone())
-          back.position.z = 0.1
+          back.position.z = 0.15
           back.material.uniforms.clipRange.value.set(clipMin, clipMax)
           slice.add(back)
         }
@@ -320,7 +320,7 @@ export default class FaceController extends THREE.Object3D {
 
 
   enableChild(i) {
-    console.log('enableChild', i, Ticker.currentFrame)
+    // console.log('enableChild', i, Ticker.currentFrame)
   }
 
 
