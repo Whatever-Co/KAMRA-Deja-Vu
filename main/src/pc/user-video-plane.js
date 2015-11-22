@@ -85,8 +85,8 @@ export default class UserVideoPlane extends UserPlaneBase {
 
 
   restart() {
-    this.video.addEventListener('ended', this.onOutroEnded)
     this.video.src = 'data/_/riri-out-1920.mp4?.jpg'
+    this.video.addEventListener('ended', this.onOutroEnded)
     this.video.play()
     this.enableTextureUpdating = true
     this.isOutro = true

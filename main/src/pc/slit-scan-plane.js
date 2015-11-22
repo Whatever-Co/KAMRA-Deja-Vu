@@ -13,7 +13,11 @@ export default class SlitScanPlane extends THREE.Mesh {
         remap: {type: 't', value: null},
         face: {type: 't', value: null},
       },
-      vertexShader: require('./shaders/no-transform.vert'),
+      vertexShader: `
+        void main() {
+          gl_Position = vec4(position, 1.0);
+        }
+      `,
       fragmentShader: require('./shaders/slit-scan-remap.frag'),
       transparent: true,
       depthWrite: false,
