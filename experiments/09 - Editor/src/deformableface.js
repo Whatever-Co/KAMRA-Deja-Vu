@@ -169,8 +169,6 @@ export default class extends THREE.Mesh {
 
 
   applyMorph(morphIndex = 0) {
-    let start = performance.now()
-
     let targetVertices = []
     {
       let position = require('./morph.json')[morphIndex].face.vertices
@@ -194,8 +192,6 @@ export default class extends THREE.Mesh {
     })
 
     position.needsUpdate = true
-
-    console.log('applyMorpth', performance.now() - start)
   }
 
 
