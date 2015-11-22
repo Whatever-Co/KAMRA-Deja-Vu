@@ -186,7 +186,7 @@ export default class App extends EventEmitter {
     this.webcam.addEventListener('complete', this.onWebcamComplete.bind(this))
 
     if (!this.face) {
-      this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
+      this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera, sourceType == 'video')
       this.scene.add(this.face)
       this.controllers.push(this.face)
     }
