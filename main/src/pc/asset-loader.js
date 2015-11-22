@@ -78,10 +78,12 @@ let manifest = [
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'colorcorrect-lut', src: 'textures/lut.png'},
-  {id: 'remap', src: `textures/remap_${(Math.random() * 6) | 0}.png`}
+  {id: 'remap', src: `textures/remap_${(Math.random() * 6) | 0}.png`},
+  {id: `face0data`, src: `textures/faces/lula.json`},
+  {id: `face0image`, src: `textures/faces/lula.jpg`},
 ]
 
-for (let i = 0; i < 10; i++) {
+for (let i = 1; i < 10; i++) {
   manifest.push(
     {id: `face${i}data`, src: `textures/faces/${ids[i]}.json`},
     {id: `face${i}image`, src: `textures/faces/${ids[i]}.jpg`}
