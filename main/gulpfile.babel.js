@@ -126,6 +126,7 @@ gulp.task('browser-sync', () => {
   browserSync.init({
     proxy: 'localhost:4000',
     middleware: gzipStatic('./public'),
+    reloadDebounce: 200, 
     ghostMode: false,
     open: false,
   })
