@@ -81,15 +81,12 @@ export default class UserVideoPlane extends UserPlaneBase {
 
     this.enableTextureUpdating = true
     this.dispatchEvent({type: 'complete'})
-
-    this.video.pause()
-    this.video.src = 'data/_/riri-out-1920.mp4?.jpg'
-    this.video.load()
   }
 
 
   restart() {
     this.video.addEventListener('ended', this.onOutroEnded)
+    this.video.src = 'data/_/riri-out-1920.mp4?.jpg'
     this.video.play()
     this.enableTextureUpdating = true
     this.isOutro = true
@@ -120,6 +117,14 @@ export default class UserVideoPlane extends UserPlaneBase {
   }
 
 
+  updateTexture() {
+    let h = this.video.videoWidth / 16 * 9
+    let y = (this.video.videoHeight - h) / 2
+    this.webcamContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
+    this.webcamTexture.needsUpdate = true
+  }
+
+
   update(currentFrame) {
     super.update(currentFrame)
 
@@ -132,17 +137,12 @@ export default class UserVideoPlane extends UserPlaneBase {
           let fp1 = FP_NAME_AT_TIME[index - 1]
           let fp2 = FP_NAME_AT_TIME[index + 1]
           let t = THREE.Math.mapLinear(this.video.currentTime, FP_NAME_AT_TIME[index][0], fp2[0], 0, 1)
-          // console.log(fp1[1], fp2[1], t)
           this.rawFeaturePoints = this.blendFPs(OUTRO_FP[fp1[1]], OUTRO_FP[fp2[1]], t)
         }
       }
       this.normralizeFeaturePoints()
 
-      let h = this.video.videoWidth / 16 * 9
-      let y = (this.video.videoHeight - h) / 2
-      this.webcamContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-      this.webcamTexture.needsUpdate = true
-
+      this.updateTexture()
       this.updateWebcamPlane()
       this.updateFaceHole()
     }
