@@ -42,7 +42,7 @@ class FaceFrontMaterial extends THREE.ShaderMaterial {
 
 export default class FaceController extends THREE.Object3D {
 
-  constructor(data, webcam, renderer, camera) {
+  constructor(data, webcam, renderer, camera, RIRI = false) {
     super()
 
     this.enabled = true
@@ -75,15 +75,17 @@ export default class FaceController extends THREE.Object3D {
 
     // children
     this.smalls = []
+    let keys = _.shuffle(this.data.user_children.property.map((c, i) => `face${i}`))
+    keys.splice(RIRI ? 0 : ~~(Math.random() * keys.length), 1, 'lula-')
     for (let i = 0; i < this.data.user_children.property.length; i++) {
-      let featurePoints = loader.getResult(`face${i}data`)
+      let featurePoints = loader.getResult(`${keys[i]}data`)
       if (!Array.isArray(featurePoints)) debugger
       featurePoints.forEach((p) => {
         p[0] *= 512
         p[1] = (1 - p[1]) * 512
       })
       let geometry = new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200)
-      let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`face${i}image`)))
+      let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`${keys[i]}image`)))
       let small = new THREE.Mesh(geometry, material)
       small.visible = false
       this.add(small)
