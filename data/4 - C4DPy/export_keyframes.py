@@ -13,6 +13,10 @@ keyframeDupPath = [
 	projDir + "/0b/main/public/data/keyframes.json.gz"
 ]
 
+configDupPath = [
+	projDir + "/0b/main/src/pc/data/config.json"
+]
+
 # user face
 cam = doc.SearchObject("Camera")
 
@@ -317,7 +321,7 @@ def initConfig():
 			"camera_fov": 12,
 			"uv_in_frame": 2094,
 			"uv_out_frame": 2511,
-			"cross_section_color": toRGB(11, 49, 73)
+			"cross_section_color": toRGB(97, 81, 72)
 		},
 		"falling_children": [],
 		"mosaic_face": {
@@ -701,7 +705,7 @@ def main():
 			addFrame(f)
 
 			if escPressed():
-				break
+				return
 
 		with open(destKeyframeFile, 'w') as outFile:
 			json.dump(keyframes, outFile, separators=(',',':'))
@@ -717,6 +721,11 @@ def main():
 
 		with open(destConfigFile, 'w') as outFile:
 			json.dump(config, outFile, separators=(',',':'))
+
+		with open(destConfigFile, 'r') as srcFile:
+			for path in configDupPath:
+				with open(path, 'w') as destFile:
+					shutil.copyfileobj(srcFile, destFile)
 
 		print "Done (%04d/%04d)" % (f, duration)
 
