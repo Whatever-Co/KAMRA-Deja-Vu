@@ -10,18 +10,15 @@
     justify-content space-between
     align-items flex-end
     align-content flex-start
-    margin 12px 0 -3px -50px
-  li
-    padding 0 18px 0 10px
-    border-width 1px
-    border-color rgba(255, 255, 255, 0.7)
-    border-left-style solid
-    &:first-child
-      border-left-style none
-  .play_buttons
+
+  .top_button
     position absolute
-    bottom 22%
-    // display none
+    width 100%
+    bottom 20%
+    text-align center
+    .play_buttons
+      margin-bottom 20px
+
   .play-shared
     display none
     position absolute
@@ -39,16 +36,20 @@
       position absolute
       left 118px
       bottom 0
+      width 264px
       font-size 12px
       ul
-        margin 12px 0 -3px -50px
+        margin-top 5px
       li
-        background url(images/icon_blank.png) no-repeat 90% 50%
+        a
+          padding 0 18px 0 0
+          background url(images/icon_blank.png) no-repeat 94% 50%
 
   .navi
     position absolute
     right 50px
     bottom 50px
+    width 534px
     li
       span
         font-size 11px
