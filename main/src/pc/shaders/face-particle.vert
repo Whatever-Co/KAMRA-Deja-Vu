@@ -54,12 +54,11 @@ vec2 getUV() {
 
 
 vec2 getFaceIndex(in vec4 textureColor, in sampler2D lookupTable) {
-  vec2 index = lookup(textureColor, lookupTable).xy * 16.;
-  index.y += 1.0;
+  vec2 index = lookup(textureColor, lookupTable).xy * 16.0;
   index.x = floor(index.x);
-  index.y = floor(index.y);
+  index.y = 15.0 - floor(index.y);
   index /= 16.0;
-  return vec2(index.x, 1.0-index.y);
+  return index;
 }
 
 
