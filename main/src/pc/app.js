@@ -172,7 +172,7 @@ export default class App extends EventEmitter {
   }
 
 
-  start(sourceType) {
+  start(sourceType, remapType = -1) {
     this.sourceType = sourceType
 
     if (!this.webcam) {
@@ -189,6 +189,11 @@ export default class App extends EventEmitter {
       this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera, sourceType == 'video')
       this.scene.add(this.face)
       this.controllers.push(this.face)
+    }
+    if (remapType == -1) {
+      this.face.creepyFaceTexture.setRemapType(THREE.Math.randInt(0, 5))
+    } else {
+      this.face.creepyFaceTexture.setRemapType(remapType)
     }
 
     if (this.sourceType == 'webcam' || this.sourceType == 'video') {
@@ -241,7 +246,10 @@ export default class App extends EventEmitter {
     if (this.sourceType == 'webcam' || this.sourceType == 'uploaded') {
       console.time('prepare form data')
       let formData = new FormData()
-      formData.append('data', JSON.stringify(this.face.shareData.data))
+      formData.append('data', JSON.stringify({
+        points: this.face.shareData.data,
+        remapType: this.face.creepyFaceTexture.remapType
+      }))
       formData.append('cap', this.renderTargetToBlob(this.face.shareData.cap))
       formData.append('kimo', this.renderTargetToBlob(this.applyPostEffect(this.face.shareData.kimo)))
       console.timeEnd('prepare form data')

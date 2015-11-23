@@ -61,7 +61,7 @@ class PageManager {
             $('#top .play-shared').show()
             this.app.prepareForImage(
               loader.getResult('shared-image'),
-              loader.getResult('shared-data')
+              loader.getResult('shared-data').points
             )
           }
           $('#top').delay(500).fadeIn(1000)
@@ -162,8 +162,8 @@ class PageManager {
         },
 
         // play
-        onenterplaying: (e, f, t, sourceType) => {
-          this.app.start(sourceType)
+        onenterplaying: (e, f, t, ...args) => {
+          this.app.start(...args)
         },
 
         // share
@@ -186,7 +186,7 @@ class PageManager {
     $('.with-webcam').click(() => this.fsm.selectWebcam())
     $('.with-photo').click(() => this.fsm.selectUpload())
     $('.without-webcam').click(() => this.fsm.start('video'))
-    $('#top .play-shared button').click(() => this.fsm.start('shared'))
+    $('#top .play-shared button').click(() => this.fsm.start('shared', loader.getResult('shared-data').remapType))
     $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
     $('#upload-step1 button.skip').click(() => this.fsm.skip())
     $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))

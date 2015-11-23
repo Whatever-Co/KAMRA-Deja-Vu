@@ -78,7 +78,6 @@ let manifest = [
   {id: 'particle-sprite', src: 'textures/particle_sprite.png'},
   {id: 'particle-lut', src: 'textures/particle_index_lut.png'},
   {id: 'colorcorrect-lut', src: 'textures/lut.png'},
-  {id: 'remap', src: `textures/remap_${(Math.random() * 6) | 0}.png`},
   {id: `lula-data`, src: `textures/faces/lula.json`},
   {id: `lula-image`, src: `textures/faces/lula.jpg`},
 ]
