@@ -55,13 +55,11 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // children
-    {
-      this.smalls = FaceLibrary.getRandomMeshes(this.data.user_children.property.length - 1)
-      this.smalls.splice(RIRI ? 0 : ~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
-      for (let i = 0; i < this.smalls.length; i++) {
-        this.smalls[i].visible = false
-        this.add(this.smalls[i])
-      }
+    this.smalls = FaceLibrary.getRandomMeshes(this.data.user_children.property.length - 1)
+    this.smalls.splice(RIRI ? 0 : ~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
+    for (let i = 0; i < this.smalls.length; i++) {
+      this.smalls[i].visible = false
+      this.add(this.smalls[i])
     }
 
     // mosaic part
@@ -107,6 +105,12 @@ export default class FaceController extends THREE.Object3D {
 
     Ticker.addFrameEvent(100, () => {
       this.mouth.visible = false
+    })
+
+    Ticker.addFrameEvent(this.data.user_particles.out_frame + 1, () => {
+      this.particles.forEach((face) => {
+        this.remove(face)
+      })
     })
 
     Ticker.addFrameEvent(Config.DATA.slitscan.uv_in_frame, () => {
@@ -169,6 +173,17 @@ export default class FaceController extends THREE.Object3D {
       face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
       face.originalMaterial = face.material
       face.material = this.main.material
+    })
+
+    // particles
+    this.particles = this.data.user_particles.property.map((props) => {
+      let face = new THREE.Mesh(this.main.geometry.clone(), this.main.material)
+      face.visible = false
+      face.scale.fromArray(Config.DATA.user_particles.scale).multiplyScalar(SCALE)
+      let meshIndex = props.mesh_index[0]
+      face.geometry.applyMorph(Config.DATA.user_particles_mesh.morph[meshIndex])
+      this.add(face)
+      return face
     })
 
     // slice & montage part
@@ -256,11 +271,11 @@ export default class FaceController extends THREE.Object3D {
       let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
-      this.particles = new FaceParticle(scale, this.face1, sprite, lut)
-      this.particles.renderOrder = 10000
-      this.particles.visible = false
-      this.add(this.particles)
-      this.particles.updateData()
+      this.mosaicParticles = new FaceParticle(scale, this.face1, sprite, lut)
+      this.mosaicParticles.renderOrder = 10000
+      this.mosaicParticles.visible = false
+      this.add(this.mosaicParticles)
+      this.mosaicParticles.updateData()
 
       this.blender = new FaceBlender(this.face1, this.face2)
       this.blender.visible = false
@@ -385,6 +400,19 @@ export default class FaceController extends THREE.Object3D {
       })
     }
 
+    // particles
+    if (this.data.user_particles.in_frame <= currentFrame && currentFrame <= this.data.user_particles.out_frame) {
+      let f = currentFrame - this.data.user_particles.in_frame
+      this.data.user_particles.property.forEach((props, i) => {
+        let face = this.particles[i]
+        face.visible = props.enabled[f]
+        if (face.visible) {
+          face.position.fromArray(props.position, f * 3)
+          face.quaternion.fromArray(props.quaternion, f * 4)
+        }
+      })
+    }
+
     // slicing
     if (this.data.slice_row.in_frame <= currentFrame && currentFrame <= this.data.slice_row.out_frame) {
       let f = currentFrame - this.data.slice_row.in_frame
@@ -435,14 +463,14 @@ export default class FaceController extends THREE.Object3D {
     // mosaic
     if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame) {
       let f = currentFrame - this.data.mosaic.in_frame
-      this.particles.update(this.data.mosaic.property.time[f])
-      this.particles.visible = true
+      this.mosaicParticles.update(this.data.mosaic.property.time[f])
+      this.mosaicParticles.visible = true
     }
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame
 
-      this.particles.update(1 + Math.min(1, f / 30 * 0.1))
-      this.particles.visible = f < 30
+      this.mosaicParticles.update(1 + Math.min(1, f / 30 * 0.1))
+      this.mosaicParticles.visible = f < 30
 
       let props = this.data.o2_extra.property
       this.rotateGroup.rotation.z = this.camera.rotation.z
