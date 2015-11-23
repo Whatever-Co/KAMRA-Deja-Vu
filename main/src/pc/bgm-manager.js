@@ -25,7 +25,7 @@ class BgmManager {
   }
 
   stop() {
-    $(this.player).animate({volume: 0}, 1000, ()=> {
+    $(this.player).animate({volume: 0}, 3000, ()=> {
       this.player.pause()
     })
   }
