@@ -18,27 +18,27 @@
   },
   "howto":{
     "webcam":{
-      "title":"Webカメラでの体験方法",
-      "s1":"トップページで「Webcam」を選択",
-      "s2":"カメラの使用を許可",
-      "s3":"撮影準備",
-      "s3_1":"メガネ、帽子を取って顔の全体がはっきり見えるようにしてください。",
-      "s3_2":"ガイドに合わせて顔を固定してください。",
-      "s3_3":"髪の毛が顔にかからないよう、顔を明るく照らしてください。",
-      "s4":"ガイド表示に顔をあわせる",
-      "s5":"顔が認識されると Deja vu 開始"
+      "title":"Play with a Webcam",
+      "s1":"Click “Webcam” on the top page.",
+      "s2":"Accept a webcam request",
+      "s3":"Get Ready",
+      "s3_1":"Take off your glasses and hat.",
+      "s3_2":"Follow the guide, still your face.",
+      "s3_3":"Make sure, nothing covers but minimum reflective light on your face.",
+      "s4":"Follow the guide, still your face.",
+      "s5":"As soon as your face is recognized, “deja vu” starts."
     },
     "photo":{
-      "title":"写真アップロードでの体験方法",
-      "s1":"トップページで「Photo」を選択",
-      "s2":"写真アップロード準備",
-      "s2_0":"下記のような写真をアップロードしてください。",
-      "s2_1":"メガネ、帽子は被らず顔の全体がはっきり見える写真",
-      "s2_2":"正面を向き、顔がまっすぐ固定された写真",
-      "s2_3":"髪の毛が顔にかかっていない、顔が明るく照らされた写真",
-      "s3":"写真ファイルをドラッグ＆ドロップするか、クリックで選択しアップロード",
-      "s4_1":"顔認証位置を確認し、",
-      "s4_2":"「OK」で Deja vu 開始"
+      "title":"Play by Uploading a Photo",
+      "s1":"Click “Photo” on the top page.",
+      "s2":"Get Ready to Upload a Photo.",
+      "s2_0":"Please upload an appreciate photo.",
+      "s2_1":"A photo without glasses and hat.",
+      "s2_2":"A full‐faced photograph.",
+      "s2_3":"Nothing is covered but minimum reflective light on your face.",
+      "s3":"Drag and drop the photo, or click to select an uploaing photo. ",
+      "s4_1":"After the face is recognized, click",
+      "s4_2":"“OK” and start “deja vu”."
     }
   },
   "disclaimer":{
