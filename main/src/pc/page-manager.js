@@ -209,18 +209,16 @@ class PageManager {
       this.fsm.goTop()
     })
 
-    this.initUploads()
-
     // smooth scroll
-    //$('a[href^=#]').click(function() {
-    //  let href= $(this).attr('href')
-    //  let target = $(href == '#' || href == '' ? 'html' : href)
-    //  var position = target.offset().top - 100
-    //  $('html', 'body').animate({scrollTop:position}, 500, 'swing')
-    //
-    //  return false
-    //});
+    $('#about a[href^=#]').click(function(e) {
+      e.preventDefault()
+      let href= $(this).attr('href')
+      let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
+      let target = $('#about .mask')
+      target.animate({scrollTop:pos + target.scrollTop()}, 500, 'swing')
+    });
 
+    this.initUploads()
     this.initLocales()
 
     Ticker.start()
