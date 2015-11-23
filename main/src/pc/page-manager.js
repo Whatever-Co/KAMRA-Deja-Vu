@@ -182,6 +182,13 @@ class PageManager {
     $('.button-top').click(() => location.reload())
     $('a[href="#about"]').click(() => this.fsm.goAbout())
     $('a[href="#howto"]').click(() => this.fsm.goHowto())
+    $('a[href="#disclaimer"]').click((e) => {
+      this.fsm.goHowto()
+      e.preventDefault()
+      let target = $('#howto .mask')
+      let pos = $('#disclaimer').offset().top - 150
+      target.scrollTop(pos + target.scrollTop()) // adjustment scroll position
+    })
     $('button.close').click(() => {
       location.href = '#'
       this.fsm.goTop()
@@ -253,7 +260,7 @@ class PageManager {
     }, () => {
       $('#about').localize()
       $('#howto').localize()
-
+      $('.top_button').localize()
       this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }
