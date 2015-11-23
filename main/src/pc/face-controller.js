@@ -121,15 +121,12 @@ export default class FaceController extends THREE.Object3D {
       this.main.visible = true
       this.remove(this.slitScan)
 
-      console.time('falling children setup')
-      let geometry = this.main.geometry.clone()
-      this.fallingChildren = this.data.falling_children.property.map(() => {
-        let face = new THREE.Mesh(geometry, this.main.material)
+      this.fallingChildren = FaceLibrary.getRandomMeshes(this.data.falling_children.property.length - 1)
+      this.fallingChildren.splice(~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
+      this.fallingChildren.forEach((face) => {
         face.scale.set(SCALE, SCALE, SCALE)
         this.add(face)
-        return face
       })
-      console.timeEnd('falling children setup')
     })
 
     Ticker.addFrameEvent(this.data.falling_children.out_frame + 1, () => {
@@ -415,11 +412,15 @@ export default class FaceController extends THREE.Object3D {
     // falling children
     if (this.data.falling_children.in_frame <= currentFrame && currentFrame <= this.data.falling_children.out_frame) {
       let f = currentFrame - this.data.falling_children.in_frame
-      // this.fallingChildren[0].geometry.applyMorph(this.data.falling_children_mesh.property[0].morph[f])
       this.data.falling_children.property.forEach((props, i) => {
         let face = this.fallingChildren[i]
         face.position.fromArray(props.position, f * 3)
         face.quaternion.fromArray(props.quaternion, f * 4)
+        if (this.data.falling_children_mesh.in_frame <= currentFrame && currentFrame <= this.data.falling_children_mesh.out_frame) {
+          let f = currentFrame - this.data.falling_children_mesh.in_frame
+          let meshIndex = Config.DATA.falling_children[i].mesh_index
+          face.geometry.applyMorph(this.data.falling_children_mesh.property[meshIndex].morph[f])
+        }
       })
     }
 
