@@ -5,15 +5,19 @@
 *
   box-sizing border-box
 
-html, body
+html, body, ul, h2, h3, hr, p
   padding 0
   margin 0
-  
+  -webkit-margin-before 0
+  -webkit-margin-after 0
+
 body, pre
   font-family "adobe-garamond-pro", Garamond, YuMincho, '游明朝', 'Hiragino Mincho ProN', serif
   font-size 12px
-  letter-spacing 0.3em
+  letter-spacing 0.2em
   color rgba(255, 255, 255, 0.7)
+
+body
   background-color #031a29
 
 button
@@ -61,6 +65,7 @@ button.close
 
 .play_buttons
   width 100%
+  height 136px
   text-align center
   .buttons
     position relative
@@ -69,7 +74,15 @@ button.close
     text-align center
     button
       margin 0 20px
-      
+      width 100px
+      height 100px
+      background-size 100px 100px
+    button.with-webcam
+      background-image url(images/button-play-webcam.png)
+    button.with-photo
+      background-image url(images/button-play-photo.png)
+    button.without-webcam
+      background-image url(images/button-play-sample.png)
 .mask
   position fixed
   width 100%

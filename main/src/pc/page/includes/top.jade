@@ -6,24 +6,34 @@
       ul
         li
           a(href='#{link.itunes}', target='_blank') iTunes
+        li |
         li
           a(href='#{link.amazon}', target='_blank') Amazon
+        li |
         li
           a(href='#{link.cdbaby}', target='_blank') CD Baby
   .navi
     ul
       li
         a(href='#') Home
+      li |
       li
         a(href='#about') About
+      li |
       li
         a(href='#howto') How to play
+      li |
       li
         | Share :
         a.button_twitter(title='Twitter', href='#')
           img(src='images/button-top-twitter.png')
         a.button_facebook(title='Facebook', href='#')
           img(src='images/button-top-facebook.png')
+      li |
       li
-        span ©KAMRA2015
-  include ./play_buttons.jade
+        span © KAMRA2015
+  .top_button
+    include ./play_buttons.jade
+    div
+      a(href='#disclaimer')
+        > 画像アップロードに関する免責事項
