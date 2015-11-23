@@ -83,10 +83,10 @@ let manifest = [
   {id: `lula-image`, src: `textures/faces/lula.jpg`},
 ]
 
-for (let i = 0; i < 10; i++) {
+for (let i = 0; i < 20; i++) {
   manifest.push(
-    {id: `face${i}data`, src: `textures/faces/${ids[i]}.json`},
-    {id: `face${i}image`, src: `textures/faces/${ids[i]}.jpg`}
+    {id: `face${i}-data`, src: `textures/faces/${ids[i]}.json`},
+    {id: `face${i}-image`, src: `textures/faces/${ids[i]}.jpg`}
   )
 }
 

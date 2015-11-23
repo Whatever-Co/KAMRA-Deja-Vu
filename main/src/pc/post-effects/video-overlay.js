@@ -1,8 +1,5 @@
 /* global THREE */
 
-import Config from '../config'
-
-
 export default class VideoOverlay extends THREE.ShaderPass {
 
   constructor() {
@@ -29,6 +26,7 @@ export default class VideoOverlay extends THREE.ShaderPass {
     this.video.addEventListener('canplay', this.loadedmetadata.bind(this))
     this.video.addEventListener('ended', this.ended.bind(this))
     this.video.load()
+    // this.video.muted = true
 
     this.enabled = false
   }

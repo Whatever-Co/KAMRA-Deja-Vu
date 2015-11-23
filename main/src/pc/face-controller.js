@@ -4,7 +4,10 @@ import _ from 'lodash'
 
 import Config from './config'
 import Ticker from './ticker'
+import FaceLibrary from './face-library'
+console.log(FaceLibrary)
 import DeformableFaceGeometry from './deformable-face-geometry'
+import FaceFrontMaterial from './face-front-material'
 import SlitScanPlane from './slit-scan-plane'
 import CreepyFaceTexture from './creepy-face-texture'
 import FaceParticle from './face-particle'
@@ -15,28 +18,6 @@ const SCALE = 150
 const loader = window.__djv_loader
 
 
-class FaceFrontMaterial extends THREE.ShaderMaterial {
-
-  constructor(texture, cameraZ) {
-    super({
-      uniforms: {
-        map: {type: 't', value: texture},
-        clipRange: {type: 'v2', value: new THREE.Vector2(-10000, 10000)},
-        cameraZ: {type: 'f', value: cameraZ},
-        inverseModelMatrix: {type: 'm4', value: new THREE.Matrix4()},
-        scaleZ: {type: 'f', value: 1},
-        curlOffset: {type: 'f', value: 300},
-        curlStrength: {type: 'f', value: 0},
-        curlRotateX: {type: 'f', value: 0}
-      },
-      vertexShader: require('./shaders/face-front.vert'),
-      fragmentShader: require('./shaders/face-front.frag'),
-      side: THREE.DoubleSide,
-      transparent: true,
-    })
-  }
-
-}
 
 
 export default class FaceController extends THREE.Object3D {
@@ -50,6 +31,8 @@ export default class FaceController extends THREE.Object3D {
     this.webcam = webcam
     this.renderer = renderer
     this.camera = camera
+
+    console.time('face controller init')
 
     // faces
     this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
@@ -73,24 +56,14 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // children
-    this.smalls = []
-    let keys = _.shuffle(this.data.user_children.property.map((c, i) => `face${i}`))
-    keys.splice(RIRI ? 0 : ~~(Math.random() * keys.length), 1, 'lula-')
-    for (let i = 0; i < this.data.user_children.property.length; i++) {
-      let featurePoints = loader.getResult(`${keys[i]}data`)
-      if (!Array.isArray(featurePoints)) debugger
-      featurePoints.forEach((p) => {
-        p[0] *= 512
-        p[1] = (1 - p[1]) * 512
-      })
-      let geometry = new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200)
-      let material = new FaceFrontMaterial(new THREE.CanvasTexture(loader.getResult(`${keys[i]}image`)))
-      let small = new THREE.Mesh(geometry, material)
-      small.visible = false
-      this.add(small)
-      this.smalls.push(small)
+    {
+      this.smalls = FaceLibrary.getRandomMeshes(this.data.user_children.property.length - 1)
+      this.smalls.splice(RIRI ? 0 : ~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
+      for (let i = 0; i < this.smalls.length; i++) {
+        this.smalls[i].visible = false
+        this.add(this.smalls[i])
+      }
     }
-    this.smallsEnabled = Config.DATA.user_children
 
     // mosaic part
     this.rotateGroup = new THREE.Object3D()
@@ -118,6 +91,7 @@ export default class FaceController extends THREE.Object3D {
     // first animation
     this.update = this._followWebcam.bind(this)
 
+    console.timeEnd('face controller init')
 
     // if (Config.DEV_MODE) {
     //   this.main.add(new THREE.AxisHelper())
@@ -148,6 +122,7 @@ export default class FaceController extends THREE.Object3D {
       this.main.visible = true
       this.remove(this.slitScan)
 
+      console.time('falling children setup')
       let geometry = this.main.geometry.clone()
       this.fallingChildren = this.data.falling_children.property.map(() => {
         let face = new THREE.Mesh(geometry, this.main.material)
@@ -155,6 +130,7 @@ export default class FaceController extends THREE.Object3D {
         this.add(face)
         return face
       })
+      console.timeEnd('falling children setup')
     })
 
     Ticker.addFrameEvent(this.data.falling_children.out_frame + 1, () => {
@@ -322,11 +298,6 @@ export default class FaceController extends THREE.Object3D {
   }
 
 
-  enableChild(i) {
-    // console.log('enableChild', i, Ticker.currentFrame)
-  }
-
-
   changeChildToAnother(i) {
     let child = this.smalls[i]
     child.geometry.uvAttribute.copy(child.geometry.originalUV)
@@ -408,7 +379,7 @@ export default class FaceController extends THREE.Object3D {
       let f = currentFrame - this.data.user_children.in_frame
       this.data.user_children.property.forEach((props, i) => {
         let face = this.smalls[i]
-        face.visible = this.smallsEnabled[i].enabled_in_frame <= currentFrame
+        face.visible = Config.DATA.user_children[i].enabled_in_frame <= currentFrame
         if (face.visible) {
           face.position.fromArray(props.position, f * 3)
           face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
