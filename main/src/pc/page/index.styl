@@ -1,3 +1,7 @@
+// vars
+
+min-width = 1100px
+
 //----------------------
 // 0. Default settings
 //----------------------
@@ -128,10 +132,11 @@ button.close
 //----------------------
 
 #canvas-clip
-  position fixed
+  position absolute
   left 0
   top 0
   width 100%
+  min-width min-width
   height 100%
   overflow hidden
   
@@ -140,11 +145,10 @@ canvas#main
 
 #page
   position absolute
-  //position fixed
   left 0
   top 0
   width 100%
-  min-width 1000px
+  min-width min-width
   height 100%
 
 #loading
