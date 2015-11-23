@@ -226,12 +226,12 @@ export default class App extends EventEmitter {
       // this._vcon.currentTime = 2 / 24
       // this._vcon.play()
     }
-    setTimeout(() => {
+    Ticker.addFrameEvent(this.keyframes.i_extra.out_frame, () => {
       let t = parseInt(location.hash.substr(1))
       if (!isNaN(t)) {
         this.videoOverlay.position = t / 24 * 1000
       }
-    }, 3000)
+    })
   }
 
 
@@ -239,10 +239,13 @@ export default class App extends EventEmitter {
     Ticker.setClock(null)
 
     if (this.sourceType == 'webcam' || this.sourceType == 'uploaded') {
+      console.time('prepare form data')
       let formData = new FormData()
       formData.append('data', JSON.stringify(this.face.shareData.data))
       formData.append('cap', this.renderTargetToBlob(this.face.shareData.cap))
       formData.append('kimo', this.renderTargetToBlob(this.applyPostEffect(this.face.shareData.kimo)))
+      console.timeEnd('prepare form data')
+      console.time('send to server')
       $.ajax({
         method: 'post',
         url: '/api/save/',
@@ -251,6 +254,7 @@ export default class App extends EventEmitter {
         processData: false,
         dataType: 'json'
       }).done((data, status) => {
+        console.timeEnd('send to server')
         console.log('success', data, status)
         if (status == 'success' && data && data.status == 201) {
           this.emit('complete', data.data.detail_url)
@@ -258,6 +262,7 @@ export default class App extends EventEmitter {
           this.emit('complete')
         }
       }).fail((error) => {
+        console.timeEnd('send to server')
         console.error(error)
         this.emit('complete')
       })

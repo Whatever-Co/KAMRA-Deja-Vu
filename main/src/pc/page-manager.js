@@ -17,6 +17,9 @@ if (Config.DEV_MODE) {
   $('head').append(`<script async src='/browser-sync/browser-sync-client.2.10.0.js'><\/script>`)
 }
 
+const loader = window.__djv_loader
+loader.on('complete', () => new PageManager())
+
 
 class PageManager {
 
@@ -53,12 +56,12 @@ class PageManager {
         },
         // top
         onentertop: () => {
-          if (window.__djv_loader.getResult('shared-data')) {
+          if (loader.getResult('shared-data')) {
             $('#top .play_buttons').hide()
             $('#top .play-shared').show()
             this.app.prepareForImage(
-              window.__djv_loader.getResult('shared-image'),
-              window.__djv_loader.getResult('shared-data')
+              loader.getResult('shared-image'),
+              loader.getResult('shared-data')
             )
           }
           $('#top').delay(500).fadeIn(1000)
@@ -259,11 +262,11 @@ class PageManager {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng:(()=>{
-        if(Config.DEV_MODE) {
+      lng: (() => {
+        if (Config.DEV_MODE) {
           return ''
         }
-        return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
+        return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0, 2) == 'ja' ? 'ja' : 'en'
       })(),
       debug: Config.DEV_MODE
     }, () => {
@@ -271,7 +274,7 @@ class PageManager {
       $('#howto').localize()
       $('.top_button').localize()
       let imgs = $('img.i18n')
-      imgs.attr('src', imgs.text()) // localise img src
+      imgs.attr('src', imgs.text()) // localize img src
       this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }
@@ -298,8 +301,6 @@ class PageManager {
 
 
   preprocessKeyframes() {
-    let loader = window.__djv_loader
-
     this.keyframes = loader.getResult('keyframes')
     console.log(this.keyframes)
 
@@ -310,7 +311,6 @@ class PageManager {
       this.keyframes.user.property,
       this.keyframes.user_alt.property[0],
       this.keyframes.user_alt.property[1],
-      this.keyframes.falling_children_mesh.property[0],
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
     .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
@@ -366,10 +366,6 @@ class PageManager {
 
 }
 
-
-window.__djv_loader.on('complete', () => {
-  new PageManager()
-})
 
 window.onerror = (message, url, lineNumber, column, error) => {
   console.log({message, url, lineNumber, column, error, stack: error.stack})
