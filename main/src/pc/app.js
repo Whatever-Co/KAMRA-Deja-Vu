@@ -309,11 +309,12 @@ export default class App extends EventEmitter {
 
 
   onResize() {
-    let s = Math.max(window.innerWidth / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    let w = Math.max(1100, window.innerWidth)
+    let s = Math.max(w / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
     $(this.renderer.domElement).css({
       transformOrigin: 'left top',
+      translate: [(w - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
       scale: [s, s],
-      translate: [(window.innerWidth - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2]
     })
   }
 
