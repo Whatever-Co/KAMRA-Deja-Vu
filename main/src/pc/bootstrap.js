@@ -6,7 +6,7 @@ import loader from './asset-loader'
 if(Modernizr.getusermedia == false
   || Modernizr.webgl == false
   || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-  // Incompatible devices
+  // No supported devices
   location.href = 'sp'
 }
 
