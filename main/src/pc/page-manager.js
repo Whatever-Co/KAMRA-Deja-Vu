@@ -11,6 +11,7 @@ import App from './app'
 import WebcamManager from './webcam-manager'
 import FaceDetector from './face-detector'
 import ShareUtil from './share-util'
+import BgmManager from './bgm-manager'
 
 
 if (Config.DEV_MODE) {
@@ -65,6 +66,7 @@ class PageManager {
             )
           }
           $('#top').delay(500).fadeIn(1000)
+          BgmManager.play('data/intro')
         },
         onleavetop: (event, from, to) => {
           if (to == 'playing') {
@@ -163,9 +165,10 @@ class PageManager {
 
         // play
         onenterplaying: (e, f, t, ...args) => {
+          BgmManager.stop()
           this.app.start(...args)
         },
-
+        
         // share
         onentershare: (e, f, t, shareURL) => {
           this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.share_text'), shareURL || location.href)
