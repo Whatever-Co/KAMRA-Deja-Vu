@@ -1,6 +1,5 @@
 /* global THREE */
 
-import $ from 'jquery'
 import _ from 'lodash'
 
 import Config from './config'
@@ -288,6 +287,8 @@ export default class FaceController extends THREE.Object3D {
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
       this.particles = new FaceParticle(scale, this.face1, sprite, lut)
+      this.particles.renderOrder = 10000
+      this.particles.visible = false
       this.add(this.particles)
       this.particles.updateData()
 
@@ -453,18 +454,23 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // mosaic
-    if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame + 50) {
-      let t = (currentFrame - this.data.mosaic.in_frame) / (this.data.mosaic.out_frame + 50 - this.data.mosaic.in_frame)
-      this.particles.update(t)
+    if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame) {
+      let f = currentFrame - this.data.mosaic.in_frame
+      this.particles.update(this.data.mosaic.property.time[f])
+      this.particles.visible = true
     }
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame
+
+      this.particles.update(1 + Math.min(1, f / 30 * 0.1))
+      this.particles.visible = f < 30
+
       let props = this.data.o2_extra.property
       this.rotateGroup.rotation.z = this.camera.rotation.z
 
       this.blender.visible = true
       this.blender.blend = props.interpolation[f]
-      this.blender.opacity = THREE.Math.clamp(f / 50, 0, 1)
+      this.blender.opacity = THREE.Math.clamp(f / 10, 0, 1)
       if (this.blender.blend >= 1) {
         this.blender.visible = false
         this.face1.visible = false
