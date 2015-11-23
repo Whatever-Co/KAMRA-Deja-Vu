@@ -2,6 +2,8 @@
 
 import {vec3} from 'gl-matrix'
 
+import Config from './config'
+
 
 class RandomFaceSelector {
 
@@ -81,7 +83,8 @@ export default class FaceParticle extends THREE.Points {
         DATA_WIDTH: DATA_WIDTH.toFixed(1),
         DATA_HEIGHT: DATA_HEIGHT.toFixed(1)
       },
-      transparent: true
+      transparent: true,
+      depthTest: false,
     }))
 
     this.face = face
@@ -90,23 +93,24 @@ export default class FaceParticle extends THREE.Points {
     this.dataTexture = new THREE.DataTexture(new Float32Array(DATA_WIDTH * DATA_HEIGHT * 3), DATA_WIDTH, DATA_HEIGHT, THREE.RGBFormat, THREE.FloatType)
     this.material.uniforms.facePosition.value = this.dataTexture
 
-    let config = require('./data/config.json')
-
+    console.time('mosaic init')
     let amount = 20000
     let position = new Float32Array(amount * 3)
     let triangleIndices = new Float32Array(amount * 3)
     let weight = new Float32Array(amount * 3)
+    let startZ = new Float32Array(amount)
     let delay = new Float32Array(amount)
+
     let randomFaceSelector = new RandomFaceSelector(this.face.geometry)
-    let faceIndices = this.face.geometry.index.array
-    for (let i = 0; i < position.length; i += 3) {
+    let vertexIndices = this.face.geometry.index.array
+    let vertexDelay = Config.DATA.mosaic_face.face_weight
+
+    for (let i = 0; i < amount; i++) {
+      let ii = i * 3
       let faceIndex = randomFaceSelector.get()
-      let j0 = faceIndices[faceIndex * 3]
-      let j1 = faceIndices[faceIndex * 3 + 1]
-      let j2 = faceIndices[faceIndex * 3 + 2]
-      triangleIndices[i] = j0
-      triangleIndices[i + 1] = j1
-      triangleIndices[i + 2] = j2
+      let i0 = triangleIndices[ii + 0] = vertexIndices[faceIndex * 3 + 0]
+      let i1 = triangleIndices[ii + 1] = vertexIndices[faceIndex * 3 + 1]
+      let i2 = triangleIndices[ii + 2] = vertexIndices[faceIndex * 3 + 2]
 
       let a = Math.random()
       let b = Math.random()
@@ -115,20 +119,20 @@ export default class FaceParticle extends THREE.Points {
         b = 1 - b
       }
       let c = 1 - a - b
-      weight[i] = a
-      weight[i + 1] = b
-      weight[i + 2] = c
+      weight[ii + 0] = a
+      weight[ii + 1] = b
+      weight[ii + 2] = c
 
-      position[i + 0] = THREE.Math.randFloat(config.mosaic_face.random_x_min, config.mosaic_face.random_x_max)
-      position[i + 1] = THREE.Math.randFloat(config.mosaic_face.random_y_min, config.mosaic_face.random_y_max)
-      position[i + 2] = -THREE.Math.randFloat(config.mosaic_face.random_z_min, config.mosaic_face.random_z_max)
-
-      delay[i / 3] = Math.random() * 3
+      // startZ[i] = THREE.Math.randFloat(2000, -Config.DATA.mosaic_face.random_z_max)
+      startZ[i] = THREE.Math.mapLinear(i, 0, amount, 2000, -Config.DATA.mosaic_face.random_z_max)
+      delay[i] = 1 - (vertexDelay[i0] * a + vertexDelay[i1] * b + vertexDelay[i2] * c)
     }
+    console.timeEnd('mosaic init')
 
-    this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
+    this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3)) // start position
     this.geometry.addAttribute('triangleIndices', new THREE.BufferAttribute(triangleIndices, 3))
     this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
+    this.geometry.addAttribute('startZ', new THREE.BufferAttribute(startZ, 1))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
   }
 
@@ -145,6 +149,7 @@ export default class FaceParticle extends THREE.Points {
 
     let data = this.dataTexture.image.data
     data.set(this.face.geometry.positionAttribute.array)
+
     let uv = this.face.geometry.uvAttribute
     for (let i = 0; i < uv.count; i++) {
       let j = data.length * 0.5 + i * 3

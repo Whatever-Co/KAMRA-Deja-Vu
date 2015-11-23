@@ -16,7 +16,10 @@ vec4 lookup() {
 
 void main() {
   vec4 c = lookup();
-  if (c.a < 0.5) discard;
-  gl_FragColor = mix(c, vColor, vBlend);
+  if (c.a > 0.) {
+    gl_FragColor = mix(c, vColor, vBlend);
+    gl_FragColor.a = c.a;
+  } else {
+    discard;
+  }
 }
- 
