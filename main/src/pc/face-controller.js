@@ -232,8 +232,6 @@ export default class FaceController extends THREE.Object3D {
         this.slicedFaces.forEach((face) => this.add(face))
       })
       Ticker.addFrameEvent(this.data.slice_col.out_frame + 1, () => {
-        // this.main.visible = true
-        // this.smalls.forEach((face) => face.visible = true)
         this.slicedFaces.forEach((face) => this.remove(face))
       })
     }
@@ -402,6 +400,16 @@ export default class FaceController extends THREE.Object3D {
           slice.rotation.y = props.rotation[f]
         }
       }
+    }
+    if (this.data.slice_alt.in_frame <= currentFrame && currentFrame <= this.data.slice_alt.out_frame) {
+      let f = currentFrame - this.data.slice_alt.in_frame
+      // [4, 5, 1, 0, -1, 7, 3, 2, 6]
+      ![5, 0, 7, 2].forEach((i) => {
+        this.smalls[i].geometry.applyMorph(this.data.slice_alt.property.morph[f])
+      })
+      ![4, 1, 3, 6].forEach((i) => {
+        this.smalls[i].geometry.applyMorph(this.data.user.property.morph[currentFrame])
+      })
     }
 
     // slit-scan
