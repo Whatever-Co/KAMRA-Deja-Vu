@@ -152,7 +152,7 @@ export default class FaceController extends THREE.Object3D {
   }
 
 
-  captureWebcam() {
+  captureWebcam(prepareShareData = true) {
     this.main.geometry.init(this.webcam.rawFeaturePoints, 320, 180, this.webcam.scale.y)
     this.main.material = new FaceFrontMaterial(this.webcam.takeSnapshot(1024, 1024), this.camera.position.z)
     this.mouth.material = this.main.material
@@ -273,7 +273,7 @@ export default class FaceController extends THREE.Object3D {
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
       this.mosaicParticles = new FaceParticle(scale, this.face1, sprite, lut)
       this.mosaicParticles.renderOrder = 10000
-      this.mosaicParticles.visible = false
+      this.mosaicParticles.visible = true
       this.add(this.mosaicParticles)
       this.mosaicParticles.updateData()
 
@@ -284,7 +284,7 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // prepare for sharing
-    {
+    if (prepareShareData) {
       let data = _.cloneDeep(this.webcam.rawFeaturePoints)
       let cap = this.webcam.takeSnapshot(1280, 720)
       let kimo = this.webcam.takeSnapshot(1280, 720)

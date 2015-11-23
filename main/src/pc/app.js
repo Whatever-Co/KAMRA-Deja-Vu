@@ -207,7 +207,7 @@ export default class App extends EventEmitter {
 
   onWebcamComplete() {
     console.time('capture')
-    this.face.captureWebcam()
+    this.face.captureWebcam(this.sourceType == 'webcam' || this.sourceType == 'uploaded')
     this.webcam.enableTracking = false
     this.webcam.drawFaceHole = true
 
