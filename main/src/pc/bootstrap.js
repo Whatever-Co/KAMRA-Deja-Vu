@@ -31,7 +31,7 @@ let updateLoading = (rate) => {
 
 loader.on('progress', (event) => {
   let rate = event.progress / event.total
-  console.log(Math.round(rate * 100))
+  // console.log(Math.round(rate * 100))
   updateLoading(rate)
 })
 loader.on('complete', () => {

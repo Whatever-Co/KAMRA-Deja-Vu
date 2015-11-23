@@ -311,6 +311,7 @@ class PageManager {
       this.keyframes.user.property,
       this.keyframes.user_alt.property[0],
       this.keyframes.user_alt.property[1],
+      this.keyframes.slice_alt.property,
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
     .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
