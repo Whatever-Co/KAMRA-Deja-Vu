@@ -28,7 +28,7 @@ class Ticker extends EventEmitter {
       let prev = this.currentFrame
       this.currentFrame = currentFrame
       if (prev > 0 && currentFrame - prev > 1) {
-        console.warn(`${currentFrame - prev - 1} frames skip detected`)
+        console.warn(`${currentFrame - prev - 1} frames skip detected at ${currentFrame}`)
       }
 
       for (let f = prev + 1; f <= currentFrame; f++) {
