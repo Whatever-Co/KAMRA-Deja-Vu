@@ -26,10 +26,10 @@ class PageManager {
       events: [
         {name: 'loadComplete', from: 'loadAssets', to: 'top'},
 
-        {name: 'selectWebcam', from: ['top', 'about'], to: 'webcam1'},
+        {name: 'selectWebcam', from: ['top', 'about', 'howto'], to: 'webcam1'},
         {name: 'webcamOK', from: 'webcam1', to: 'webcam2'},
         
-        {name: 'selectUpload', from: ['top', 'about'], to: 'upload1'},
+        {name: 'selectUpload', from: ['top', 'about', 'howto'], to: 'upload1'},
         {name: 'skip', from: 'upload1', to: 'upload2'},
         {name: 'fileSelected', from: 'upload2', to: 'upload2process'},
         {name: 'detected', from: 'upload2process', to: 'upload3'},
@@ -64,7 +64,7 @@ class PageManager {
           $('#top').delay(500).fadeIn(1000)
         },
         onleavetop: (event, from, to) => {
-          if (to == 'webcam1' || to == 'upload1' || to == 'playing') {
+          if (to == 'playing') {
             $('#top').stop().fadeOut(1000, () => {
               this.fsm.transition()
             })
@@ -72,8 +72,14 @@ class PageManager {
           }
         },
 
+
         // webcam
+        onbeforeselectWebcam: () => {
+          $('#top').stop().fadeOut(1000)
+          return StateMachine.ASYNC
+        },
         onenterwebcam1: () => {
+          $('#canvas-clip').addClass('blur')
           $('#webcam-step1').fadeIn(1000)
           WebcamManager.start(() => {
             this.fsm.webcamOK()
@@ -91,6 +97,7 @@ class PageManager {
           $('#webcam-step2').css({display: 'flex'}).hide().fadeIn(1000)
         },
         onleavewebcam2: () => {
+          $('#canvas-clip').removeClass('blur')
           $('#webcam-step2').stop().fadeOut(1000, () => {
             this.fsm.transition()
           })
@@ -98,8 +105,13 @@ class PageManager {
         },
 
         // upload
+        onbeforeselectUpload: () => {
+          $('#top').stop().fadeOut(1000)
+          return StateMachine.ASYNC
+        },
         onenterupload1: () => {
           $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
+          $('#canvas-clip').addClass('blur')
         },
         onleaveupload1: () => {
           $('#upload-step1').stop().fadeOut(1000, () => {
@@ -120,6 +132,7 @@ class PageManager {
           $('#upload-step3').css({display: 'flex'}).hide().fadeIn(1000)
         },
         onleaveupload3: () => {
+          $('#canvas-clip').removeClass('blur')
           $('#upload-step3').stop().fadeOut(1000, () => {
             this.fsm.transition()
           })
@@ -146,10 +159,6 @@ class PageManager {
         },
 
         // play
-        // onbeforestart: () => {
-        //   $('#top').fadeOut(1000)
-        //   return StateMachine.ASYNC
-        // },
         onenterplaying: (e, f, t, sourceType) => {
           this.app.start(sourceType)
         },
@@ -182,6 +191,13 @@ class PageManager {
     $('.button-top').click(() => location.reload())
     $('a[href="#about"]').click(() => this.fsm.goAbout())
     $('a[href="#howto"]').click(() => this.fsm.goHowto())
+    $('a[href="#disclaimer"]').click((e) => {
+      this.fsm.goHowto()
+      e.preventDefault()
+      let target = $('#howto .mask')
+      let pos = $('#disclaimer').offset().top - 150
+      target.scrollTop(pos + target.scrollTop()) // adjustment scroll position
+    })
     $('button.close').click(() => {
       location.href = '#'
       this.fsm.goTop()
@@ -243,12 +259,19 @@ class PageManager {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng: 'dev',
+      lng:(()=>{
+        if(Config.DEV_MODE) {
+          return ''
+        }
+        return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
+      })(),
       debug: Config.DEV_MODE
     }, () => {
       $('#about').localize()
       $('#howto').localize()
-
+      $('.top_button').localize()
+      let imgs = $('img.i18n')
+      imgs.attr('src', imgs.text()) // localise img src
       this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }

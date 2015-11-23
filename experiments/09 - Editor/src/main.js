@@ -38,11 +38,63 @@ class FeaturePointEditor {
 
     this.tracker = new FaceTracker()
 
+    this.initKeyEvents()
     this.initDropHandler()
     // this.filename = 'shutterstock_62329042.jpg'
     // this.filename = 'shutterstock_102487424_512.jpg'
     this.filename = 'shutterstock_102487424_1920.jpg'
     this.loadImage(`media/${this.filename}`)
+  }
+
+
+  initKeyEvents() {
+    window.addEventListener('keydown', (e) => {
+      // console.log(e.keyCode)
+      let scale = e.shiftKey || e.metaKey ? 0.1 : 1
+      switch (e.keyCode) {
+        case 37: // left
+          if (e.ctrlKey) {
+            this.rotatePoints(THREE.Math.degToRad(-3 * scale))
+          } else {
+            this.translatePoints(-10 * scale, 0)
+          }
+          break
+        case 38: // up
+          if (e.ctrlKey) {
+            this.scalePoints(1 + 0.05 * scale)
+          } else {
+            this.translatePoints(0, -10 * scale)
+          }
+          break
+        case 39: // right
+          if (e.ctrlKey) {
+            this.rotatePoints(THREE.Math.degToRad(3 * scale))
+          } else {
+            this.translatePoints(10 * scale, 0)
+          }
+          break
+        case 40: // down
+          if (e.ctrlKey) {
+            this.scalePoints(1 - 0.05 * scale)
+          } else {
+            this.translatePoints(0, 10 * scale)
+          }
+          break
+        default:
+          return
+      }
+      e.preventDefault()
+      this.update()
+    })
+
+    document.addEventListener('copy', (e) => {
+      e.preventDefault()
+      e.clipboardData.setData('text/plain', JSON.stringify(this.dump()))
+    })
+    document.addEventListener('paste', (e) => {
+      e.preventDefault()
+      this.setPoints(JSON.parse(e.clipboardData.getData('text/plain')))
+    })
   }
 
 
@@ -144,17 +196,22 @@ class FeaturePointEditor {
   loadPoints(file) {
     let reader = new FileReader()
     reader.onload = (e) => {
-      let data = JSON.parse(reader.result)
-      data.forEach((p, i) => {
+      this.setPoints(JSON.parse(reader.result))
+    }
+    reader.readAsText(file)
+  }
+
+
+  setPoints(points) {
+    if (Array.isArray(points) && points.length == 80) {
+      points.forEach((p, i) => {
         let dot = this.editPoints[i]
         dot.css({left: `${p[0] - 6}px`, top: `${p[1] - 6}px`, opacity: 0.5})
       })
-      this.cropTexture()
-      this.face.applyTexture(this.texture, this.textureCoords)
-      this.face.applyMorph()
-      this.setupDownloadData()
+      this.update()
+    } else {
+      console.warn('Invalid data')
     }
-    reader.readAsText(file)
   }
 
 
@@ -184,45 +241,67 @@ class FeaturePointEditor {
   }
 
 
-  addEditPoint(p, i) {
+  addEditPoint(p) {
     let dot = $('<div>').addClass('edit-point')
-    // dot.data('index', i)
     dot.css({left: `${p[0] / this.trackingScale - 6}px`, top: `${p[1] / this.trackingScale - 6}px`, opacity: 0.5})
     dot.appendTo(this.editArea)
-    dot.draggable({stop: () => {
-      this.cropTexture()
-      this.face.applyTexture(this.texture, this.textureCoords)
-      this.face.applyMorph()
-      this.setupDownloadData()
-    }})
+    dot.draggable({stop: () => this.update()})
     this.editPoints.push(dot)
     return dot
   }
 
-  onEditPointMouseDown(e) {
-    e.preventDefault()
-    console.log(this)
+
+  translatePoints(x, y) {
+    this.editPoints.forEach((p) => {
+      p.css({
+        left: `+=${x}`,
+        top: `+=${y}`
+      })
+    })
   }
 
 
-  dump() {
+  scalePoints(scale) {
+    let {center} = this.getBounds()
+    let mtx = mat3.create()
+    mat3.translate(mtx, mtx, center)
+    mat3.scale(mtx, mtx, [scale, scale])
+    mat3.translate(mtx, mtx, vec2.scale([], center, -1))
     let scrollLeft = this.editArea.scrollLeft()
     let scrollTop = this.editArea.scrollTop()
-    let points = this.editPoints.map((p) => {
+    this.editPoints.forEach((p) => {
       let c = p.position()
-      return [scrollLeft + c.left + 6, scrollTop + c.top + 6]
+      c = [scrollLeft + c.left + 6, scrollTop + c.top + 6]
+      vec2.transformMat3(c, c, mtx)
+      p.css({left: c[0] - 6, top: c[1] - 6})
     })
-    console.log(JSON.stringify(points))
   }
 
 
-  cropTexture() {
+  rotatePoints(angle) {
+    let {center} = this.getBounds()
+    let mtx = mat3.create()
+    mat3.translate(mtx, mtx, center)
+    mat3.rotate(mtx, mtx, angle)
+    mat3.translate(mtx, mtx, vec2.scale([], center, -1))
+    let scrollLeft = this.editArea.scrollLeft()
+    let scrollTop = this.editArea.scrollTop()
+    this.editPoints.forEach((p) => {
+      let c = p.position()
+      c = [scrollLeft + c.left + 6, scrollTop + c.top + 6]
+      vec2.transformMat3(c, c, mtx)
+      p.css({left: c[0] - 6, top: c[1] - 6})
+    })
+  }
+
+
+  getBounds() {
     let scrollLeft = this.editArea.scrollLeft()
     let scrollTop = this.editArea.scrollTop()
     // console.log({scrollLeft, scrollTop})
     let min = [Number.MAX_VALUE, Number.MAX_VALUE]
     let max = [Number.MIN_VALUE, Number.MIN_VALUE]
-    this.editPoints.forEach((p, i) => {
+    this.editPoints.forEach((p) => {
       let c = p.position()
       c = [scrollLeft + c.left + 6, scrollTop + c.top + 6]
       vec2.min(min, min, c)
@@ -231,6 +310,12 @@ class FeaturePointEditor {
     let size = vec2.sub([], max, min)
     let center = vec2.lerp([], min, max, 0.5)
     // console.log(min, max, size, center)
+    return {size, center}
+  }
+
+
+  cropTexture() {
+    let {size, center} = this.getBounds()
 
     let ctx = this.texture.getContext('2d')
     if (!ctx.getTransform) {
@@ -245,6 +330,8 @@ class FeaturePointEditor {
     ctx.drawImage(this.currentImage, 0, 0)
     ctx.restore()
 
+    let scrollLeft = this.editArea.scrollLeft()
+    let scrollTop = this.editArea.scrollTop()
     this.textureCoords = this.editPoints.map((ep) => {
       let c = ep.position()
       let p = vec2.transformMat3([], [scrollLeft + c.left + 6, scrollTop + c.top + 6], mtx)
@@ -268,6 +355,26 @@ class FeaturePointEditor {
       href: `data:application/json,${encodeURIComponent(JSON.stringify(data))}`,
       download: `${basename}.json`
     })
+  }
+
+
+  update() {
+    this.cropTexture()
+    this.face.applyTexture(this.texture, this.textureCoords)
+    this.face.applyMorph()
+    this.setupDownloadData()
+  }
+
+
+  dump() {
+    let scrollLeft = this.editArea.scrollLeft()
+    let scrollTop = this.editArea.scrollTop()
+    let points = this.editPoints.map((p) => {
+      let c = p.position()
+      return [scrollLeft + c.left + 6, scrollTop + c.top + 6]
+    })
+    console.log(JSON.stringify(points))
+    return points
   }
 
 
@@ -310,6 +417,7 @@ class EditorApp {
     document.body.appendChild(this.renderer.domElement)
 
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement)
+    this.controls.enableKeys = false
 
     window.addEventListener('resize', this.onResize.bind(this))
   }
@@ -322,10 +430,8 @@ class EditorApp {
   }
 
 
-  animate(t) {
+  animate() {
     requestAnimationFrame(this.animate)
-
-    // this.face.update(t)
     this.controls.update()
     this.renderer.render(this.scene, this.camera)
   }

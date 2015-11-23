@@ -18,6 +18,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
     this.uvAttribute = new THREE.BufferAttribute(new Float32Array(this.standardFace.position.array.length / 3 * 2), 2)
     this.uvAttribute.dynamic = true
     this.addAttribute('uv', this.uvAttribute)
+    this.addAttribute('uv2', this.standardFace.uv)
 
     if (featurePoint2D) {
       this.init(featurePoint2D, image, planeHeight, cameraZ)

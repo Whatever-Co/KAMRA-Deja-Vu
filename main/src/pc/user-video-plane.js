@@ -1,10 +1,39 @@
+/* global THREE */
+
+import _ from 'lodash'
+import {vec2} from 'gl-matrix'
+import TWEEN from 'tween.js'
+
 import UserPlaneBase from './user-plane-base'
 
-const RIRI = [[791.046875,507.953125],[791.453125,565.34375],[800.671875,632.640625],[810.21875,692.859375],[831.5625,741.921875],[871.09375,778.84375],[912.15625,810.828125],[968.296875,823.65625],[1026.703125,811.015625],[1076.84375,784.296875],[1124.234375,741.609375],[1145.140625,696.03125],[1157.03125,635.40625],[1163.171875,569.375],[1160.859375,501.40625],[1135.53125,474.140625],[1106.359375,454.015625],[1065.5625,458.953125],[1023.921875,469.78125],[815.71875,474.6875],[841.328125,457.46875],[886.15625,462.890625],[924.515625,469.21875],[826.546875,516.453125],[879.234375,490],[923.75,525.9375],[871.640625,528.78125],[880.640625,510.59375],[1132.234375,518.71875],[1069.375,490.375],[1027.40625,520.453125],[1074.9375,532.640625],[1069.296875,515.21875],[978.25,490.34375],[925.375,601.71875],[917.703125,630.953125],[931.953125,648.6875],[972.515625,648.703125],[1016.0625,649.59375],[1029.90625,630.265625],[1017.359375,603.921875],[975.65625,562.203125],[943.921875,633.703125],[997.28125,634.796875],[902.5625,714.828125],[925.375,693.5625],[947.953125,678.421875],[970.328125,681.90625],[990.203125,679.96875],[1016.5,693.9375],[1035.59375,717.421875],[1013.734375,729.09375],[996.03125,739.3125],[967.71875,743],[943.140625,739.40625],[920.640625,727.859375],[940.03125,711.328125],[969.015625,709.328125],[993.5,708.96875],[995.25,708.546875],[968.5,708.609375],[940.1875,709.890625],[973.453125,618.125],[851.421875,496.765625],[910.15625,504.671875],[898.015625,527.078125],[845.796875,521.921875],[1102.5625,501.828125],[1040.8125,502.625],[1048.3125,527.84375],[1102.015625,528.90625],[1157.90625,447.78125],[1136.140625,372.5625],[1101.953125,335.0625],[1036.953125,299.15625],[975.25,290.328125],[915.71875,294.796875],[842.3125,327.8125],[809.09375,381.078125],[791.6875,454.921875]].map((p) => {
-  p[0] /= 6
-  p[1] /= 6
-  return p
+
+const scalePoints = (points, scale = 1 / 6) => {
+  return points.map((p) => {
+    p[0] *= scale
+    p[1] *= scale
+    return p
+  })
+}
+
+const INTRO_FP = scalePoints(require('./data/riri-in.json'))
+const OUTRO_FP = _.mapValues(require('./data/riri-out.json'), (points) => {
+  return scalePoints(points)
 })
+const FP_NAME_AT_TIME = [
+  [0, '1028'],
+  [13.04, null],
+  [13.30, '1439'],
+  [14.83, null],
+  [15.28, '1611'],
+  [17.00, null],
+  [17.37, '1795'],
+  [18.16, null],
+  [18.60, '1916'],
+  [20.25, null],
+  [20.50, '2133'],
+  [Number.MAX_VALUE],
+]
+
 
 export default class UserVideoPlane extends UserPlaneBase {
 
@@ -17,6 +46,7 @@ export default class UserVideoPlane extends UserPlaneBase {
     this.onOutroEnded = this.onOutroEnded.bind(this)
   }
 
+
   start() {
     this.video = document.createElement('video')
     this.video.src = 'data/_/riri-in-1920.mp4?.jpg'
@@ -25,13 +55,14 @@ export default class UserVideoPlane extends UserPlaneBase {
     this.video.addEventListener('ended', this.onIntroEnded)
     this.video.play()
 
-    this.rawFeaturePoints = RIRI
+    this.rawFeaturePoints = INTRO_FP
 
     this.enableTextureUpdating = true
   }
 
 
   onLoadedMetadata() {
+    this.video.removeEventListener('loadedmetadata', this.onLoadedMetadata)
     this.enabled = true
   }
 
@@ -46,17 +77,15 @@ export default class UserVideoPlane extends UserPlaneBase {
 
   onIntroEnded() {
     this.video.removeEventListener('ended', this.onIntroEnded)
+    this.video.pause()
 
     this.enableTextureUpdating = true
     this.dispatchEvent({type: 'complete'})
-
-    this.video.pause()
-    this.video.src = 'data/_/riri-out-1920.mp4?.jpg'
-    this.video.load()
   }
 
 
   restart() {
+    this.video.src = 'data/_/riri-out-1920.mp4?.jpg'
     this.video.addEventListener('ended', this.onOutroEnded)
     this.video.play()
     this.enableTextureUpdating = true
@@ -70,20 +99,62 @@ export default class UserVideoPlane extends UserPlaneBase {
   }
 
 
+  getFPNameAtTime(time) {
+    for (let i = 0; i < FP_NAME_AT_TIME.length - 1; i++) {
+      if (FP_NAME_AT_TIME[i][0] <= time && time < FP_NAME_AT_TIME[i + 1][0]) {
+        return [i, FP_NAME_AT_TIME[i][1]]
+      }
+    }
+  }
+
+
+  blendFPs(fp1, fp2, alpha) {
+    alpha = TWEEN.Easing.Sinusoidal.Out(alpha)
+    return fp1.map((p1, i) => {
+      let p = vec2.lerp([], p1, fp2[i], alpha)
+      return p
+    })
+  }
+
+
+  updateTexture() {
+    let h = this.video.videoWidth / 16 * 9
+    let y = (this.video.videoHeight - h) / 2
+    this.webcamContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
+    this.webcamTexture.needsUpdate = true
+  }
+
+
   update(currentFrame) {
     super.update(currentFrame)
 
     if (this.enableTextureUpdating) {
+      if (this.isOutro) {
+        let [index, name] = this.getFPNameAtTime(this.video.currentTime)
+        if (name) {
+          this.rawFeaturePoints = OUTRO_FP[name]
+        } else {
+          let fp1 = FP_NAME_AT_TIME[index - 1]
+          let fp2 = FP_NAME_AT_TIME[index + 1]
+          let t = THREE.Math.mapLinear(this.video.currentTime, FP_NAME_AT_TIME[index][0], fp2[0], 0, 1)
+          this.rawFeaturePoints = this.blendFPs(OUTRO_FP[fp1[1]], OUTRO_FP[fp2[1]], t)
+        }
+      }
       this.normralizeFeaturePoints()
 
-      let h = this.video.videoWidth / 16 * 9
-      let y = (this.video.videoHeight - h) / 2
-      this.webcamContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-      this.webcamTexture.needsUpdate = true
-
+      this.updateTexture()
       this.updateWebcamPlane()
       this.updateFaceHole()
     }
+  }
+
+
+  scalePoints(points, scale = 1 / 6) {
+    return points.map((p) => {
+      p[0] *= scale
+      p[1] *= scale
+      return p
+    })
   }
 
 }

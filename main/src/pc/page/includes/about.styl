@@ -1,49 +1,96 @@
 #about
   display none
 
-  .concept
-    text-align center
+  #concept
+    img.i18n
+      width 940px
+      margin 0 0 80px 0
+
   section
     position relative
     padding 80px 0 80px 0
     &:not(:first-child)
       background url(images/h-line.png) top repeat-x
+
+  ul
+    display flex
+    justify-content space-between
+    align-items flex-end
+    list-style none
+  li
+    a.blank
+      padding 0 18px 0 0
+      background url(images/icon_blank.png) no-repeat 94% 80%
+
+  #album
+    display flex
     .album_info
-      position absolute
+      position relative
       margin 0 0 0 40px
+    .store_link
+      position absolute
+      width 500px
+      bottom -6px
+      span
+        position absolute
+        bottom 0
+      ul
+        position absolute
+        width 386px
+        right 0
+        bottom -2px
+
+  #kamra
+    .info
+      position absolute
+      left 250px
+      top 146px
+      ul
+        width 242px
+        margin-top 22px
+    p
+      margin-top 40px
+    p.about_kamra
+      margin-top 60px
 
   .colum
     width 440px
-    min-height 310px
-    h3
-      margin 30px 0
+    //min-height 250px
+    margin-bottom 50px
     a
       position absolute
       bottom 0
   .credit
     width 440px
     display flex
-    margin 30px 0
+    margin 0 0 60px 0
+    hr.mini
+      margin 0
     .info
       display flex
       flex-direction column
       justify-content center
       align-items flex-start
       margin 0 0 0 26px
-      .name
-        font-size 20px
+      line-height 1
+      .part
+        margin-bottom 20px
+      hr.mini
         margin 20px 0
-      a
-        padding 0 14px 0 0
-
+      a.blank
+        padding 0 10px 0 0
   .navi
     position fixed
     width 100%
     top 0
+    line-height 1
+    margin-top 50px
     ul
       display flex
       list-style none
       justify-content center
       font-size 32px
+      letter-spacing 0.2em
     li
       padding 0 18px 0 10px
+

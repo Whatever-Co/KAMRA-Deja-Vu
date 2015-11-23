@@ -1,10 +1,7 @@
 /* global THREE */
 
-import {vec3} from 'gl-matrix'
-
 import StandardFaceData from './standard-face-data'
 
-const OFFSET = 40 / 150
 
 export default class DeformedUVTexture extends THREE.WebGLRenderTarget {
 
@@ -13,59 +10,11 @@ export default class DeformedUVTexture extends THREE.WebGLRenderTarget {
 
     this.faceGeometry = faceGeometry
 
-    let vertices = []
-    let texCoords = []
-    let v2vt = []
-    require('raw!./data/face-uv.obj').split(/\n/).forEach((line) => {
-      let tokens = line.split(' ')
-      let type = tokens.shift()
-      switch (type) {
-        case 'v':
-          vertices.push(tokens.map((v) => parseFloat(v)))
-          break
-        case 'vt':
-          texCoords.push(tokens.map((v) => parseFloat((v))))
-          break
-        case 'f':
-          tokens.forEach((pair) => {
-            pair = pair.split('/').map((v) => parseInt(v) - 1)
-            v2vt[pair[0]] = pair[1]
-          })
-          break
-      }
-    })
-    vertices.forEach((v) => v[2] += OFFSET)
-
-    let getUVForVertex = (v) => {
-      let min = Number.MAX_VALUE
-      let index
-      for (let i = 0; i < vertices.length; i++) {
-        let d = vec3.distance(v, vertices[i])
-        if (d < min) {
-          min = d
-          index = i
-        }
-      }
-      return texCoords[v2vt[index]]
-    }
-
     let standardFace = new StandardFaceData()
-
-    {
-      let uvs = []
-      let position = standardFace.data.face.position
-      for (let i = 0; i < position.length; i += 3) {
-        let uv = getUVForVertex(position.slice(i, i + 3))
-        uvs.push(uv[0], uv[1])
-      }
-      this.uvAttribute = new THREE.Float32Attribute(uvs, 2)
-    }
-
     let uvs = []
-    let position = standardFace.data.face.position
-    for (let i = 0; i < position.length; i += 3) {
-      let uv = getUVForVertex(position.slice(i, i + 3))
-      uvs.push(uv[0], uv[1], 0)
+    for (let i = 0; i < standardFace.uv.count; i++) {
+      let j = i * 2
+      uvs.push(standardFace.uv.array[j], standardFace.uv.array[j + 1], 0)
     }
 
     let geometry = new THREE.BufferGeometry()
