@@ -119,7 +119,6 @@ class PageManager {
         // upload
         onbeforeselectUpload: () => {
           $('#top').stop().fadeOut(1000)
-          return StateMachine.ASYNC
         },
         onenterupload1: () => {
           $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
