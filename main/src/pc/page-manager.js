@@ -270,6 +270,8 @@ class PageManager {
       $('#about').localize()
       $('#howto').localize()
       $('.top_button').localize()
+      let imgs = $('img.i18n')
+      imgs.attr('src', imgs.text()) // localise img src
       this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }

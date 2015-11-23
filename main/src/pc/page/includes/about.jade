@@ -2,30 +2,36 @@
   .mask
     .page
       section#concept(name='concept')
-        p.concept()
-          span(data-i18n='about.concept.1') #{about.concept.l1}
-          br
-          br
-          span(data-i18n='about.concept.2') #{about.concept.l2}
-          br
-          br
-          span(data-i18n='about.concept.3') #{about.concept.l3}
+        img.i18n(src='images/concept_ja.png', data-i18n='about.conceptimg', alt='concept')
         include ./play_buttons.jade
       section#album(name='album')
         img(src='images/album-jacket.jpg')
-        img.album_info(src='images/album-info.png')
+        .album_info
+          img(src='images/album-info.png')
+          .store_link
+            span.s14 Buy via:
+            ul.s20
+              li
+                a.blank(href='#{link.itunes}', target='_blank') iTunes
+              li /
+              li
+                a.blank(href='#{link.amazon}', target='_blank') Amazon
+              li /
+              li
+                a.blank(href='#{link.cdbaby}', target='_blank') CD Baby
       section#kamra(name='kamra')
         img(src='images/profile-kamra.png')
         .info
-          p KAMRA
-            span / Yuichi Nakamura
+          span.s24 KAMRA
+          span.s14  / Yuichi Nakamura
           ul
             li
               a.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
+            li /
             li
               a.blank(src='#{link.twitter}' target='_blank') Twitter
 
-        p(data-i18n='about.kamra') #{about.kamra}
+        p.about_kamra(data-i18n='about.kamra') #{about.kamra}
 
         hr.mini
 
@@ -44,9 +50,12 @@
             .credit
               img(src="images/#{credit.photo}")
               .info
-                span.part #{credit.part}
-                span.name #{credit.name}
-                a.blank(href="#{credit.url}" target="_blank") #{credit.site}
+                span.part.s14 #{credit.part}
+                span.name.s20 #{credit.name}
+                if credit.url !== undefined
+                  hr.mini
+                  a.blank.s14(href="#{credit.url}" target="_blank") #{credit.site}
+
         include ./play_buttons.jade
   .navi
     ul
