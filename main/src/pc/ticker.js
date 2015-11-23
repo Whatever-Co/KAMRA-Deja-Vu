@@ -27,13 +27,13 @@ class Ticker extends EventEmitter {
     if (currentFrame != this.currentFrame) {
       let prev = this.currentFrame
       this.currentFrame = currentFrame
+      if (prev > 0 && currentFrame - prev > 1) {
+        console.warn(`${currentFrame - prev - 1} frames skip detected`)
+      }
 
-      let d = currentFrame - prev
-      if (d > 0) {
-        for (let f = prev + 1; f <= currentFrame; f++) {
-          if (this.frameEvents[f]) {
-            this.frameEvents[f].forEach((callback) => callback())
-          }
+      for (let f = prev + 1; f <= currentFrame; f++) {
+        if (this.frameEvents[f]) {
+          this.frameEvents[f].forEach((callback) => callback())
         }
       }
       this.emit('update', currentFrame, t)
