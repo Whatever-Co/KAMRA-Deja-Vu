@@ -316,6 +316,7 @@ class PageManager {
       this.keyframes.user_alt.property[0],
       this.keyframes.user_alt.property[1],
       this.keyframes.slice_alt.property,
+      {face_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.face_vertices)}
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
     .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
@@ -331,6 +332,7 @@ class PageManager {
         return null
       })
     })
+    Config.DATA.user_particles_mesh = targetObject[4]
 
     worker.postMessage(objectVertices, transferList)
     worker.onmessage = (event) => {
