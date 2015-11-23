@@ -271,11 +271,14 @@ class PageManager {
       })(),
       debug: Config.DEV_MODE
     }, () => {
-      $('#about').localize()
-      $('#howto').localize()
-      $('.top_button').localize()
+      $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,.top_button').localize()
+      $('img.i18n').localize()
       let imgs = $('img.i18n')
-      imgs.attr('src', imgs.text()) // localize img src
+      imgs.each(function(){
+        console.log(this)
+        let img = $(this)
+        img.attr('src', img.text()) // localize img src
+      })
       this.setupShareButtons('a.button_twitter', 'a.button_facebook', $.t('social.top_text'), $.t('social.url'))
     })
   }
