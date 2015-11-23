@@ -342,6 +342,6 @@ if __name__ == '__main__':
     # plot_dictance_color(paths)
     # plot_mosaic_color(paths)
 
-    # make_spritesheet(paths, 16, 256, 'lut/sprite256.png')
+    make_spritesheet(paths, 16, 256, 'lut/sprite256.png')
     convert_lut(paths)
-    # average_colors_to_json(paths, 'lut/sprite_colors.json')
+    average_colors_to_json(paths, 'lut/sprite_colors.json')

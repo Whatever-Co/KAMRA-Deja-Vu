@@ -1,6 +1,6 @@
 /* global THREE */
 
-import {vec3} from 'gl-matrix'
+import {vec2,vec3} from 'gl-matrix'
 import TWEEN from 'tween.js'
 import dat from 'dat-gui'
 
@@ -147,9 +147,13 @@ export default class FaceParticle extends THREE.Points {
       weight[i + 2] = c
     }
 
+    this.weight = new THREE.BufferAttribute(weight, 3)
+    this.triangleIndices = new THREE.BufferAttribute(triangleIndices, 3)
+
     this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
-    this.geometry.addAttribute('triangleIndices', new THREE.BufferAttribute(triangleIndices, 3))
-    this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
+    this.geometry.addAttribute('triangleIndices', this.triangleIndices)
+    this.geometry.addAttribute('weight', this.weight)
+    //this.geometry.addAttribute('faceUv', this.weight)
 
     this._gui = new dat.GUI()
     this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 1).setValue(0).name('Time')
@@ -183,14 +187,75 @@ export default class FaceParticle extends THREE.Points {
   }
 
   updateUV() {
-    let amount = 10000
-    let faceUv = new Float32Array(amount * 2)
-    for (let i = 0; i < amount*2; i+=2) {
-      faceUv[i]   = 0.5
-      faceUv[i+1] = 0.5
+    let tex = this.material.uniforms.faceTexture.value
+    let canvas = tex.image
+    let pixels = canvas.getContext('2d').getImageData(0, 0, 1024, 1024).data
+
+    let data = this.dataTexture.image.data
+
+    let getu = (index) => {
+      let x = index % 32.0
+      let y = Math.floor(index / 32.0) + 16
+      let i = x + y * 32
+      return [data[i * 3], data[i * 3 + 1]]
     }
-    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
-    this.testNearestColor()
+    let getUV = (idx, w) => {
+      let x = vec2.scale([], getu(idx[0]), w[0])
+      let y = vec2.scale([], getu(idx[1]), w[1])
+      let z = vec2.scale([], getu(idx[2]), w[2])
+      return [x[0]+y[0]+z[0], x[1]+y[1]+z[1]]
+    }
+
+    /**
+     * return RGB vec3
+     */
+    let texture2D = (uv) => {
+      let x = (uv[0] < 0 ? 1.0 + uv[0] : uv[0]) * 1024
+      let y = (uv[1] < 0 ? 1.0 + uv[1] : uv[1]) * 1024
+      //let x = (uv[0] < 0 ? 1.0 + uv[0] : uv[0]) * 1024
+      //let y = (uv[1] < 0 ? 1.0 + uv[1] : uv[1]) * 1024
+      //y = 1.0 - y
+      let i = Math.floor(x + y * 1024)
+      return [pixels[i*4], pixels[i*4+1], pixels[i*4+2]]
+    }
+
+    let amount = 10000
+    //let faceUv = new Float32Array(amount * 2)
+    let faceUv = new Float32Array(amount * 3)
+
+    let facecolor = new FaceColor()
+    let cssColor = (c) => {
+      return `rgb(${c[0]},${c[1]},${c[2]})`
+    }
+
+    let t= this.triangleIndices.array
+    let w = this.weight.array
+    for (let i = 0; i < amount; ++i) {
+
+      let uv = getUV(
+        [t[i*3],t[i*3+1],t[i*3+2]],
+        [w[i*3],w[i*3+1],w[i*3+2]]
+      )
+
+      let orig_c = texture2D(uv)
+      if(orig_c == undefined || orig_c[0] == undefined) {
+        orig_c = [0,0,0]
+      }
+      faceUv[i*3]   = orig_c[0] / 255.0
+      faceUv[i*3+1] = orig_c[1] / 255.0
+      faceUv[i*3+2] = orig_c[2] / 255.0
+
+      let result = facecolor.findNearestColor(orig_c)
+      console.log(`%cIN${ orig_c } %cOUT${result.color}`, `background:${cssColor(orig_c)}`, `background:${cssColor(result.color)}`)
+      //
+      //faceUv[i*2]   = result.index % 16 / 16.0
+      //faceUv[i*2+1] = 1.0 - Math.floor(result.index / 16.0) / 16.0 - 1.0 / 16
+
+    }
+    //this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
+    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 3))
+
+    //this.testNearestColor()
   }
 
   testNearestColor() {
@@ -204,10 +269,9 @@ export default class FaceParticle extends THREE.Points {
         Math.floor(Math.random()*255),
         Math.floor(Math.random()*255)
       ]
-      let result = facecolor.findNearestColor(in_c)    
-      console.log(`%cIN${ in_c } %cOUT${result.color}`, `background:${cssColor(in_c)}`, `background:${cssColor(result.color)}`)  
+      let result = facecolor.findNearestColor(in_c)
+      console.log(`%cIN${ in_c } %cOUT${result.color}`, `background:${cssColor(in_c)}`, `background:${cssColor(result.color)}`)
     }
   }
-
 
 }

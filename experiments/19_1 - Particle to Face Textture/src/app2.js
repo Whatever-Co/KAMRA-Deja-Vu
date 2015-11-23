@@ -65,6 +65,7 @@ export default class App {
     let spriteLut = THREE.ImageUtils.loadTexture('media/particle_index_lut.png')
     spriteLut.minFilter = THREE.NearestFilter
     this.particles = new FaceParticle(scale, this.face, sprite, spriteLut)
+    this.particles._gui.add(this.webcam, 'updateCamera')
     this.scene.add(this.particles)
   }
 

@@ -8,7 +8,7 @@ uniform sampler2D spritePosition; // 256x16 LUT
 
 attribute vec3 triangleIndices;
 attribute vec3 weight;
-attribute vec2 faceUv;
+attribute vec3 faceUv;
 
 varying vec3 vColor;
 varying vec2 lutIndex;
@@ -34,17 +34,17 @@ vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
     textureColor = clamp(textureColor, 0.0, 1.0);
   #endif
 
-  mediump float blueColor = textureColor.b * 63.0;
+  float blueColor = textureColor.b * 63.0;
 
-  mediump vec2 quad1;
+  vec2 quad1;
   quad1.y = floor(floor(blueColor) / 8.0);
   quad1.x = floor(blueColor) - (quad1.y * 8.0);
 
-  mediump vec2 quad2;
+  vec2 quad2;
   quad2.y = floor(ceil(blueColor) / 8.0);
   quad2.x = ceil(blueColor) - (quad2.y * 8.0);
 
-  highp vec2 texPos1;
+  vec2 texPos1;
   texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
   texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
 
@@ -52,7 +52,7 @@ vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
     texPos1.y = 1.0-texPos1.y;
   #endif
 
-  highp vec2 texPos2;
+  vec2 texPos2;
   texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
   texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
 
@@ -60,18 +60,16 @@ vec4 lookup(in vec4 textureColor, in sampler2D lookupTable) {
     texPos2.y = 1.0-texPos2.y;
   #endif
 
-  lowp vec4 newColor1 = texture2D(lookupTable, texPos1);
-  lowp vec4 newColor2 = texture2D(lookupTable, texPos2);
+  vec4 newColor1 = texture2D(lookupTable, texPos1);
+  vec4 newColor2 = texture2D(lookupTable, texPos2);
 
-  lowp vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
-  return newColor;
+  return mix(newColor1, newColor2, fract(blueColor));
 }
 
 vec2 lookup_face_uv(in vec4 textureColor, in sampler2D lookupTable) {
   vec2 index = lookup(textureColor, lookupTable).xy * 16.0;
-  index.y += 1.0;
   index.x = floor(index.x) / 16.0;
-  index.y = 1.0 - floor(index.y) / 16.0;
+  index.y = 1.0 - floor(index.y) / 16.0 - 1.0 / 16.0;
   return index;
 }
 
@@ -83,6 +81,8 @@ void main() {
 
   vec3 c = texture2D(faceTexture, getUV()).xyz;
   vColor = c;
+  vColor = faceUv;
+
   lutIndex = lookup_face_uv(vec4(c, 1), spritePosition);
-  // lutIndex = faceUv;
+//  lutIndex = faceUv;
 }
