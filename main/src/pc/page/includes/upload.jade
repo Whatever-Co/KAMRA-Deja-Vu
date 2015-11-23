@@ -1,8 +1,8 @@
 #upload-step1
-  p 下記のような写真をアップロードしてください。
-  img(src='images/upload-1.png', width=2160/2)
+  p(data-i18n='tutorial.upload1') 下記のような写真をアップロードしてください。
+  img.i18n(src='images/upload-1-ja.png', width=2160/2, data-i18n='tutorial.upload1img')
   button.skip
-    img(src='images/skip.png', width=153/2)
+    img(src='images/next.png', width=154/2)
 
 #upload-step2
   button.drop-area
@@ -10,7 +10,7 @@
   input.image-file(type='file', accept='image/*')
 
 #upload-step3
-  p この顔で再生します。よろしいですか？
+  p(data-i18n='tutorial.upload3') この顔で再生します。よろしいですか？
   div.buttons
     button.ok
       img(src='images/upload-ok.png', width=80)

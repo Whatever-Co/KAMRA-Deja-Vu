@@ -40,6 +40,14 @@
       "s4_2":"「OK」で Deja vu 開始"
     }
   },
+  "tutorial":{
+    "upload1img":"images/upload-1-ja.png",
+    "upload1":"下記のような写真をアップロードしてください。",
+    "upload3":"この顔で再生します。よろしいですか？",
+    "webcamtext":"リクエストを許可して下さい",
+    "webcam1img":"images/webcam-1-ja.png",
+    "webcam2img":"images/webcam-2-ja.png"
+  },
   "disclaimer":{
     "title":"画像アップロードに関する免責事項",
     "toplnk":"＞ 画像アップロードに関する免責事項",
