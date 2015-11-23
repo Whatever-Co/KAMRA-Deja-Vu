@@ -12,6 +12,7 @@ import WebcamManager from './webcam-manager'
 import FaceDetector from './face-detector'
 import ShareUtil from './share-util'
 import BgmManager from './bgm-manager'
+import LoadingBar from './loading-bar'
 
 
 if (Config.DEV_MODE) {
@@ -48,6 +49,12 @@ class PageManager {
       ],
       callbacks: {
         onleaveloadAssets: () => {
+          $({progress:0.95}).animate({progress:1.0},{
+            duration:500,
+            step:(s, s1)=>{
+              LoadingBar.update(s)
+            }
+          })
           $('#loading').fadeOut(1000, () => {
             this.app = new App(this.keyframes)
             this.app.on('complete', this.fsm.playCompleted.bind(this.fsm))
@@ -275,7 +282,6 @@ class PageManager {
       $('img.i18n').localize()
       let imgs = $('img.i18n')
       imgs.each(function(){
-        console.log(this)
         let img = $(this)
         img.attr('src', img.text()) // localize img src
       })

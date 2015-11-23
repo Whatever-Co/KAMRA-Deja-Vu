@@ -2,6 +2,7 @@
 
 import Modernizr from 'exports?Modernizr!modernizr-custom'
 import loader from './asset-loader'
+import LoadingBar from './loading-bar'
 
 if(Modernizr.getusermedia == false
   || Modernizr.webgl == false
@@ -10,36 +11,9 @@ if(Modernizr.getusermedia == false
   location.href = 'sp'
 }
 
-let loaderCanvas = document.querySelector('#loading canvas')
-loaderCanvas.width = 400
-loaderCanvas.height = 400
-let loaderCtx = loaderCanvas.getContext('2d')
-let updateLoading = (rate) => {
-  // Estimate final worker task
-  rate *= 0.95
-
-  loaderCtx.save()
-  loaderCtx.clearRect(0, 0, 400, 400)
-  loaderCtx.lineWidth = 1
-
-  loaderCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
-  loaderCtx.beginPath()
-  loaderCtx.arc(200, 200, 199, 0, 2 * Math.PI, false)
-  loaderCtx.stroke()
-
-  loaderCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-  loaderCtx.beginPath()
-  loaderCtx.arc(200, 200, 199,
-    -Math.PI * 0.5,
-    -Math.PI * 0.5 + 2 * Math.PI * rate, false)
-  loaderCtx.stroke()
-  loaderCtx.restore()
-}
-
 loader.on('progress', (event) => {
   let rate = event.progress / event.total
-  // console.log(Math.round(rate * 100))
-  updateLoading(rate)
+  LoadingBar.update(rate * 0.95) // Estimate final worker task
 })
 loader.on('complete', () => {
   console.timeEnd('asset loading')
