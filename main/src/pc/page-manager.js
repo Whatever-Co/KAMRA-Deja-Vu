@@ -243,7 +243,12 @@ class PageManager {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng: 'dev',
+      lng:(()=>{
+        if(Config.DEV_MODE) {
+          return ''
+        }
+        return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
+      })(),
       debug: Config.DEV_MODE
     }, () => {
       $('#about').localize()

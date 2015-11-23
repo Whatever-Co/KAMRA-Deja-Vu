@@ -32,7 +32,12 @@ class App {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      //lng: 'dev',
+      lng:(()=>{
+        if(DEV) {
+          return ''
+        }
+        return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
+      })(),
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
     }, ()=>{
