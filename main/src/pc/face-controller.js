@@ -5,7 +5,6 @@ import _ from 'lodash'
 import Config from './config'
 import Ticker from './ticker'
 import FaceLibrary from './face-library'
-console.log(FaceLibrary)
 import DeformableFaceGeometry from './deformable-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 import SlitScanPlane from './slit-scan-plane'
@@ -81,7 +80,7 @@ export default class FaceController extends THREE.Object3D {
     this.face2.matrixAutoUpdate = false
     this.rotateGroup.add(this.face2)
 
-    this.creepyFaceTexture = new CreepyFaceTexture(this.renderer, this.camera, this.webcam, this.face2, new THREE.CanvasTexture(loader.getResult('remap')))
+    this.creepyFaceTexture = new CreepyFaceTexture(this.renderer, this.camera, this.webcam, this.face2)
 
     this.face2.material.map = this.creepyFaceTexture
 

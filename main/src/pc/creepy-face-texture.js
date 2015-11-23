@@ -50,7 +50,7 @@ class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
 
 export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
 
-  constructor(renderer, camera, webcam, face, warpTexture) {
+  constructor(renderer, camera, webcam, face) {
     super(1024, 1024, {depthBuffer: false, stencilBuffer: false})
 
     this.renderer = renderer
@@ -65,15 +65,19 @@ export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
     this.scene.add(this.webcam)
 
     let uvTexture = new DeformedUVTexture(this.renderer, this.baseFace.geometry)
-    let material = new FacePartsDuplicateMaterial(this.baseWebcam.webcamTexture, warpTexture, uvTexture)
+    let material = new FacePartsDuplicateMaterial(this.baseWebcam.webcamTexture, null, uvTexture)
     this.face = new THREE.Mesh(this.baseFace.geometry, material)
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)
+  }
 
-    // let loader = new THREE.TextureLoader()
-    // loader.load('textures/creepy-remap1.png', (texture) => {
-    //   material.uniforms.warpTexture.value = texture
-    // })
+
+  setRemapType(remapType) {
+    this.remapType = remapType
+    let loader = new THREE.TextureLoader()
+    loader.load(`textures/remap_${remapType}.png`, (texture) => {
+      this.face.material.uniforms.warpTexture.value = texture
+    })
   }
 
 
