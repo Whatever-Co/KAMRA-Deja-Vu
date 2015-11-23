@@ -1,7 +1,14 @@
 /* global Typekit*/
 
+import Modernizr from 'exports?Modernizr!modernizr-custom'
 import loader from './asset-loader'
 
+if(Modernizr.getusermedia == false
+  || Modernizr.webgl == false
+  || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+  // Incompatible devices
+  location.href = 'sp'
+}
 
 let loaderCanvas = document.querySelector('#loading canvas')
 loaderCanvas.width = 400
