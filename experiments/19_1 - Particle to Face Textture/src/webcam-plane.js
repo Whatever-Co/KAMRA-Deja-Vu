@@ -48,6 +48,8 @@ export default class WebcamPlane extends THREE.Mesh {
     this.matrixFeaturePoints = new THREE.Matrix4()
 
     this.scoreHistory = []
+
+    this.updateCamera = true
   }
 
 
@@ -222,7 +224,12 @@ export default class WebcamPlane extends THREE.Mesh {
     let h = this.video.videoWidth / 16 * 9
     let y = (this.video.videoHeight - h) / 2
     this.textureContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, 1024, 1024)
-    this.texture.needsUpdate = true
+
+    if(!this.updateCamera) {
+      return
+    }
+
+    this.texture.needsUpdate = this.updateCamera
 
     this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
 
