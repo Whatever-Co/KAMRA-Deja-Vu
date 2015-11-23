@@ -13,16 +13,19 @@ _MEDIA_PC()
 *
   box-sizing border-box
 
-html, body
+html, body, ul, h2, h3, hr, p
   padding 0
   margin 0
+  -webkit-margin-before 0.0em
+  -webkit-margin-after 0.0em
 
 body
   font-family "adobe-garamond-pro", Garamond, YuMincho, "游明朝", "Hiragino Mincho ProN", "Roboto Slab", serif
   font-size 11px
-  letter-spacing 0.2em
+  letter-spacing 0.18em
+  line-height 2.27
   color rgba(255, 255, 255, 0.7)
-  background-color #021827
+  background-color #0a1a26
 
 button
   background none
@@ -50,8 +53,13 @@ a
 
 h2
   font-size 17px
+  font-weight normal
+  letter-spacing 0.2em
+  line-height 2
 h3
   font-size 15px
+  font-weight normal
+  letter-spacing 0.2em
 .s9
   font-size 9px
 .s12
@@ -61,11 +69,21 @@ h3
 .s19
   font-size 19px
 
+.m-top40
+  margin-top 40px
+.m-bottom40
+  margin-bottom 40px
+.m-top30
+  margin-top 30px
+.m-bottom30
+  margin-bottom 30px
+
 hr
   border 0
   height 1px
   background url(images/h-line.png) repeat-x 0 0
   background-size 100% 1px
+  margin 40px 0
   &.mini
     width 15px
     text-align left
@@ -86,7 +104,21 @@ hr
     font-size 14px*2
   .s19
     font-size 19px*2
-
+  .m-top40
+    margin-top 40px*2
+  .m-bottom40
+    margin-bottom 40px*2
+  .m-top30
+    margin-top 30px*2
+  .m-bottom30
+    margin-bottom 30px*2
+  a.blank
+    background-size 20px 16px
+    padding 0 32px 0 0
+  hr
+    margin 80px 0
+  hr.mini
+    width 30px
 
 
 //----------------------
@@ -138,25 +170,28 @@ html.mobile
   margin 0 auto
 .content
   position relative
-  margin 0 30px 0 30px
+  margin 0 30px
+  +_MEDIA_PC()
+    margin 0 30px*2
 
 .enviroment
-  margin 25px 0 50px 0
   padding 20px
   background url(images/h-line.png) top repeat-x, url(images/h-line.png) bottom repeat-x, url(images/v-line.png) left repeat-y, url(images/v-line.png) right repeat-y
   background-color rgba(255, 255, 255, 0.04)
+  +_MEDIA_PC()
+    padding 40px
   ul
     list-style-type none
     margin 10 0
     padding 0
   li
-    padding-left 20px
+    padding-left 15px
     &.check
       background url(images/icon-check.png) left center no-repeat
       background-size 10px 8px
-
-section
-  margin 38px 0 38px 0
+      +_MEDIA_PC()
+        padding-left 15px*2
+        background-size 10px*2 8px*2
 
 .concept
   img
@@ -169,7 +204,7 @@ section
   img
     width 100%
   h3
-    letter-spacing 0.1em
+    white-space nowrap
   ul
     display flex
     align-items center
@@ -194,10 +229,9 @@ section
   img
     width 50%
   .info
-    margin 0 0 0 20px
+    margin -1.3em 0 0 1.8em
+    letter-spacing 0.2em
   .social
-    margin 20px 0 0 0
-  p
     margin 20px 0 0 0
 
 
@@ -212,27 +246,37 @@ section.credits
   // only sp?
   .credit
     width 120px
-    letter-spacing 0em
-    margin 0 0 36px 0
+    letter-spacing 0.1em
     +_MEDIA_PC()
       width 240px
 
 .share
-  display flex
-  align-items center
-  justify-content space-around
-  margin 76px 24px 90px 24px
-  +_MEDIA_SP()
-    img
-      width 50px
+  position relative
+  width 100%
+  background-color #0f2432
+
+  .buttons
+    max-width 580px
+    display flex
+    align-items center
+    justify-content space-around
+    margin 0 auto
+    padding 80px 0
+    +_MEDIA_SP()
+      margin 0 auto
+      padding 40px 0
+      img
+        width 50px
 
 .footer
   display flex
   flex-direction column
   align-items center
   justify-content space-around
-  margin 0 0 50px 0
+  padding 100px 0
+  background-color #0c212f
   +_MEDIA_SP()
+    padding 50px 0
     img
       width 50%
   .copylight
