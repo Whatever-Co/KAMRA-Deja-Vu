@@ -27,6 +27,8 @@ import UserImagePlane from './user-image-plane'
 const PLANE_CLASSES = {webcam: UserWebcamPlane, video: UserVideoPlane, shared: UserImagePlane}
 import FaceController from './face-controller'
 
+import CompositePass1 from './post-effects/composite-pass1'
+import CompositePass2 from './post-effects/composite-pass2'
 import ColorCorrectionPass from './post-effects/color-correction'
 import ChromaticAberrationPass from './post-effects/chromatic-aberration'
 import VideoOverlayPass from './post-effects/video-overlay'
@@ -112,31 +114,17 @@ export default class App extends EventEmitter {
   initPostprocessing() {
     this.composer = new THREE.EffectComposer(this.renderer)
 
-    // render scene
     this.composer.addPass(new THREE.RenderPass(this.scene, this.camera))
 
-    // antialias
-    let fxaa = new THREE.ShaderPass(THREE.FXAAShader)
-    fxaa.uniforms.resolution.value.set(1 / Config.RENDER_WIDTH, 1 / Config.RENDER_HEIGHT)
-    this.composer.addPass(fxaa)
+    let lut = new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut'))
+    this.compositePass1 = new CompositePass1(lut)
+    this.compositePass1.addEventListener('complete', this.onVideoComplete.bind(this))
+    this.composer.addPass(this.compositePass1)
+    this.controllers.push(this.compositePass1)
 
-    // color correction
-    this.colorCorrection = new ColorCorrectionPass(new THREE.CanvasTexture(window.__djv_loader.getResult('colorcorrect-lut')))
-    this.composer.addPass(this.colorCorrection)
-
-    // texture overlay
-    this.videoOverlay = new VideoOverlayPass()
-    this.videoOverlay.addEventListener('complete', this.onVideoComplete.bind(this))
-    this.composer.addPass(this.videoOverlay)
-    this.controllers.push(this.videoOverlay)
-
-    // chromatic aberration
-    this.composer.addPass(new ChromaticAberrationPass())
-
-    // vignette
-    let vignette = new THREE.ShaderPass(THREE.VignetteShader)
-    vignette.uniforms.darkness.value = 1.2
-    this.composer.addPass(vignette)
+    this.compositePass2 = new CompositePass2()
+    this.composer.addPass(this.compositePass2)
+    this.controllers.push(this.compositePass2)
 
     _.last(this.composer.passes).renderToScreen = true
   }
@@ -201,7 +189,9 @@ export default class App extends EventEmitter {
     }
     this.webcam.start()
 
-    this.colorCorrection.setEnabled(true)
+    this.compositePass1.setLUTEnabled(true)
+    this.compositePass2.noiseEnabled = true
+    this.noiseLayer.hide()
   }
 
 
@@ -213,10 +203,10 @@ export default class App extends EventEmitter {
 
     this.camera.enabled = true
 
-    Ticker.setClock(this.videoOverlay)
-    // this.videoOverlay.start()
+    Ticker.setClock(this.compositePass1)
+    // this.compositePass1.start()
     setTimeout(() => {
-      this.videoOverlay.start()
+      this.compositePass1.start()
     })
     console.timeEnd('capture')
 
@@ -234,7 +224,7 @@ export default class App extends EventEmitter {
     Ticker.addFrameEvent(this.keyframes.i_extra.out_frame, () => {
       let t = parseInt(location.hash.substr(1))
       if (!isNaN(t)) {
-        this.videoOverlay.position = t / 24 * 1000
+        this.compositePass1.position = t / 24 * 1000
       }
     })
   }
@@ -297,7 +287,7 @@ export default class App extends EventEmitter {
 
     this.composer.render()
 
-    if (currentFrame % 2 == 0) {
+    if (!this.compositePass2.noiseEnabled && currentFrame % 2 == 0) {
       this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
     }
 

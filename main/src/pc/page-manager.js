@@ -189,7 +189,7 @@ class PageManager {
       },
       error: (eventName, from, to, args, errorCode, errorMessage) => {
         console.warn(eventName, from, to, args, errorCode, errorMessage)
-        if (Config.DEV_MODE) debugger
+        // if (Config.DEV_MODE) debugger
       }
     })
     $('.with-webcam').click(() => this.fsm.selectWebcam())
@@ -218,17 +218,18 @@ class PageManager {
     // smooth scroll
     $('#about a[href^=#]').click(function(e) {
       e.preventDefault()
-      let href= $(this).attr('href')
+      let href = $(this).attr('href')
       let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
       let target = $('#about .mask')
       target.animate({scrollTop:pos + target.scrollTop()}, 500, 'swing')
-    });
+    })
 
     this.initUploads()
     this.initLocales()
 
     Ticker.start()
 
+    // this.fsm.loadComplete()
     this.preprocessKeyframes()
   }
 
