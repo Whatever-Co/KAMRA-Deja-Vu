@@ -194,7 +194,7 @@ class PageManager {
     $('#upload-step1 button.skip').click(() => this.fsm.skip())
     $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
-    $('.button-top').click(() => location.reload())
+    $('.button-top').click(() => location.href = '')
     $('a[href="#about"]').click(() => this.fsm.goAbout())
     $('a[href="#howto"]').click(() => this.fsm.goHowto())
     $('a[href="#disclaimer"]').click((e) => {
