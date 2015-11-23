@@ -33,7 +33,7 @@ a
   color rgb(255, 255, 255)
   text-decoration none
   opacity 0.7
-  transition all 1.0s
+  transition opacity 1.0s
   &:hover
     opacity 1.0
   &.blank
@@ -76,13 +76,22 @@ button.close
       margin 0 20px
       width 100px
       height 100px
-      background-size 100px 100px
+      background-size 300px 100px
+      background-repeat no-repeat
+      transition background-image 1.0s cubic-bezier(0.390, 0.575, 0.565, 1.000)
+    button
+      background-image url(images/button-play.png)
+      &:hover
+        background-image url(images/button-play-h.png)
     button.with-webcam
-      background-image url(images/button-play-webcam.png)
+      background-position 0 0
     button.with-photo
-      background-image url(images/button-play-photo.png)
+      background-position -100px 0
     button.without-webcam
-      background-image url(images/button-play-sample.png)
+      background-position -200px 0
+
+
+
 .mask
   position fixed
   width 100%
