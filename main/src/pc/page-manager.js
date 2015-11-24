@@ -284,23 +284,16 @@ class PageManager {
     })
 
     // smooth scroll
-    $('#about .navi a[href^=#]').click(function(e) {
-      e.preventDefault()
-      let href = $(this).attr('href')
-      let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
-      let target = $('#about .mask')
-      target.animate({scrollTop:pos + target.scrollTop()}, 500, 'swing')
-    })
     $('#credit a[href=#femm]').click((e) => {
       // Credit FEMM link
       e.preventDefault()
       this.fsm.start('video')
     })
 
-
     this.initUploads()
     this.initLocales()
     this.initAnalytics()
+    this.initAboutMenu()
 
     Ticker.start()
 
@@ -351,7 +344,8 @@ class PageManager {
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0, 2) == 'ja' ? 'ja' : 'en'
       })(),
       debug: Config.DEV_MODE
-    }, () => {
+    }, (e) => {
+      $('html').addClass($.i18n.lng())
       $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,#upload-error,.top_button').localize()
       $('img.i18n').localize()
       let imgs = $('img.i18n')
@@ -423,6 +417,35 @@ class PageManager {
       let info = e.target.parentElement
       let name = info.querySelector('.name')
       ga('send', 'event', 'button', 'click', `Credit_${name.innerText}`)
+    })
+  }
+
+  initAboutMenu() {
+    let aboutNavs = $('#about .navi a')
+    let scrollArea = $('#about .mask')
+    let links = $('#concept,#album,#kamra,#credit')
+
+    aboutNavs.click(function(e) {
+      e.preventDefault()
+      aboutNavs.removeClass('selected')
+      $(this).addClass('selected')
+      let href = $(this).attr('href')
+      let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
+      scrollArea.animate({scrollTop:pos + scrollArea.scrollTop()}, 500, 'swing')
+    })
+
+    scrollArea.on('scroll', ()=>{
+      let selected = -1
+      links.each((i, link)=>{
+        let pos = $(link).offset().top + 300
+        if (selected < 0 && pos > 0) {
+          selected = i
+        }
+      })
+      if(selected >= 0) {
+        aboutNavs.removeClass('selected')
+        $(aboutNavs[selected]).addClass('selected')
+      }
     })
   }
 

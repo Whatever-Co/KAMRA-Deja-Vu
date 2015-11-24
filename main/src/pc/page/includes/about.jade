@@ -19,30 +19,31 @@
               li /
               li
                 a.link_cdbaby.blank(href='#{link.cdbaby}', target='_blank') CD Baby
+
       section#kamra(name='kamra')
         img(src='images/profile-kamra.png')
         .info
           span.s24 KAMRA
           span.s14  / Yuichi Nakamura
-          ul
+          ul.s14
             li
-              a.link_kamra_soundcloud.blank(src='#{link.soundcloud}' target='_blank') SoundCloud
+              a.link_kamra_soundcloud.blank(href='#{link.soundcloud}' target='_blank') SoundCloud
             li /
             li
-              a.link_kamra_tw.blank(src='#{link.twitter}' target='_blank') Twitter
+              a.link_kamra_tw.blank(href='#{link.twitter}' target='_blank') Twitter
 
-        p.about_kamra(data-i18n='about.kamra') #{about.kamra}
+        p.about_kamra.s14.i18n(data-i18n='about.kamra') #{about.kamra}
 
         hr.mini
 
         .colum2
           .colum
             h3 invisi-dir.
-            p(data-i18n='about.invisidir') #{about.invisidir}
+            p.s14.i18n(data-i18n='about.invisidir') #{about.invisidir}
             a.link_invisidir.blank(href='http://invisi-dir.com' target='_blank') http://invisi-dir.com
           .colum
             h3 invisible designs lab.
-            p(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
+            p.s14.i18n(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
             a.link_invisi.blank(href='http://invisi.jp' target='_blank') http://invisi.jp
       section#credit(name='credit')
         .colum2
@@ -61,16 +62,23 @@
         include ./play_buttons.jade
   .navi
     ul
+      li.concept
+        a(href='#concept').selected
+          img(src='images/about-nav-concept.png' width=282/2 height=61/2)
       li
-        a(href='#concept') Concept
-      li /
+        img(src='images/about-nav-line.png' width=22/2 height=46/2)
       li
-        a(href='#album') Album
-      li /
+        a(href='#album')
+          img(src='images/about-nav-album.png' width=223/2 height=49/2)
       li
-        a(href='#kamra') KAMRA
-      li /
+        img(src='images/about-nav-line.png' width=22/2 height=46/2)
       li
-        a(href='#credit') Credit
+        a(href='#kamra')
+          img(src='images/about-nav-kamra.png' width=267/2 height=43/2)
+      li
+        img(src='images/about-nav-line.png' width=22/2 height=46/2)
+      li
+        a(href='#credit')
+          img(src='images/about-nav-credit.png' width=218/2 height=49/2)
     button.close
       img(src='images/button-close.png')

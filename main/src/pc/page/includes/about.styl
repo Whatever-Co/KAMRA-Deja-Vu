@@ -30,15 +30,19 @@
     .store_link
       position absolute
       width 500px
-      bottom -6px
+      bottom 0
       span
         position absolute
         bottom 0
       ul
         position absolute
-        width 386px
+        width 410px
         right 0
         bottom -2px
+      a
+        background-position 98% 60%
+        background-size 10px 8px
+        padding-right 22px
 
   #kamra
     .info
@@ -46,16 +50,21 @@
       left 250px
       top 146px
       ul
-        width 242px
+        width 238px
         margin-top 22px
+      a
+        background-position 98% 60%
+        background-size 10px 8px
+        padding-right 22px
     p
       margin-top 40px
+      line-height 2.28
     p.about_kamra
       margin-top 60px
+      line-height 2.28
 
   .colum
     width 440px
-    //min-height 250px
     margin-bottom 50px
     a
       position absolute
@@ -96,6 +105,12 @@
     top 0
     line-height 1
     margin-top 50px
+    a
+      opacity 0.4
+      &:hover
+        opacity 1.0
+    a.selected
+      opacity 1.0
     ul
       display flex
       list-style none
@@ -104,4 +119,6 @@
       letter-spacing 0.2em
     li
       padding 0 18px 0 10px
+    li.concept
+      margin-bottom -8px
 
