@@ -192,6 +192,7 @@ export default class UserImagePlane extends THREE.Mesh {
         void main() {
           vec4 c = clamp((texture2D(map, vUv) - inMin) / (inMax - inMin), 0., 1.);
           gl_FragColor = pow(c, vec4(gamma)) * outMax;
+          gl_FragColor.a = 1.;
         }
       `,
       depthWrite: false,
