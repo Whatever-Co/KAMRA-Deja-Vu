@@ -20,7 +20,7 @@ void main() {
   fTaps_Poisson[10] = vec2(-.322,-.933);
   fTaps_Poisson[11] = vec2(-.792,-.598);
 
-  vec4 sum;
+  vec4 sum = vec4(0., 0., 0., 0.);
   for (int i = 0; i < NUM_TAPS; i++) {
     sum += texture2D(remap, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize) / resolution);
     sum += texture2D(remap, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 2.) / resolution);

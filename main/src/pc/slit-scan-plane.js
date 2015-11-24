@@ -34,6 +34,7 @@ export default class SlitScanPlane extends THREE.Mesh {
 
     this.video = document.createElement('video')
     this.video.width = this.video.height = 512
+    this.video.autoplay = false
     this.video.src = 'textures/slitscan_uv_512.mp4?.jpg'
     this.video.load()
     this.material.uniforms.remap.value = new THREE.Texture(this.video)
