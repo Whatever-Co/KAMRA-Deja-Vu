@@ -9,6 +9,7 @@ attribute vec3 triangleIndices;
 attribute vec3 weight;
 attribute float startZ;
 attribute float delay;
+attribute vec2 faceUv;
 attribute float rotation;
 
 varying vec4 vColor;
@@ -54,15 +55,6 @@ vec2 getUV() {
 }
 
 
-vec2 getFaceIndex(in vec4 textureColor, in sampler2D lookupTable) {
-  vec2 index = lookup(textureColor, lookupTable).xy * 16.0;
-  index.x = floor(index.x);
-  index.y = 15.0 - floor(index.y);
-  index /= 16.0;
-  return index;
-}
-
-
 void main() {
   float t = saturate(range(0., 1. - delay * 0.5, time));
 
@@ -75,8 +67,7 @@ void main() {
 
   vColor = texture2D(faceTexture, getUV());
   vColor.a = min(1., gl_PointSize);
-//  vFaceIndex = getFaceIndex(vColor, faceLUT);
   vFaceIndex = faceUv;
-  vBlend = easeOutSine(saturate(range(0.9, 1.05, t))) * 0.4;
+  vBlend = easeOutSine(saturate(range(0.9, 1.05, t))) * 0.5;
   vRotation = rotation;
 }
