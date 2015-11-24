@@ -176,14 +176,22 @@ export default class UserImagePlane extends THREE.Mesh {
     this.webcamPlane = new THREE.Mesh(new THREE.PlaneBufferGeometry(2, 2), new THREE.ShaderMaterial({
       uniforms: {
         map: {type: 't', value: this.webcamTexture},
+        inMax: {type: 'f', value: 1.0},
+        inMin: {type: 'f', value: 0.0},
+        outMax: {type: 'f', value: 0.9},
+        gamma: {type: 'f', value: 0.8},
       },
       vertexShader: require('./shaders/no-transform.vert'),
       fragmentShader: `
         uniform sampler2D map;
-        uniform vec2 resolution;
+        uniform float inMax;
+        uniform float inMin;
+        uniform float outMax;
+        uniform float gamma;
         varying vec2 vUv;
         void main() {
-          gl_FragColor = texture2D(map, vUv);
+          vec4 c = clamp((texture2D(map, vUv) - inMin) / (inMax - inMin), 0., 1.);
+          gl_FragColor = pow(c, vec4(gamma)) * outMax;
         }
       `,
       depthWrite: false,
