@@ -44,7 +44,7 @@ class PageManager {
         {name: 'failed', from: 'upload2process', to: 'uploaderror'},
         {name: 'retry', from: ['upload3', 'uploaderror'], to: 'upload2'},
 
-        {name: 'start', from: ['top', 'webcam2', 'upload3'], to: 'playing'},
+        {name: 'start', from: ['top', 'webcam2', 'upload3', 'about', 'howto'], to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goAbout', from: 'top', to: 'about'},
         {name: 'goHowto', from: 'top', to: 'howto'},
@@ -177,18 +177,30 @@ class PageManager {
           $('#about').fadeIn(1000)
           $('#top,#canvas-clip').addClass('blur')
         },
-        onleaveabout: () => {
+        onleaveabout: (event, from, to) => {
           $('#about').fadeOut(1000)
           $('#top,#canvas-clip').removeClass('blur')
+          if (to == 'playing') {
+            $('#top').stop().fadeOut(1000, () => {
+              this.fsm.transition()
+            })
+            return StateMachine.ASYNC
+          }
         },
         // howto
         onenterhowto: () => {
           $('#howto').fadeIn(1000)
           $('#top,#canvas-clip').addClass('blur')
         },
-        onleavehowto: () => {
+        onleavehowto: (event, from, to) => {
           $('#howto').fadeOut(1000)
           $('#top,#canvas-clip').removeClass('blur')
+          if (to == 'playing') {
+            $('#top').stop().fadeOut(1000, () => {
+              this.fsm.transition()
+            })
+            return StateMachine.ASYNC
+          }
         },
 
         // play
@@ -271,13 +283,19 @@ class PageManager {
     })
 
     // smooth scroll
-    $('#about a[href^=#]').click(function(e) {
+    $('#about .navi a[href^=#]').click(function(e) {
       e.preventDefault()
       let href = $(this).attr('href')
       let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
       let target = $('#about .mask')
       target.animate({scrollTop:pos + target.scrollTop()}, 500, 'swing')
     })
+    $('#credit a[href=#femm]').click((e) => {
+      // Credit FEMM link
+      e.preventDefault()
+      this.fsm.start('video')
+    })
+
 
     this.initUploads()
     this.initLocales()
