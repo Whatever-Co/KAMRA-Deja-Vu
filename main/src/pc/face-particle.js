@@ -6,10 +6,11 @@ import Config from './config'
 
 
 const AMOUNT = 20000
-const RANDOM_COLOR = 600
+const RANDOM_COLOR = 300
 
 class FaceColor {
-  constructor(){
+
+  constructor() {
     this.colors = require('./data/particle_sprite_colors.json')
     this.renderBuffer = new Uint8Array(1024 * 1024 * 4)
   }
@@ -19,7 +20,7 @@ class FaceColor {
     let currIndex = -1
     this.colors.forEach((c, i) => {
       let d = vec3.squaredDistance(inColor, c)
-      if(d < currDist) {
+      if (d < currDist) {
         currDist = d
         currIndex = i
       }
@@ -33,16 +34,16 @@ class FaceColor {
     let idx = []
     this.colors.forEach((c, i) => {
       let d = vec3.squaredDistance(inColor, c)
-      if(d < range) {
+      if (d < range) {
         idx.push(i)
       }
-      if(d < currDist) {
+      if (d < currDist) {
         currDist = d
         currIndex = i
       }
     })
 
-    if(idx.length == 0) {
+    if (idx.length == 0) {
       // if not found in range.
       // return nearest
       //this.log(inColor, this.colors[currIndex])
@@ -72,6 +73,7 @@ class FaceColor {
     return `rgb(${c[0]},${c[1]},${c[2]})`
   }
 }
+
 
 class RandomFaceSelector {
 
@@ -171,6 +173,7 @@ export default class FaceParticle extends THREE.Points {
     let weight = new Float32Array(amount * 3)
     let startZ = new Float32Array(amount)
     let delay = new Float32Array(amount)
+    let rotation = new Float32Array(amount)
 
     let randomFaceSelector = new RandomFaceSelector(this.face.geometry)
     let vertexIndices = this.face.geometry.index.array
@@ -197,6 +200,7 @@ export default class FaceParticle extends THREE.Points {
       // startZ[i] = THREE.Math.randFloat(2000, -Config.DATA.mosaic_face.random_z_max)
       startZ[i] = THREE.Math.mapLinear(i, 0, amount, 2000, -Config.DATA.mosaic_face.random_z_max)
       delay[i] = 1 - (vertexDelay[i0] * a + vertexDelay[i1] * b + vertexDelay[i2] * c)
+      rotation[i] = (Math.random() - 0.5) * Math.PI
     }
     console.timeEnd('mosaic init')
 
@@ -208,6 +212,7 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('weight', this.weight)
     this.geometry.addAttribute('startZ', new THREE.BufferAttribute(startZ, 1))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
+    this.geometry.addAttribute('rotation', new THREE.BufferAttribute(rotation, 1))
   }
 
 
@@ -233,7 +238,7 @@ export default class FaceParticle extends THREE.Points {
     this.dataTexture.needsUpdate = true
 
 
-    if(this.faceColor == null) {
+    if (this.faceColor == null) {
       console.time('mosaic set uv')
       this.faceColor = new FaceColor()
       this.updateUV()
@@ -241,12 +246,14 @@ export default class FaceParticle extends THREE.Points {
     }
   }
 
+
   texture2D(pixels, uv) {
     let x = Math.floor(uv[0] * 1024)
     let y = 1024 - Math.floor(uv[1] * 1024)
     let i = x + y * 1024
-    return [pixels[i*4], pixels[i*4+1], pixels[i*4+2]]
+    return [pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2]]
   }
+
 
   getUV(data, triangleIndices, weight, index) {
     let getu = (index) => {
@@ -255,11 +262,12 @@ export default class FaceParticle extends THREE.Points {
       let i = x + y * 32
       return [data[i * 3], data[i * 3 + 1]]
     }
-    let x = vec2.scale([], getu(triangleIndices[index*3]), weight[index*3])
-    let y = vec2.scale([], getu(triangleIndices[index*3+1]), weight[index*3+1])
-    let z = vec2.scale([], getu(triangleIndices[index*3+2]), weight[index*3+2])
-    return [x[0]+y[0]+z[0], x[1]+y[1]+z[1]]
+    let x = vec2.scale([], getu(triangleIndices[index * 3]), weight[index * 3])
+    let y = vec2.scale([], getu(triangleIndices[index * 3 + 1]), weight[index * 3 + 1])
+    let z = vec2.scale([], getu(triangleIndices[index * 3 + 2]), weight[index * 3 + 2])
+    return [x[0] + y[0] + z[0], x[1] + y[1] + z[1]]
   }
+
 
   updateUV() {
     let tex = this.material.uniforms.faceTexture.value
@@ -276,17 +284,16 @@ export default class FaceParticle extends THREE.Points {
     for (let i = 0; i < amount; ++i) {
       let uv = this.getUV(data, t, w, i)
       let orig_c = this.texture2D(pixels, uv)
-      if(orig_c[0] == undefined) {
+      if (orig_c[0] == undefined) {
         console.warn('none')
         orig_c = [0,0,0]
       }
 
       let resultIndex = this.faceColor.chooseNearColor(orig_c, RANDOM_COLOR)
-      faceUv[i*2]   = (resultIndex  % 16) * r16
-      faceUv[i*2+1] = (15 - Math.floor(resultIndex  * r16)) * r16
+      faceUv[i * 2]   = (resultIndex  % 16) * r16
+      faceUv[i * 2 + 1] = (15 - Math.floor(resultIndex  * r16)) * r16
     }
     this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
   }
-
 
 }

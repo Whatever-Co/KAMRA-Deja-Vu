@@ -313,25 +313,9 @@ export default class App extends EventEmitter {
     let result = target.clone()
     let composer = new THREE.EffectComposer(this.renderer, result)
     composer.addPass(new THREE.TexturePass(target))
-
-    // antialias
-    let fxaa = new THREE.ShaderPass(THREE.FXAAShader)
-    fxaa.uniforms.resolution.value.set(1 / target.width, 1 / target.height)
-    composer.addPass(fxaa)
-
-    // color correction
-    composer.addPass(this.colorCorrection)
-
-    // chromatic aberration
-    composer.addPass(new ChromaticAberrationPass())
-
-    // vignette
-    let vignette = new THREE.ShaderPass(THREE.VignetteShader)
-    vignette.uniforms.darkness.value = 1.2
-    composer.addPass(vignette)
-
+    composer.addPass(this.compositePass1)
+    composer.addPass(this.compositePass2)
     composer.render()
-
     return result
   }
 
