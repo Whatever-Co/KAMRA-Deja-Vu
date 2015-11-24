@@ -123,7 +123,7 @@ export default class App extends EventEmitter {
     this.controllers.push(this.compositePass1)
 
     this.compositePass2 = new CompositePass2()
-    this.composer.addPass(this.compositePass2)
+    // this.composer.addPass(this.compositePass2)
     this.controllers.push(this.compositePass2)
 
     _.last(this.composer.passes).renderToScreen = true
@@ -189,8 +189,8 @@ export default class App extends EventEmitter {
     }
     this.webcam.start()
 
-    this.compositePass1.setLUTEnabled(true)
-    this.compositePass2.noiseEnabled = true
+    // this.compositePass1.setLUTEnabled(true)
+    // this.compositePass2.noiseEnabled = true
     this.noiseLayer.hide()
   }
 
@@ -274,7 +274,7 @@ export default class App extends EventEmitter {
     // console.time('frame')
     if (Config.DEV_MODE) {
       // this.stats.begin()
-      this._frameCounter.text(currentFrame)
+      // this._frameCounter.text(currentFrame)
     }
 
     this.controllers.forEach((controller) => {
