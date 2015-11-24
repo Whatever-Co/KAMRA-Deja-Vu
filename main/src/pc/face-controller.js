@@ -113,10 +113,12 @@ export default class FaceController extends THREE.Object3D {
       })
     })
 
+    Ticker.addFrameEvent(Config.DATA.slitscan.uv_in_frame - 100, () => {
+      this.slitScan = new SlitScanPlane()
+    })
     Ticker.addFrameEvent(Config.DATA.slitscan.uv_in_frame, () => {
       this.main.visible = false
       this.slicedFaces.forEach((face, i) => face.visible = i != 4)
-      this.slitScan = new SlitScanPlane()
       this.slitScan.start(this.main)
       this.add(this.slitScan)
     })
