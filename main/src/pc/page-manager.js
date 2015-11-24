@@ -51,7 +51,7 @@ class PageManager {
         onleaveloadAssets: () => {
           $({progress:0.95}).animate({progress:1.0},{
             duration:500,
-            step:(s, s1)=>{
+            step:(s) => {
               LoadingBar.update(s)
             }
           })
@@ -201,11 +201,17 @@ class PageManager {
     $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
     $('.button-top').click(() => location.href = '')
-    $('a[href="#about"]').click(() => this.fsm.goAbout())
-    $('a[href="#howto"]').click(() => this.fsm.goHowto())
-    $('a[href="#disclaimer"]').click((e) => {
-      this.fsm.goHowto()
+    $('a[href="#about"]').click((e) => {
       e.preventDefault()
+      this.fsm.goAbout()
+    })
+    $('a[href="#howto"]').click((e) => {
+      e.preventDefault()
+      this.fsm.goHowto()
+    })
+    $('a[href="#disclaimer"]').click((e) => {
+      e.preventDefault()
+      this.fsm.goHowto()
       let target = $('#howto .mask')
       let pos = $('#disclaimer').offset().top - 150
       target.scrollTop(pos + target.scrollTop()) // adjustment scroll position
@@ -281,7 +287,7 @@ class PageManager {
       $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,.top_button').localize()
       $('img.i18n').localize()
       let imgs = $('img.i18n')
-      imgs.each(function(){
+      imgs.each(function() {
         let img = $(this)
         img.attr('src', img.text()) // localize img src
       })
