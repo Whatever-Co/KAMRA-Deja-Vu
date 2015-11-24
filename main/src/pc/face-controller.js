@@ -271,7 +271,7 @@ export default class FaceController extends THREE.Object3D {
       let sprite = new THREE.CanvasTexture(loader.getResult('particle-sprite'))
       let lut = new THREE.CanvasTexture(loader.getResult('particle-lut'))
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
-      this.mosaicParticles = new FaceParticle(scale, this.face1, sprite, lut)
+      this.mosaicParticles = new FaceParticle(scale, this.face1, sprite, lut, this.renderer)
       this.mosaicParticles.renderOrder = 10000
       this.mosaicParticles.visible = true
       this.add(this.mosaicParticles)
