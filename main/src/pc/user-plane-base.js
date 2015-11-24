@@ -1,6 +1,7 @@
 /* global THREE */
 
 import {vec2, mat3} from 'gl-matrix'
+import TWEEN from 'tween.js'
 
 import Ticker from './ticker'
 import StandardFaceData from './standard-face-data'
@@ -219,6 +220,19 @@ export default class UserImagePlane extends THREE.Mesh {
 
   set alpha(value) {
     this.material.uniforms.alpha.value = value
+  }
+
+  fadeIn() {
+    this.enabled = true
+    return new Promise((resolved) => {
+      new TWEEN.Tween(this).to({alpha: 1}, 2000).start().onComplete(resolved)
+    })
+  }
+
+  fadeOut() {
+    return new Promise((resolved) => {
+      new TWEEN.Tween(this).to({alpha: 0}, 1000).easing(TWEEN.Easing.Cubic.InOut).start().onComplete(resolved)
+    })
   }
 
 

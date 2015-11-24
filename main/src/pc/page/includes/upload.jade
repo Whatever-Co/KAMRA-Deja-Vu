@@ -8,6 +8,8 @@
   button.drop-area
     img(src='images/upload-2.png', width=400)
   input.image-file(type='file', accept='image/*')
+  button.home
+    img(src='images/home-arrow.png', width=176/2)
 
 #upload-step3
   p(data-i18n='tutorial.upload3') この顔で再生します。よろしいですか？
@@ -16,3 +18,12 @@
       img(src='images/upload-ok.png', width=80)
     button.retry
       img(src='images/upload-retry.png', width=80)
+
+#upload-error
+  h2 Error
+  p 顔が認識できませんでした。
+  .buttons
+    button.retry
+      img(src='images/button-replay.png', width=80)
+    button.home
+      img(src='images/button-top.png', width=80)

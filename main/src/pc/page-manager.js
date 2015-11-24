@@ -41,14 +41,14 @@ class PageManager {
         {name: 'skip', from: 'upload1', to: 'upload2'},
         {name: 'fileSelected', from: 'upload2', to: 'upload2process'},
         {name: 'detected', from: 'upload2process', to: 'upload3'},
-        {name: 'failure', from: 'upload2process', to: 'upload2'},
-        {name: 'retry', from: 'upload3', to: 'upload2'},
+        {name: 'failed', from: 'upload2process', to: 'uploaderror'},
+        {name: 'retry', from: ['upload3', 'uploaderror'], to: 'upload2'},
 
         {name: 'start', from: ['top', 'webcam2', 'upload3'], to: 'playing'},
         {name: 'playCompleted', from: 'playing', to: 'share'},
         {name: 'goAbout', from: 'top', to: 'about'},
         {name: 'goHowto', from: 'top', to: 'howto'},
-        {name: 'goTop', from: ['webcam1', 'about', 'howto', 'share'], to: 'top'},
+        {name: 'goTop', from: ['webcam1', 'upload2', 'uploaderror', 'about', 'howto', 'share'], to: 'top'},
       ],
       callbacks: {
         onleaveloadAssets: () => {
@@ -67,6 +67,7 @@ class PageManager {
         },
         // top
         onentertop: () => {
+          $('#canvas-clip').removeClass('blur')
           if (loader.getResult('shared-data')) {
             $('#top .play_buttons').hide()
             $('#top .play-shared').show()
@@ -124,8 +125,8 @@ class PageManager {
           $('#top').stop().fadeOut(1000)
         },
         onenterupload1: () => {
-          $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
           $('#canvas-clip').addClass('blur')
+          $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
         },
         onleaveupload1: () => {
           $('#upload-step1').stop().fadeOut(1000, () => {
@@ -134,6 +135,7 @@ class PageManager {
           return StateMachine.ASYNC
         },
         onenterupload2: () => {
+          $('#canvas-clip').addClass('blur')
           $('#upload-step2').css({display: 'flex'}).hide().fadeIn(1000)
         },
         onleaveupload2: () => {
@@ -143,14 +145,31 @@ class PageManager {
           this.processImageFile(file)
         },
         onenterupload3: () => {
+          $('#canvas-clip').removeClass('blur')
           $('#upload-step3').css({display: 'flex'}).hide().fadeIn(1000)
         },
-        onleaveupload3: () => {
-          $('#canvas-clip').removeClass('blur')
+        onleaveupload3: (e, f, to) => {
+          if (to == 'upload2') {
+            this.app.clearImage()
+          }
           $('#upload-step3').stop().fadeOut(1000, () => {
             this.fsm.transition()
           })
           return StateMachine.ASYNC
+        },
+        onenteruploaderror: () => {
+          $('#canvas-clip').addClass('blur')
+          $('#upload-error').css({display: 'flex'}).hide().fadeIn(1000)
+        },
+        onleaveuploaderror: (e, f, to) => {
+          if (to == 'upload2') {
+            $('#upload-error').fadeOut(1000, () => {
+              this.fsm.transition()
+            })
+            return StateMachine.ASYNC
+          } else {
+            $('#upload-error').fadeOut(1000)
+          }
         },
 
         // about
@@ -205,19 +224,27 @@ class PageManager {
           return StateMachine.ASYNC
         },
       },
-      error: (eventName, from, to, args, errorCode, errorMessage) => {
-        console.warn(eventName, from, to, args, errorCode, errorMessage)
-        // if (Config.DEV_MODE) debugger
-      }
+      // error: (eventName, from, to, args, errorCode, errorMessage) => {
+      //   console.warn(eventName, from, to, args, errorCode, errorMessage)
+      //   // if (Config.DEV_MODE) debugger
+      // }
     })
+
     $('.with-webcam').click(() => this.fsm.selectWebcam())
     $('.with-photo').click(() => this.fsm.selectUpload())
     $('.without-webcam').click(() => this.fsm.start('video'))
+
     $('#top .play-shared button').click(() => this.fsm.start('shared', loader.getResult('shared-data').remapType))
+
     $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
+
     $('#upload-step1 button.skip').click(() => this.fsm.skip())
+    $('#upload-step2 button.home').click(() => this.fsm.goTop())
     $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
+    $('#upload-error button.retry').click(() => this.fsm.retry())
+    $('#upload-error button.home').click(() => this.fsm.goTop())
+
     $('.button-top').click(() => location.href = '')
     $('a[href="#about"]').click((e) => {
       e.preventDefault()
@@ -277,7 +304,6 @@ class PageManager {
     window.addEventListener('drop', (e) => {
       e.preventDefault()
       e.stopPropagation()
-      console.log(e.dataTransfer.files)
       this.fsm.fileSelected(e.dataTransfer.files[0])
     })
   }
@@ -424,8 +450,12 @@ class PageManager {
       image.onload = () => {
         let detector = new FaceDetector()
         detector.once('detected', (points) => {
-          this.app.prepareForImage(image, points, true)
-          this.fsm.detected()
+          if (points) {
+            this.app.prepareForImage(image, points, true)
+            this.fsm.detected()
+          } else {
+            this.fsm.failed()
+          }
         })
         detector.detect(image)
       }

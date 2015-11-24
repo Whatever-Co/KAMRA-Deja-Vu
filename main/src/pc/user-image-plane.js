@@ -1,3 +1,5 @@
+import TWEEN from 'tween.js'
+
 import UserPlaneBase from './user-plane-base'
 
 
@@ -10,7 +12,8 @@ export default class UserImagePlane extends UserPlaneBase {
     this.webcamTexture.needsUpdate = true
     this.rawFeaturePoints = featurePoints
     this.normralizeFeaturePoints()
-    this.enabled = true
+    // this.enabled = true
+    this.alpha = 0
   }
 
 
