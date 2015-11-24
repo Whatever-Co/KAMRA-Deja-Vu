@@ -17,6 +17,7 @@
     "express-http-proxy": "^0.6.0",
     "gl-matrix": "^2.3.1",
     "glsl-easings": "^1.0.0",
+    "glsl-fxaa": "^3.0.0",
     "glsl-lut": "^1.1.0",
     "glsl-noise": "0.0.0",
     "glsl-range": "^1.0.0",

@@ -22,7 +22,42 @@ class FaceColor {
         currIndex = i
       }
     })
-    return {index:currIndex, color:this.colors[currIndex]}
+    //this.log(inColor, this.colors[currIndex])
+    return currIndex
+  }
+
+  chooseNearColor(inColor, range) {
+    let currDist = Number.MAX_VALUE
+    let currIndex = -1
+    let idx = []
+    this.colors.forEach((c, i) => {
+      let d = vec3.squaredDistance(inColor, c)
+      if(d < range) {
+        idx.push(i)
+      }
+      if(d < currDist) {
+        currDist = d
+        currIndex = i
+      }
+    })
+
+    if(idx.length == 0) {
+      // if not found in range.
+      // return nearest
+      console.log('return nearest')
+      return currIndex
+    }
+    //
+    let i = Math.floor(Math.random() * idx.length)
+    return idx[i]
+  }
+
+  log(inColor, outColor) {
+    console.log(`%cIN${ inColor } %cOUT${outColor}`, `background:${this.cssColor(inColor)}`, `background:${this.cssColor(outColor)}`)
+  }
+
+  cssColor (c) {
+    return `rgb(${c[0]},${c[1]},${c[2]})`
   }
 }
 
@@ -153,7 +188,6 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
     this.geometry.addAttribute('triangleIndices', this.triangleIndices)
     this.geometry.addAttribute('weight', this.weight)
-    //this.geometry.addAttribute('faceUv', this.weight)
 
     this._gui = new dat.GUI()
     this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 1).setValue(0).name('Time')
@@ -175,6 +209,13 @@ export default class FaceParticle extends THREE.Points {
     if (!this.material.uniforms.faceTexture.value) {
       this.material.uniforms.faceTexture.value = this.face.material.map
     }
+
+    let tex = this.material.uniforms.faceTexture.value
+    let pixels = tex.image.getContext('2d').getImageData(0, 0, 1024, 1024).data
+    let minColor, maxColor
+    let minLen = Number.MAX_VALUE
+    let maxLen = Number.MIN_VALUE
+
     let data = this.dataTexture.image.data
     data.set(this.face.geometry.positionAttribute.array)
     let uv = this.face.geometry.uvAttribute
@@ -182,95 +223,89 @@ export default class FaceParticle extends THREE.Points {
       let j = data.length * 0.5 + i * 3
       data[j] = uv.array[i * 2]
       data[j + 1] = uv.array[i * 2 + 1]
+
+      let c = this.texture2D(pixels, [uv.array[i * 2], uv.array[i * 2 + 1]])
+      let d = vec3.squaredLength(c)
+      if (d < minLen) {
+        minLen = d
+        minColor = c
+      }
+      if (d > maxLen) {
+        maxLen = d
+        maxColor = c
+      }
     }
+
+    console.log(
+      `%cMIN${minColor} %cMAX${maxColor}`,
+      `background:rgb(${minColor[0]},${minColor[1]},${minColor[2]})`,
+      `background:rgb(${maxColor[0]},${maxColor[1]},${maxColor[2]})`
+    )
+
     this.dataTexture.needsUpdate = true
   }
 
-  updateUV() {
-    let tex = this.material.uniforms.faceTexture.value
-    let canvas = tex.image
-    let pixels = canvas.getContext('2d').getImageData(0, 0, 1024, 1024).data
+  texture2D(pixels, uv) {
+    let x = Math.floor(uv[0] * 1024)
+    let y = 1024 - Math.floor(uv[1] * 1024)
+    let i = x + y * 1024
+    return [pixels[i*4], pixels[i*4+1], pixels[i*4+2]]
+  }
 
-    let data = this.dataTexture.image.data
-
+  getUV(data, triangleIndices, weight, index) {
     let getu = (index) => {
       let x = index % 32.0
       let y = Math.floor(index / 32.0) + 16
       let i = x + y * 32
       return [data[i * 3], data[i * 3 + 1]]
     }
-    let getUV = (idx, w) => {
-      let x = vec2.scale([], getu(idx[0]), w[0])
-      let y = vec2.scale([], getu(idx[1]), w[1])
-      let z = vec2.scale([], getu(idx[2]), w[2])
-      return [x[0]+y[0]+z[0], x[1]+y[1]+z[1]]
-    }
-
-    /**
-     * return RGB vec3
-     */
-    let texture2D = (uv) => {
-      let x = (uv[0] < 0 ? 1.0 + uv[0] : uv[0]) * 1024
-      let y = (uv[1] < 0 ? 1.0 + uv[1] : uv[1]) * 1024
-      //let x = (uv[0] < 0 ? 1.0 + uv[0] : uv[0]) * 1024
-      //let y = (uv[1] < 0 ? 1.0 + uv[1] : uv[1]) * 1024
-      //y = 1.0 - y
-      let i = Math.floor(x + y * 1024)
-      return [pixels[i*4], pixels[i*4+1], pixels[i*4+2]]
-    }
-
-    let amount = 10000
-    //let faceUv = new Float32Array(amount * 2)
-    let faceUv = new Float32Array(amount * 3)
-
-    let facecolor = new FaceColor()
-    let cssColor = (c) => {
-      return `rgb(${c[0]},${c[1]},${c[2]})`
-    }
-
-    let t= this.triangleIndices.array
-    let w = this.weight.array
-    for (let i = 0; i < amount; ++i) {
-
-      let uv = getUV(
-        [t[i*3],t[i*3+1],t[i*3+2]],
-        [w[i*3],w[i*3+1],w[i*3+2]]
-      )
-
-      let orig_c = texture2D(uv)
-      if(orig_c == undefined || orig_c[0] == undefined) {
-        orig_c = [0,0,0]
-      }
-      faceUv[i*3]   = orig_c[0] / 255.0
-      faceUv[i*3+1] = orig_c[1] / 255.0
-      faceUv[i*3+2] = orig_c[2] / 255.0
-
-      let result = facecolor.findNearestColor(orig_c)
-      console.log(`%cIN${ orig_c } %cOUT${result.color}`, `background:${cssColor(orig_c)}`, `background:${cssColor(result.color)}`)
-      //
-      //faceUv[i*2]   = result.index % 16 / 16.0
-      //faceUv[i*2+1] = 1.0 - Math.floor(result.index / 16.0) / 16.0 - 1.0 / 16
-
-    }
-    //this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
-    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 3))
-
-    //this.testNearestColor()
+    let x = vec2.scale([], getu(triangleIndices[index*3]), weight[index*3])
+    let y = vec2.scale([], getu(triangleIndices[index*3+1]), weight[index*3+1])
+    let z = vec2.scale([], getu(triangleIndices[index*3+2]), weight[index*3+2])
+    return [x[0]+y[0]+z[0], x[1]+y[1]+z[1]]
   }
 
-  testNearestColor() {
+  updateUV() {
+    let tex = this.material.uniforms.faceTexture.value
+    let pixels = tex.image.getContext('2d').getImageData(0, 0, 1024, 1024).data
+
+    let amount = 10000
+    let faceUv = new Float32Array(amount * 2)
     let facecolor = new FaceColor()
-    let cssColor = (c) => {
-      return `rgb(${c[0]},${c[1]},${c[2]})`
+
+    let data = this.dataTexture.image.data
+    let t = this.triangleIndices.array
+    let w = this.weight.array
+    let r16 = 1.0 / 16.0
+    for (let i = 0; i < amount; ++i) {
+      let uv = this.getUV(data, t, w, i)
+      let orig_c = this.texture2D(pixels, uv)
+      if(orig_c[0] == undefined) {
+        console.warn('none')
+        orig_c = [0,0,0]
+      }
+
+      //let resultIndex = facecolor.findNearestColor(orig_c)
+      let resultIndex = facecolor.chooseNearColor(orig_c, 500)
+
+      faceUv[i*2]   = (resultIndex  % 16) * r16
+      faceUv[i*2+1] = (15 - Math.floor(resultIndex  * r16)) * r16
     }
+
+    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
+
+    //this.textColors()
+  }
+
+  textColors() {
+    let facecolor = new FaceColor()
     for(let i=0; i<100; ++i) {
-      let in_c = [
+      let c = [
         Math.floor(Math.random()*255),
         Math.floor(Math.random()*255),
         Math.floor(Math.random()*255)
       ]
-      let result = facecolor.findNearestColor(in_c)
-      console.log(`%cIN${ in_c } %cOUT${result.color}`, `background:${cssColor(in_c)}`, `background:${cssColor(result.color)}`)
+      let result = facecolor.findNearestColor(c)
     }
   }
 

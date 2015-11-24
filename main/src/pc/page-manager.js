@@ -119,7 +119,6 @@ class PageManager {
         // upload
         onbeforeselectUpload: () => {
           $('#top').stop().fadeOut(1000)
-          return StateMachine.ASYNC
         },
         onenterupload1: () => {
           $('#upload-step1').css({display: 'flex'}).hide().fadeIn(1000)
@@ -190,7 +189,7 @@ class PageManager {
       },
       error: (eventName, from, to, args, errorCode, errorMessage) => {
         console.warn(eventName, from, to, args, errorCode, errorMessage)
-        if (Config.DEV_MODE) debugger
+        // if (Config.DEV_MODE) debugger
       }
     })
     $('.with-webcam').click(() => this.fsm.selectWebcam())
@@ -219,17 +218,18 @@ class PageManager {
     // smooth scroll
     $('#about a[href^=#]').click(function(e) {
       e.preventDefault()
-      let href= $(this).attr('href')
+      let href = $(this).attr('href')
       let pos = $(href == '#' || href == '' ? 'html' : href).offset().top - 100
       let target = $('#about .mask')
       target.animate({scrollTop:pos + target.scrollTop()}, 500, 'swing')
-    });
+    })
 
     this.initUploads()
     this.initLocales()
 
     Ticker.start()
 
+    // this.fsm.loadComplete()
     this.preprocessKeyframes()
   }
 
@@ -271,7 +271,7 @@ class PageManager {
     })
     $.i18n.init({
       lng: (() => {
-        if (Config.DEV_MODE) {
+        if (Config.DEV_MODE || location.search.startsWith('?setLng')) {
           return ''
         }
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0, 2) == 'ja' ? 'ja' : 'en'
