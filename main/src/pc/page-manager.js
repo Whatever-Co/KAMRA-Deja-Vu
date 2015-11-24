@@ -69,7 +69,7 @@ class PageManager {
         onentertop: () => {
           $('#canvas-clip').removeClass('blur')
           if (loader.getResult('shared-data')) {
-            $('#top .play_buttons').hide()
+            $('#top .play_buttons, .link_disclaimer').hide()
             $('#top .play-shared').show()
             this.app.prepareForImage(
               loader.getResult('shared-image'),
