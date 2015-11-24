@@ -19,22 +19,19 @@ html.no-js
           img(src='images/button-play.png' alt='play button')
     #page
       .content
-        h2.m-top40 The Special Version of Music Video
-        .m-top30(data-i18n='support.description') #{support.description}
-        .enviroment.m-top30
-          span(data-i18n='support.envitoments') #{support.envitoments}
-          ul.s9
-            li.check(data-i18n='support.env1') #{support.env1}
-            li.check(data-i18n='support.env2') #{support.env2}
-            li(data-i18n='support.env3') #{support.env3}
-            li(data-i18n='support.env4') #{support.env4}
+        h2 The Special Version of Music Video
+        .support_description(data-i18n='support.description') #{support.description}
+        .environment
+          img.i18n(src='images/environment-ja.png', data-i18n='support.img', alt='environment')
         hr.mini
         section.concept
           img.i18n(src='images/concept_ja.png', data-i18n='about.conceptimg', alt='concept')
         section.album.m-top40
           img.m-bottom30(src='images/album-jacket.jpg' alt='album jacket')
-          h3.m-bottom30 KAMRA - Artificial Emotions
+          img.m-bottom30(src='images/album-title.png' alt='album title')
           span Buy via:
+          br
+          br
           ul.s14
             li
               a.link_itunes.blank(href='#{link.itunes}', target='_blank') iTunes
@@ -49,8 +46,7 @@ html.no-js
           .col2
             #profile_kamra
             .info
-              .name.s19 KAMRA
-              span Yuichi Nakamura
+              img.name(src='images/kamra-name.png')
               .social
                 a.link_soundcloud.blank(href='#{link.soundcloud}', target='_blank') SoundCloud
                 br
@@ -58,14 +54,14 @@ html.no-js
 
           p.m-top30(data-i18n='about.kamra') #{about.kamra}
         hr.mini
-        section
+        section.invisi
           h3 invisi-dir.
-          p.m-top30(data-i18n='about.invisidir') #{about.invisidir}
+          p(data-i18n='about.invisidir') #{about.invisidir}
           a.link_invisidir.blank(href='http://invisi-dir.com' target='_blank') http://invisi-dir.com
         hr.mini
-        section
+        section.invisi
           h3 invisible designs lab.
-          p.m-top30(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
+          p(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
           a.link_invisi.blank(href='http://invisi.jp' target='_blank') http://invisi.jp
         hr
         section.credits
