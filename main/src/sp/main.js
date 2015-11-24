@@ -60,7 +60,10 @@ class App {
       $('#page').localize()
       // build img src
       let imgs = $('img.i18n')
-      imgs.attr('src', imgs.text())
+      imgs.each(function() {
+        let img = $(this)
+        img.attr('src', img.text()) // localize img src
+      })
 
       // build twitter
       let twitter_href = $.t('social.twitter', {
