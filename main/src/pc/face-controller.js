@@ -273,7 +273,8 @@ export default class FaceController extends THREE.Object3D {
       lut.minFilter = lut.maxFilter = THREE.NearestFilter
       this.mosaicParticles = new FaceParticle(scale, this.face1, sprite, lut, this.renderer)
       this.mosaicParticles.renderOrder = 10000
-      this.mosaicParticles.visible = true
+      // this.mosaicParticles.visible = true
+      this.mosaicParticles.position.z = 10000
       this.add(this.mosaicParticles)
       this.mosaicParticles.updateData()
 
@@ -464,7 +465,7 @@ export default class FaceController extends THREE.Object3D {
     if (this.data.mosaic.in_frame <= currentFrame && currentFrame <= this.data.mosaic.out_frame) {
       let f = currentFrame - this.data.mosaic.in_frame
       this.mosaicParticles.update(this.data.mosaic.property.time[f])
-      this.mosaicParticles.visible = true
+      this.mosaicParticles.position.z = 0
     }
     if (this.data.o2_extra.in_frame <= currentFrame && currentFrame <= this.data.o2_extra.out_frame) {
       let f = currentFrame - this.data.o2_extra.in_frame
