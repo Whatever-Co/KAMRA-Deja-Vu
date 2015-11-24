@@ -5,23 +5,23 @@
       | KAMRA - Artificial Emotions
       ul
         li
-          a(href='#{link.itunes}', target='_blank') iTunes
+          a.link_itunes(href='#{link.itunes}', target='_blank') iTunes
         li |
         li
-          a(href='#{link.amazon}', target='_blank') Amazon
+          a.link_amazon(href='#{link.amazon}', target='_blank') Amazon
         li |
         li
-          a(href='#{link.cdbaby}', target='_blank') CD Baby
+          a.link_cdbaby(href='#{link.cdbaby}', target='_blank') CD Baby
   .navi
     ul
       li
-        a(href='#') Home
+        a.nav_home(href='#') Home
       li |
       li
-        a(href='#about') About
+        a.nav_about(href='#about') About
       li |
       li
-        a(href='#howto') How to play
+        a.nav_howto(href='#howto') How to play
       li |
       li
         | Share :
@@ -35,4 +35,4 @@
   .top_button
     include ./play_buttons.jade
     div
-      a(href='#disclaimer', data-i18n='disclaimer.toplnk') #{disclaimer.toplnk}
+      a.link_disclaimer(href='#disclaimer', data-i18n='disclaimer.toplnk') #{disclaimer.toplnk}

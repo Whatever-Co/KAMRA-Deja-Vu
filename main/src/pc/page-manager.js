@@ -13,6 +13,7 @@ import FaceDetector from './face-detector'
 import ShareUtil from './share-util'
 import BgmManager from './bgm-manager'
 import LoadingBar from './loading-bar'
+import GaUtil from './ga-util'
 
 
 if (Config.DEV_MODE) {
@@ -177,6 +178,21 @@ class PageManager {
         
         // share
         onentershare: (e, f, t, shareURL) => {
+          if (loader.getResult('shared-data')) {
+            GaUtil.sendEvent('End_Share')
+          } else {
+            switch (this.app.sourceType) {
+              case 'webcam':
+                GaUtil.sendEvent('End_Webcam')
+                break
+              case 'uploaded':
+                GaUtil.sendEvent('End_Photo')
+                break
+              case 'video':
+                GaUtil.sendEvent('End_Preset')
+                break
+            }
+          }
           this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.share_text'), shareURL || location.href)
           $('#share').fadeIn(1000)
         },
@@ -232,6 +248,7 @@ class PageManager {
 
     this.initUploads()
     this.initLocales()
+    this.initAnalytics()
 
     Ticker.start()
 
@@ -315,6 +332,48 @@ class PageManager {
     })
   }
 
+  initAnalytics() {
+    GaUtil.sendEvent('Load_Complete')
+    GaUtil.clickEvents({
+      // Top
+      'button.with-webcam':'Play_Webcam',
+      'button.with-photo':'Play_Photo',
+      'button.without-webcam':'Play_Preset',
+      '.link_disclaimer':'Click_Term',
+      //
+      '.link_itunes':'Album_iTunes',
+      '.link_amazon':'Album_Amazon',
+      '.link_cdbaby':'Album_CDBaby',
+      // Top nav
+      'a.nav_home':'Navi_Home',
+      'a.nav_about':'Navi_About',
+      'a.nav_about':'Navi_Howto',
+      'a.button_twitter':'Share_TW',
+      'a.button_facebook':'Share_FB',
+      // Upload
+      '#upload-step3 button.ok':'Upload_OK',
+      '#upload-step3 button.retry':'Upload_Retry',
+      // About
+      '.link_kamra_soundcloud':'KAMRA_SoundCloud',
+      '.link_kamra_tw':'KAMRA_TW',
+      '.link_invisidir':'Link_invisi-dir',
+      '.link_invisi':'Link_invisi',
+      // Share
+      '#share button.button-twitter':'ShareOwn_TW',
+      '#share button.button-facebook':'ShareOwn_FB',
+      '#share button.button-top':'Back_Home',
+      '#share button.button-replay':'Back_Retry',
+      // Landing
+      '.play-shared button':'Play_Share'
+    })
+
+    // send credit link
+    $('.credit a.link_credit').click((e)=> {
+      let info = e.target.parentElement
+      let name = info.querySelector('.name')
+      ga('send', 'event', 'button', 'click', `Credit_${name.innerText}`)
+    })
+  }
 
   preprocessKeyframes() {
     this.keyframes = loader.getResult('keyframes')
