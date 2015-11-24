@@ -157,6 +157,8 @@ export default class FaceParticle extends THREE.Points {
       depthTest: false,
     }))
 
+    this.frustumCulled = false
+
     this.renderer = renderer
     this.face = face
     this.face.updateMatrix()
