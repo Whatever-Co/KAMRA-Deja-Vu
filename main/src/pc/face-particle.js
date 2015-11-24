@@ -251,7 +251,8 @@ export default class FaceParticle extends THREE.Points {
 
   texture2D(pixels, uv) {
     let x = Math.floor(uv[0] * 1024)
-    let y = 1024 - Math.floor(uv[1] * 1024)
+    //let y = 1024 - Math.floor(uv[1] * 1024)
+    let y = Math.floor(uv[1] * 1024) // For flipY texture
     let i = x + y * 1024
     return [pixels[i * 4], pixels[i * 4 + 1], pixels[i * 4 + 2]]
   }
