@@ -48,7 +48,9 @@
         .colum2
           for credit in credits
             .credit
-              img(src="images/#{credit.photo}")
+              a.play(href="https://kamra.invisi-dir.com/#{credit.play}/")
+                img(src="images/#{credit.photo}")
+                img(src="images/profile-overlay.png")
               .info
                 span.part.s14 #{credit.part}
                 span.name.s20 #{credit.name}
