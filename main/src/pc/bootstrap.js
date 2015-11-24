@@ -1,10 +1,8 @@
-/* global Typekit*/
-
 import Modernizr from 'exports?Modernizr!modernizr-custom'
 import loader from './asset-loader'
 import LoadingBar from './loading-bar'
 
-if(Modernizr.getusermedia == false
+if (Modernizr.getusermedia == false
   || Modernizr.webgl == false
   || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
   // No supported devices
