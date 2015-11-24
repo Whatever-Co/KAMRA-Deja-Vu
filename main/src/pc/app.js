@@ -24,7 +24,7 @@ import ParticledLogo from './particled-logo'
 import UserWebcamPlane from './user-webcam-plane'
 import UserVideoPlane from './user-video-plane'
 import UserImagePlane from './user-image-plane'
-const PLANE_CLASSES = {webcam: UserWebcamPlane, video: UserVideoPlane, shared: UserImagePlane}
+const PLANE_CLASSES = {webcam: UserWebcamPlane, uploaded: UserImagePlane, video: UserVideoPlane, shared: UserImagePlane}
 import FaceController from './face-controller'
 
 import CompositePass1 from './post-effects/composite-pass1'
@@ -144,6 +144,8 @@ export default class App extends EventEmitter {
       this.initSourcePlane(UserImagePlane)
     }
     this.webcam.init(image, featurePoints)
+    this.webcam.enabled = true
+    this.webcam.fadeIn()
 
     if (!this.face) {
       this.face = new FaceController(this.keyframes, this.webcam, this.renderer, this.camera)
@@ -160,10 +162,18 @@ export default class App extends EventEmitter {
   }
 
 
+  clearImage() {
+    this.logo.setMode('logo')
+    this.webcam.fadeOut().then(() => {
+      this.webcam.enabled = false
+    })
+  }
+
+
   start(sourceType, remapType = -1) {
     this.sourceType = sourceType
 
-    if (!this.webcam) {
+    if (!this.webcam || !(this.webcam instanceof PLANE_CLASSES[sourceType])) {
       this.initSourcePlane(PLANE_CLASSES[sourceType])
     }
     this.webcam.addEventListener('detected', () => {
