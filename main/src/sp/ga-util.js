@@ -1,7 +1,7 @@
 
 const DEV = (process.env.NODE_ENV == 'development')
 
-let tracking = (query, action) => {
+let click = (query, action) => {
   let elements = document.querySelectorAll(query)
   let len = elements.length
 
@@ -15,11 +15,10 @@ let tracking = (query, action) => {
       }
     })
   }
-
 }
 
 export default function main(config) {
   for (let key in config) {
-    tracking(key, config[key])
+    click(key, config[key])
   }
 }
