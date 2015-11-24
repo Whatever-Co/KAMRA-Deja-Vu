@@ -45,6 +45,7 @@
     "upload1img":"images/upload-1-en.png",
     "upload1":"Please upload an appreciate photo.",
     "upload3":"Are you ready to play with this face?",
+    "uploaderror":"Not able to recognize a face.",
     "webcamtext":"Accept the  request",
     "webcam1img":"images/webcam-1-en.png",
     "webcam2img":"images/webcam-2-en.png"

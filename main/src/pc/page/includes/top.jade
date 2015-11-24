@@ -2,36 +2,37 @@
   .album-info
     image(src='images/album-jacket.png')
     .info
-      | KAMRA - Artificial Emotions
+      span KAMRA - Artificial Emotions
       ul
         li
           a.link_itunes(href='#{link.itunes}', target='_blank') iTunes
-        li |
+        li.line
         li
           a.link_amazon(href='#{link.amazon}', target='_blank') Amazon
-        li |
+        li.line
         li
           a.link_cdbaby(href='#{link.cdbaby}', target='_blank') CD Baby
   .navi
     ul
       li
         a.nav_home(href='#') Home
-      li |
+      li.line
       li
         a.nav_about(href='#about') About
-      li |
+      li.line
       li
         a.nav_howto(href='#howto') How to play
-      li |
-      li
+      li.line
+      li.share
         | Share :
         a.button_twitter(title='Twitter', href='#')
           img(src='images/button-top-twitter.png')
         a.button_facebook(title='Facebook', href='#')
           img(src='images/button-top-facebook.png')
-      li |
+      li.line
       li
         span © KAMRA2015
+        //img(src='images/nav-copyright.png' width='95' height='9')
   .top_button
     include ./play_buttons.jade
     div

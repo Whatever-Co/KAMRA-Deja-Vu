@@ -11,12 +11,20 @@
     justify-content space-between
     align-items flex-end
     align-content flex-start
+  li.line
+    width 1px
+    height 9px
+    background-color #FFF
+    opacity 0.7
+    font-size 0
+    margin-bottom 2px
 
   .top_button
     position absolute
     width 100%
     bottom 20%
     text-align center
+    font-size 10px
     .play_buttons
       margin-bottom 20px
 
@@ -39,8 +47,9 @@
       bottom 0
       width 264px
       font-size 12px
+      line-height 1
       ul
-        margin-top 5px
+        margin-top 20px
       li
         a
           padding 0 18px 0 0
@@ -50,7 +59,15 @@
     position absolute
     right 50px
     bottom 50px
-    width 534px
+    width 530px
+    line-height 1
+    align-items flex-end
+
     li
       span
         font-size 11px
+    li.share
+      margin-right -10px
+      img
+        font-size 0
+        margin-bottom -2px

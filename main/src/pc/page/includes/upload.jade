@@ -14,16 +14,12 @@
 #upload-step3
   p(data-i18n='tutorial.upload3') この顔で再生します。よろしいですか？
   div.buttons
-    button.ok
-      img(src='images/upload-ok.png', width=80)
-    button.retry
-      img(src='images/upload-retry.png', width=80)
+    button.ok.size-m
+    button.retry.size-m
 
 #upload-error
   h2 Error
-  p 顔が認識できませんでした。
+  p(data-i18n='tutorial.uploaderror') 顔が認識できませんでした。
   .buttons
-    button.retry
-      img(src='images/button-replay.png', width=80)
-    button.home
-      img(src='images/button-top.png', width=80)
+    button.button-replay.size-m
+    button.button-top.size-m

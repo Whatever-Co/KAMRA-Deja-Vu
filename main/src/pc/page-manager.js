@@ -258,8 +258,8 @@ class PageManager {
     $('#upload-step2 button.home').click(() => this.fsm.goTop())
     $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
-    $('#upload-error button.retry').click(() => this.fsm.retry())
-    $('#upload-error button.home').click(() => this.fsm.goTop())
+    $('#upload-error button.button-replay').click(() => this.fsm.retry())
+    $('#upload-error button.button-top').click(() => this.fsm.goTop())
 
     $('.button-top').click(() => location.href = '')
     $('a[href="#about"]').click((e) => {
@@ -351,7 +351,7 @@ class PageManager {
       })(),
       debug: Config.DEV_MODE
     }, () => {
-      $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,.top_button').localize()
+      $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,#upload-error,.top_button').localize()
       $('img.i18n').localize()
       let imgs = $('img.i18n')
       imgs.each(function() {
