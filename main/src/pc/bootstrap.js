@@ -22,12 +22,3 @@ loader.load()
 console.time('asset loading')
 
 window.__djv_loader = loader
-
-
-// enable font
-
-try {
-  Typekit.load({async: true})
-} catch (e) {
-  console.warn('Typekit load error...')
-}
