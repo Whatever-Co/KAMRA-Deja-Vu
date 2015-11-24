@@ -12,4 +12,5 @@ Thumbs.db
 **/*.blend?
 main/public/data/_
 **/riri*
+!data/3 - JSON/riri*
 **/lula*
