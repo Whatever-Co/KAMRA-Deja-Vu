@@ -40,7 +40,8 @@ export default class UserVideoPlane extends UserPlaneBase {
     this.video.addEventListener('ended', this.onIntroEnded)
     this.video.play()
 
-    this.rawFeaturePoints = INTRO_FP
+    this.rawFeaturePoints = _.cloneDeep(INTRO_FP)
+    this.normralizeFeaturePoints(false)
 
     this.enableTextureUpdating = true
   }
@@ -110,7 +111,7 @@ export default class UserVideoPlane extends UserPlaneBase {
         for (let i = 0; i < FP_KEY_TIME.length; i++) {
           if (time < FP_KEY_TIME[i]) {
             if (i == 0) {
-              this.rawFeaturePoints = OUTRO_FP[FP_KEY_TIME[0]]
+              this.rawFeaturePoints = _.cloneDeep(OUTRO_FP[FP_KEY_TIME[0]])
             } else {
               let t = (time - FP_KEY_TIME[i - 1]) / (FP_KEY_TIME[i] - FP_KEY_TIME[i - 1])
               this.rawFeaturePoints = this.blendFPs(OUTRO_FP[FP_KEY_TIME[i - 1]], OUTRO_FP[FP_KEY_TIME[i]], t)
@@ -118,8 +119,8 @@ export default class UserVideoPlane extends UserPlaneBase {
             break
           }
         }
+        this.normralizeFeaturePoints(false)
       }
-      this.normralizeFeaturePoints()
 
       this.updateTexture()
       this.updateWebcamPlane()

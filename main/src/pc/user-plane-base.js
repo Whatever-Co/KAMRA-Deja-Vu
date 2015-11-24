@@ -9,7 +9,7 @@ import DeformableFaceGeometry from './deformable-face-geometry'
 
 
 const ROT_Z_90 = new THREE.Matrix4().makeRotationZ(Math.PI)
-
+const OUTLINE_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 71, 72, 73, 74, 75, 76, 77, 78, 79]
 
 
 class FaceEdgeMaterial extends THREE.ShaderMaterial {
@@ -336,7 +336,7 @@ export default class UserImagePlane extends THREE.Mesh {
   }
 
 
-  normralizeFeaturePoints() {
+  normralizeFeaturePoints(shrinkOutline = true) {
     this.featurePoint3D = null
     this.normalizedFeaturePoints = null
 
@@ -365,6 +365,25 @@ export default class UserImagePlane extends THREE.Mesh {
         vec2.add(p, p, center)
         this.rawFeaturePoints[i] = p
       }
+    }
+
+    // offset inside a bit
+    if (shrinkOutline) {
+      let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+      let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+      OUTLINE_INDICES.forEach((i) => {
+        vec2.min(min, min, this.rawFeaturePoints[i])
+        vec2.max(max, max, this.rawFeaturePoints[i])
+      })
+      let center = vec2.lerp([], min, max, 0.5)
+      const scale = 0.95
+      let mtx = mat3.create()
+      mat3.translate(mtx, mtx, center)
+      mat3.scale(mtx, mtx, [scale, scale])
+      mat3.translate(mtx, mtx, vec2.negate([], center))
+      OUTLINE_INDICES.forEach((i) => {
+        vec2.transformMat3(this.rawFeaturePoints[i], this.rawFeaturePoints[i], mtx)
+      })
     }
 
     // convert to canvas coord to world coord
