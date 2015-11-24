@@ -47,9 +47,6 @@ def main():
 	print "saved"
 
 
-
-
-
 	# for ms in original:
 	# 	f = (float(ms) / 1000.0) * 24.0
 	# 	doc.SetTime(c4d.BaseTime(f, 24))
