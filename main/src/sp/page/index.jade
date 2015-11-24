@@ -35,13 +35,13 @@ html.no-js
           span Buy via:
           ul.s14
             li
-              a.blank(href='#{link.itunes}', target='_blank') iTunes
+              a.link_itunes.blank(href='#{link.itunes}', target='_blank') iTunes
             li /
             li
-              a.blank(href='#{link.amazon}', target='_blank') Amazon
+              a.link_amazon.blank(href='#{link.amazon}', target='_blank') Amazon
             li /
             li
-              a.blank(href='#{link.cdbaby}', target='_blank') CD Baby
+              a.link_cdbaby.blank(href='#{link.cdbaby}', target='_blank') CD Baby
         hr
         section.kamra
           .col2
@@ -50,21 +50,21 @@ html.no-js
               .name.s19 KAMRA
               span Yuichi Nakamura
               .social
-                a.blank(href='#{link.soundcloud}', target='_blank') SoundCloud
+                a.link_soundcloud.blank(href='#{link.soundcloud}', target='_blank') SoundCloud
                 br
-                a.blank(href='#{link.twitter}', target='_blank') Twitter
+                a.link_kamratwitter.blank(href='#{link.twitter}', target='_blank') Twitter
 
           p.m-top30(data-i18n='about.kamra') #{about.kamra}
         hr.mini
         section
           h3 invisi-dir.
           p.m-top30(data-i18n='about.invisidir') #{about.invisidir}
-          a.blank(href='http://invisi-dir.com' target='_blank') http://invisi-dir.com
+          a.link_invisidir.blank(href='http://invisi-dir.com' target='_blank') http://invisi-dir.com
         hr.mini
         section
           h3 invisible designs lab.
           p.m-top30(data-i18n='about.invisibledesignslab') #{about.invisibledesignslab}
-          a.blank(href='http://invisi.jp' target='_blank') http://invisi.jp
+          a.link_invisi.blank(href='http://invisi.jp' target='_blank') http://invisi.jp
         hr
         section.credits
           .col2
@@ -82,13 +82,13 @@ html.no-js
           onClick="window.open(this.href,'tweetwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
         )
           img(src='images/button-twitter.png' alt='twitter')
-        a.button(
+        a.button.button_facebook(
           title='Facebook',
           href='http://www.facebook.com/share.php?u=#{social.url}',
           onClick="window.open(this.href,'facebookwindow','width=550,height=450,personalbar=0,toolbar=0,scrollbars=1,resizable=1');return false;"
         )
           img(src='images/button-facebook.png' alt='facebook')
-        a.button.mobile_only(
+        a.button.button_line.mobile_only(
           title='Line',
           href='line://msg/text/#{social.text}',
           target='_blank'
