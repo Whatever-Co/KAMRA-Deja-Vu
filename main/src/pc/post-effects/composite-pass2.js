@@ -26,10 +26,9 @@ export default class CompositePass extends THREE.ShaderPass {
   loadNoise() {
     let loader = new THREE.TextureLoader()
     loader.load('images/noise.png', (texture) => {
-      texture.magFilter = texture.minFilter = THREE.NearestFilter
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping
       this.material.uniforms.tNoise.value = texture
-    this.enabled = true
+      this.enabled = true
     })
   }
 
