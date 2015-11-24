@@ -162,8 +162,6 @@ export default class UserWebcamPlane extends UserPlaneBase {
     }
 
     if (this.destProgress == WAIT_FOR_FRAMES) {
-      // this.enableTextureUpdating = false
-      // this.enableTracking = false
       this.enableScoreChecking = false
     }
 
@@ -172,7 +170,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
 
 
   updateProgress() {
-    this.currentProgress += (this.destProgress - this.currentProgress) * 0.3
+    this.currentProgress += (this.destProgress - this.currentProgress) * 0.5
     let ctx = this.scoreContext
     ctx.clearRect(-100, -100, 200, 200)
     ctx.beginPath()
@@ -186,13 +184,14 @@ export default class UserWebcamPlane extends UserPlaneBase {
       ctx.strokeStyle = 'white'
       ctx.stroke()
 
+      this.enableTextureUpdating = false
+      this.enableTracking = false
+      this.enableScoreChecking = false
+      this.dispatchEvent({type: 'complete'})
+
       Ticker.removeListener('update', this.updateProgress)
       window.removeEventListener('resize', this.onResize)
-      this.webcamStep2.fadeOut(1000, () => {
-        this.enableTextureUpdating = false
-        this.enableTracking = false
-        this.dispatchEvent({type: 'complete'})
-      })
+      this.webcamStep2.fadeOut(1000)
     }
   }
 
@@ -200,7 +199,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
   onResize() {
     let w = Math.max(Config.MIN_WINDOW_WIDTH, window.innerWidth)
     let h = window.innerHeight
-    let props = {x: (w - 400) / 2, y: (h - 200) / 2}
+    let props = {x: (w - 400) >> 1, y: (h - 200) >> 1}
     this.webcamStep1.css(props)
     this.webcamStep2.css(props)
   }
