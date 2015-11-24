@@ -136,24 +136,30 @@ html.mobile
 // 2. Elements
 //----------------------
 
-#youtube
+#youtube_container
   position relative
   width 100%
   max-width 640px
+  z-index 10002
+  +_MEDIA_PC()
+    margin 60px auto 0 auto
+
+#youtube
+  position absolute
+  width 100%
+
+#youtube_overlay
+  width 100%
   display flex
   align-items center
   justify-content center
   margin 30px auto 0 auto
-  z-index 10002
-  +_MEDIA_PC()
-    margin 60px auto 0 auto
-  .bg
+  pointer-events none
+  img
+    position relative
     width 100%
-    img
-      position relative
-      width 100%
-      top 0
-      left 0
+    top 0
+    left 0
   button
     position absolute
     top 50%

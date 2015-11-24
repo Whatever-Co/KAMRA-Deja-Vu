@@ -3,8 +3,10 @@ const DEV = (process.env.NODE_ENV == 'development')
 
 let tracking = (query, action) => {
   let elements = document.querySelectorAll(query)
-  Array.from(elements).forEach((element) => {
-    element.addEventListener('click', (e)=> {
+  let len = elements.length
+
+  for (let i=0; i<len; ++i) {
+    elements[i].addEventListener('click', (e)=> {
       if (ga) {
         if(DEV) {
           console.log('send ' + action)
@@ -12,7 +14,8 @@ let tracking = (query, action) => {
         ga('send', 'event', 'button', 'click', action)
       }
     })
-  })
+  }
+
 }
 
 export default function main(config) {

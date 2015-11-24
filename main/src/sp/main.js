@@ -73,15 +73,17 @@ class App {
 
   initYoutube() {
     let youtube = $('#youtube')
+    let overlay = $('#youtube_overlay')
     let videoId = youtube.data('videoid')
     youtube.css({
-      width:youtube.width(),
-      height:youtube.height()
+      width:overlay.width(),
+      height:overlay.height()
     })
-    youtube.click(() => this.startYoutube(videoId))
-  }
+    $('#youtube_container').css({
+      width:overlay.width(),
+      height:overlay.height()
+    })
 
-  startYoutube(videoId) {
     this.player = new YT.Player('youtube',
       {
         width: '100%',
@@ -89,9 +91,16 @@ class App {
         videoId: videoId,
         playerVars: {
           autohide: 1,
-          autoplay: 1,
-          loop: 1,
+          autoplay: 0,
+          loop: 0,
           controls: 1
+        },
+        events: {
+          onStateChange: (event) => {
+            if (event.data == YT.PlayerState.BUFFERING) {
+              overlay.hide()
+            }
+          }
         }
       })
   }

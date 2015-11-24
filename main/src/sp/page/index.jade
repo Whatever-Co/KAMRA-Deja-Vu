@@ -11,11 +11,12 @@ html.no-js
     link(rel='stylesheet', href='index.css')
     include ./includes/og.jade
   body
-    #youtube(data-videoid='#{youtubeId}')
-      .bg
+    #youtube_container
+      #youtube(data-videoid='#{youtubeId}')
+      #youtube_overlay
         img(src='images/thumbnail.jpg' alt='thumbnail')
-      button
-        img(src='images/button-play.png' alt='play button')
+        button
+          img(src='images/button-play.png' alt='play button')
     #page
       .content
         h2.m-top40 The Special Version of Music Video
