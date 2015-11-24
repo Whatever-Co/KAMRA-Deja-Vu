@@ -100,6 +100,7 @@ class PageManager {
           WebcamManager.start(() => {
             this.fsm.webcamOK()
           }, () => {
+            $('#canvas-clip').removeClass('blur')
             this.fsm.goTop()
           })
         },
