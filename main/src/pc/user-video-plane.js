@@ -1,5 +1,3 @@
-/* global THREE */
-
 import _ from 'lodash'
 import {vec2} from 'gl-matrix'
 import TWEEN from 'tween.js'
@@ -19,20 +17,7 @@ const INTRO_FP = scalePoints(require('./data/riri-in.json'))
 const OUTRO_FP = _.mapValues(require('./data/riri-out.json'), (points) => {
   return scalePoints(points)
 })
-const FP_NAME_AT_TIME = [
-  [0, '1028'],
-  [13.04, null],
-  [13.30, '1439'],
-  [14.83, null],
-  [15.28, '1611'],
-  [17.00, null],
-  [17.37, '1795'],
-  [18.16, null],
-  [18.60, '1916'],
-  [20.25, null],
-  [20.50, '2133'],
-  [Number.MAX_VALUE],
-]
+const FP_KEY_TIME = _.keys(OUTRO_FP).map((k) => parseInt(k)).sort()
 
 
 export default class UserVideoPlane extends UserPlaneBase {
@@ -99,15 +84,6 @@ export default class UserVideoPlane extends UserPlaneBase {
   }
 
 
-  getFPNameAtTime(time) {
-    for (let i = 0; i < FP_NAME_AT_TIME.length - 1; i++) {
-      if (FP_NAME_AT_TIME[i][0] <= time && time < FP_NAME_AT_TIME[i + 1][0]) {
-        return [i, FP_NAME_AT_TIME[i][1]]
-      }
-    }
-  }
-
-
   blendFPs(fp1, fp2, alpha) {
     alpha = TWEEN.Easing.Sinusoidal.Out(alpha)
     return fp1.map((p1, i) => {
@@ -130,14 +106,17 @@ export default class UserVideoPlane extends UserPlaneBase {
 
     if (this.enableTextureUpdating) {
       if (this.isOutro) {
-        let [index, name] = this.getFPNameAtTime(this.video.currentTime)
-        if (name) {
-          this.rawFeaturePoints = OUTRO_FP[name]
-        } else {
-          let fp1 = FP_NAME_AT_TIME[index - 1]
-          let fp2 = FP_NAME_AT_TIME[index + 1]
-          let t = THREE.Math.mapLinear(this.video.currentTime, FP_NAME_AT_TIME[index][0], fp2[0], 0, 1)
-          this.rawFeaturePoints = this.blendFPs(OUTRO_FP[fp1[1]], OUTRO_FP[fp2[1]], t)
+        let time = this.video.currentTime * 1000
+        for (let i = 0; i < FP_KEY_TIME.length; i++) {
+          if (time < FP_KEY_TIME[i]) {
+            if (i == 0) {
+              this.rawFeaturePoints = OUTRO_FP[FP_KEY_TIME[0]]
+            } else {
+              let t = (time - FP_KEY_TIME[i - 1]) / (FP_KEY_TIME[i] - FP_KEY_TIME[i - 1])
+              this.rawFeaturePoints = this.blendFPs(OUTRO_FP[FP_KEY_TIME[i - 1]], OUTRO_FP[FP_KEY_TIME[i]], t)
+            }
+            break
+          }
         }
       }
       this.normralizeFeaturePoints()
