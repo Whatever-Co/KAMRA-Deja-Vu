@@ -61,5 +61,9 @@
     "env2":"WebGL対応ブラウザ",
     "env3":"・Google Chrome　・Mozilla Firefox",
     "env4":"※いずれも最新版を推奨"
+  },
+  "webcam": {
+    "step1": "顔を正面にして<br>枠内に入れてください",
+    "step2": "そのまま顔を<br>固定してください"
   }
 }
