@@ -20,3 +20,4 @@ loader.load()
 console.time('asset loading')
 
 window.__djv_loader = loader
+window.__djv_loadingBar = LoadingBar

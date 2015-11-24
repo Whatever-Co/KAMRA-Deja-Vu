@@ -14,7 +14,6 @@ import WebcamManager from './webcam-manager'
 import FaceDetector from './face-detector'
 import ShareUtil from './share-util'
 import BgmManager from './bgm-manager'
-import LoadingBar from './loading-bar'
 import GaUtil from './ga-util'
 
 
@@ -55,7 +54,7 @@ class PageManager {
           $({progress:0.95}).animate({progress:1.0},{
             duration:500,
             step:(s) => {
-              LoadingBar.update(s)
+              window.__djv_loadingBar.update(s)
             }
           })
           $('#loading').fadeOut(1000, () => {
