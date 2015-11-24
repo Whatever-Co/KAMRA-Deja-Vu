@@ -3,16 +3,18 @@ const DEV = (process.env.NODE_ENV == 'development')
 
 let click = (query, action) => {
   let elements = document.querySelectorAll(query)
-  Array.from(elements).forEach((element) => {
-    element.addEventListener('click', (e)=> {
-      if(DEV) {
-        console.log('GA send ' + action)
-      }
+  let len = elements.length
+
+  for (let i=0; i<len; ++i) {
+    elements[i].addEventListener('click', (e)=> {
       if (ga) {
+        if(DEV) {
+          console.log('send ' + action)
+        }
         ga('send', 'event', 'button', 'click', action)
       }
     })
-  })
+  }
 }
 
 let clickEvents = (config) => {
