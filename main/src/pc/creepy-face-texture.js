@@ -5,10 +5,15 @@ import DeformedUVTexture from './deformed-uv-texture'
 
 class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
 
-  constructor(faceTexture, warpTexture, uvTexture) {
+  constructor(webcam, warpTexture, uvTexture) {
+    let u = webcam.webcamPlane.material.uniforms
     super({
       uniforms: {
-        faceTexture: {type: 't', value: faceTexture},
+        faceTexture: {type: 't', value: webcam.webcamTexture},
+        inMax: u.inMax,
+        inMin: u.inMin,
+        outMax: u.outMax,
+        gamma: u.gamma,
         warpTexture: {type: 't', value: warpTexture},
         uvTexture: {type: 't', value: uvTexture},
       },
@@ -26,17 +31,26 @@ class FacePartsDuplicateMaterial extends THREE.ShaderMaterial {
       `,
       fragmentShader: `
         uniform sampler2D faceTexture;
+        uniform float inMax;
+        uniform float inMin;
+        uniform float outMax;
+        uniform float gamma;
         uniform sampler2D warpTexture;
         uniform sampler2D uvTexture;
 
         varying vec2 vUv;
         varying vec2 vUv2;
 
+        vec4 contrast(vec4 c) {
+          vec4 d = clamp((c - inMin) / (inMax - inMin), 0., 1.);
+          return pow(d, vec4(gamma)) * outMax;
+        }
+
         void main() {
-          vec4 color = texture2D(faceTexture, vUv);
+          vec4 color = contrast(texture2D(faceTexture, vUv));
           vec4 uv2 = texture2D(warpTexture, vUv2);
           vec4 uv3 = texture2D(uvTexture, uv2.xy);
-          vec4 parts = texture2D(faceTexture, uv3.xy);
+          vec4 parts = contrast(texture2D(faceTexture, uv3.xy));
           gl_FragColor = vec4(mix(color.rgb, parts.rgb, uv2.a), 1.0);
         }
       `,
@@ -65,7 +79,7 @@ export default class CreepyFaceTexture extends THREE.WebGLRenderTarget {
     this.scene.add(this.webcam)
 
     let uvTexture = new DeformedUVTexture(this.renderer, this.baseFace.geometry)
-    let material = new FacePartsDuplicateMaterial(this.baseWebcam.webcamTexture, null, uvTexture)
+    let material = new FacePartsDuplicateMaterial(this.baseWebcam, null, uvTexture)
     this.face = new THREE.Mesh(this.baseFace.geometry, material)
     this.face.matrixAutoUpdate = false
     this.scene.add(this.face)

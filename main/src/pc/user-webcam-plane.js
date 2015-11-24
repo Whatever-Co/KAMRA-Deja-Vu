@@ -99,6 +99,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
       if (this.enableScoreChecking) {
         this.checkCaptureScore()
       }
+      this.setAutoContrastParams()
     }
 
     if (this.enableTextureUpdating || this.enableTracking || this.drawFaceHole) {
@@ -115,6 +116,38 @@ export default class UserWebcamPlane extends UserPlaneBase {
     this.webcamTexture.needsUpdate = true
 
     this.trackerContext.drawImage(this.video, 0, y, this.video.videoWidth, h, 0, 0, this.trackerCanvas.width, this.trackerCanvas.height)
+  }
+
+
+  setAutoContrastParams() {
+    let min = [Number.MAX_VALUE, Number.MAX_VALUE]
+    let max = [Number.MIN_VALUE, Number.MIN_VALUE]
+    for (let i = 0; i < this.rawFeaturePoints.length; i++) {
+      let p = this.rawFeaturePoints[i]
+      vec2.min(min, min, p)
+      vec2.max(max, max, p)
+    }
+    let size = vec2.sub([], max, min)
+    if (size[0] < 1 || size[1] < 1) {
+      return
+    }
+    let data = this.trackerContext.getImageData(min[0], min[1], size[0], size[1])
+    let numPixels = data.width * data.height
+    let n = (numPixels / 30) | 0
+    min = Number.MAX_VALUE
+    max = Number.MIN_VALUE
+    for (let i = 0; i < numPixels; i += n) {
+      let ii = i * 4
+      let gray = (data.data[ii] + data.data[ii + 1] + data.data[ii + 2]) / 3
+      if (gray < min) {
+        min = gray
+      }
+      if (gray > max) {
+        max = gray
+      }
+    }
+    let current = this.webcamPlane.material.uniforms.inMax.value
+    this.webcamPlane.material.uniforms.inMax.value += (max * 1.5 / 255 - current) * 0.05
   }
 
 
