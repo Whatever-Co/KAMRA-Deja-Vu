@@ -215,6 +215,10 @@ class PageManager {
             }
           }
           this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.share_text'), shareURL || location.href)
+          $('#share .button-replay').click((e) => {
+            e.preventDefault()
+            location.href = shareURL || location.href
+          })
           $('#share').fadeIn(1000)
         },
         onleaveshare: () => {
