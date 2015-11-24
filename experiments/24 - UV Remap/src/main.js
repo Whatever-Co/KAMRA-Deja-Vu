@@ -141,16 +141,17 @@ class App {
           fTaps_Poisson[10] = vec2(-.322,-.933);
           fTaps_Poisson[11] = vec2(-.792,-.598);
 
-          vec4 sum;
+          vec4 sum = vec4(0.);
           for (int i = 0; i < NUM_TAPS; i++) {
             sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize) / resolution);
-            sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 2.) / resolution);
-            sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 3.) / resolution);
+            // sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 2.) / resolution);
+            // sum += texture2D(map, (gl_FragCoord.xy + fTaps_Poisson[i] * blurSize * 3.) / resolution);
           }
-          sum /= float(NUM_TAPS * 3);
+          sum /= float(NUM_TAPS);
 
           // vec2 uv = texture2D(map, gl_FragCoord.xy / resolution).xy;
           gl_FragColor = texture2D(face, sum.xy);
+          // gl_FragColor = texture2D(face, uv);
 
           // gl_FragColor = vec4(uv, 0., 1.);
           // gl_FragColor = vec4(gl_FragCoord.xy / resolution, 0, 1);
