@@ -72,8 +72,11 @@ class PageManager {
               loader.getResult('shared-data').points
             )
           }
-          $('#top').delay(500).fadeIn(1000)
-          BgmManager.play('data/intro')
+          // $('#top').delay(500).fadeIn(1000)
+          // BgmManager.play('data/intro')
+          setTimeout(() => {
+            this.fsm.start('video')
+          }, 10000)
         },
         onleavetop: (event, from, to) => {
           if (to == 'playing') {
