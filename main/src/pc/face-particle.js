@@ -1,9 +1,77 @@
 /* global THREE */
 
-import {vec3} from 'gl-matrix'
+import {vec2,vec3} from 'gl-matrix'
 
 import Config from './config'
 
+
+const AMOUNT = 20000
+const RANDOM_COLOR = 600
+
+class FaceColor {
+  constructor(){
+    this.colors = require('./data/particle_sprite_colors.json')
+    this.renderBuffer = new Uint8Array(1024 * 1024 * 4)
+  }
+
+  findNearestColor(inColor) {
+    let currDist = Number.MAX_VALUE
+    let currIndex = -1
+    this.colors.forEach((c, i) => {
+      let d = vec3.squaredDistance(inColor, c)
+      if(d < currDist) {
+        currDist = d
+        currIndex = i
+      }
+    })
+    return currIndex
+  }
+
+  chooseNearColor(inColor, range) {
+    let currDist = Number.MAX_VALUE
+    let currIndex = -1
+    let idx = []
+    this.colors.forEach((c, i) => {
+      let d = vec3.squaredDistance(inColor, c)
+      if(d < range) {
+        idx.push(i)
+      }
+      if(d < currDist) {
+        currDist = d
+        currIndex = i
+      }
+    })
+
+    if(idx.length == 0) {
+      // if not found in range.
+      // return nearest
+      //this.log(inColor, this.colors[currIndex])
+      return currIndex
+    }
+    //
+    let i = Math.floor(Math.random() * idx.length)
+
+    //this.log(inColor, this.colors[idx[i]])
+    return idx[i]
+  }
+
+  copyToBuffer(renderer, renderTarget) {
+    renderer.readRenderTargetPixels(
+      renderTarget,
+      0, 0, 1024, 1024,
+      this.renderBuffer
+    )
+    return this.renderBuffer
+  }
+
+  log(inColor, outColor) {
+    console.log(`%cIN${ inColor } %cOUT${outColor}`, `background:${this.cssColor(inColor)}`, `background:${this.cssColor(outColor)}`)
+  }
+
+  cssColor (c) {
+    return `rgb(${c[0]},${c[1]},${c[2]})`
+  }
+}
 
 class RandomFaceSelector {
 
@@ -63,7 +131,7 @@ class RandomFaceSelector {
 
 export default class FaceParticle extends THREE.Points {
 
-  constructor(scale, face, sprite, lut) {
+  constructor(scale, face, sprite, lut, renderer) {
     const DATA_WIDTH = 32
     const DATA_HEIGHT = 32
 
@@ -87,14 +155,17 @@ export default class FaceParticle extends THREE.Points {
       depthTest: false,
     }))
 
+    this.renderer = renderer
     this.face = face
     this.face.updateMatrix()
+
+    this.faceColor = null
 
     this.dataTexture = new THREE.DataTexture(new Float32Array(DATA_WIDTH * DATA_HEIGHT * 3), DATA_WIDTH, DATA_HEIGHT, THREE.RGBFormat, THREE.FloatType)
     this.material.uniforms.facePosition.value = this.dataTexture
 
     console.time('mosaic init')
-    let amount = 20000
+    let amount = AMOUNT
     let position = new Float32Array(amount * 3)
     let triangleIndices = new Float32Array(amount * 3)
     let weight = new Float32Array(amount * 3)
@@ -129,9 +200,12 @@ export default class FaceParticle extends THREE.Points {
     }
     console.timeEnd('mosaic init')
 
+    this.triangleIndices = new THREE.BufferAttribute(triangleIndices, 3)
+    this.weight = new THREE.BufferAttribute(weight, 3)
+
     this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3)) // start position
-    this.geometry.addAttribute('triangleIndices', new THREE.BufferAttribute(triangleIndices, 3))
-    this.geometry.addAttribute('weight', new THREE.BufferAttribute(weight, 3))
+    this.geometry.addAttribute('triangleIndices', this.triangleIndices)
+    this.geometry.addAttribute('weight', this.weight)
     this.geometry.addAttribute('startZ', new THREE.BufferAttribute(startZ, 1))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
   }
@@ -157,6 +231,62 @@ export default class FaceParticle extends THREE.Points {
       data[j + 1] = uv.array[i * 2 + 1]
     }
     this.dataTexture.needsUpdate = true
+
+
+    if(this.faceColor == null) {
+      console.time('mosaic set uv')
+      this.faceColor = new FaceColor()
+      this.updateUV()
+      console.timeEnd('mosaic set uv')
+    }
   }
+
+  texture2D(pixels, uv) {
+    let x = Math.floor(uv[0] * 1024)
+    let y = 1024 - Math.floor(uv[1] * 1024)
+    let i = x + y * 1024
+    return [pixels[i*4], pixels[i*4+1], pixels[i*4+2]]
+  }
+
+  getUV(data, triangleIndices, weight, index) {
+    let getu = (index) => {
+      let x = index % 32.0
+      let y = Math.floor(index / 32.0) + 16
+      let i = x + y * 32
+      return [data[i * 3], data[i * 3 + 1]]
+    }
+    let x = vec2.scale([], getu(triangleIndices[index*3]), weight[index*3])
+    let y = vec2.scale([], getu(triangleIndices[index*3+1]), weight[index*3+1])
+    let z = vec2.scale([], getu(triangleIndices[index*3+2]), weight[index*3+2])
+    return [x[0]+y[0]+z[0], x[1]+y[1]+z[1]]
+  }
+
+  updateUV() {
+    let tex = this.material.uniforms.faceTexture.value
+    let pixels = this.faceColor.copyToBuffer(this.renderer, tex)
+
+    let amount = AMOUNT
+    let faceUv = new Float32Array(amount * 2)
+
+    let data = this.dataTexture.image.data
+    let t = this.triangleIndices.array
+    let w = this.weight.array
+
+    let r16 = 1.0 / 16.0
+    for (let i = 0; i < amount; ++i) {
+      let uv = this.getUV(data, t, w, i)
+      let orig_c = this.texture2D(pixels, uv)
+      if(orig_c[0] == undefined) {
+        console.warn('none')
+        orig_c = [0,0,0]
+      }
+
+      let resultIndex = this.faceColor.chooseNearColor(orig_c, RANDOM_COLOR)
+      faceUv[i*2]   = (resultIndex  % 16) * r16
+      faceUv[i*2+1] = (15 - Math.floor(resultIndex  * r16)) * r16
+    }
+    this.geometry.addAttribute('faceUv', new THREE.BufferAttribute(faceUv, 2))
+  }
+
 
 }
