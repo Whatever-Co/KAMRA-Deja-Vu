@@ -1,0 +1,79 @@
+{
+  "devDependencies": {
+    "babel-core": "5",
+    "babel-loader": "5",
+    "browser-sync": "^2.9.12",
+    "browser-sync-webpack-plugin": "^1.0.0",
+    "dat-gui": "^0.5.0",
+    "exports-loader": "^0.6.2",
+    "gl-matrix": "^2.3.1",
+    "glsl-range": "^1.0.0",
+    "glslify": "^2.3.1",
+    "glslify-loader": "^1.0.2",
+    "jquery": "^2.1.4",
+    "json-loader": "^0.5.3",
+    "raw-loader": "^0.5.1",
+    "webpack": "^1.12.3"
+  },
+  "scripts": {
+    "dev": "webpack -d --devtool inline-source-map --progress --colors --watch",
+    "release": "webpack -p --progress --colors",
+    "server": "nodemon --verbose --ignore data/ src/server.js"
+  },
+  "eslintConfig": {
+    "rules": {
+      "indent": [
+        2,
+        2,
+        {
+          "SwitchCase": 1
+        }
+      ],
+      "quotes": [
+        2,
+        "single"
+      ],
+      "linebreak-style": [
+        2,
+        "unix"
+      ],
+      "semi": [
+        2,
+        "never"
+      ],
+      "comma-dangle": 0,
+      "arrow-parens": 1,
+      "arrow-spacing": 1,
+      "constructor-super": 2,
+      "generator-star-spacing": 2,
+      "no-class-assign": 2,
+      "no-const-assign": 2,
+      "no-dupe-class-members": 2,
+      "no-empty-pattern": 2,
+      "no-this-before-super": 2,
+      "no-var": 2,
+      "object-shorthand": 2,
+      "prefer-arrow-callback": 2,
+      "prefer-const": 0,
+      "prefer-reflect": 0,
+      "prefer-spread": 2,
+      "prefer-template": 2,
+      "require-yield": 2,
+      "no-console": 0,
+      "no-unused-vars": 1,
+      "no-empty": 1,
+      "no-unreachable": 1,
+      "no-debugger": 1
+    },
+    "env": {
+      "es6": true,
+      "browser": true,
+      "amd": true,
+      "worker": true
+    },
+    "extends": "eslint:recommended",
+    "ecmaFeatures": {
+      "modules": true
+    }
+  }
+}
