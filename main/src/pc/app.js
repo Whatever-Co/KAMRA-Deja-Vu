@@ -80,7 +80,6 @@ export default class App extends EventEmitter {
     {
       this.logo = new ParticledLogo(this.keyframes)
       let scale = 2 * Math.tan(THREE.Math.degToRad(this.camera.fov / 2)) * this.camera.position.z / 1080
-      // console.log(scale)
       this.logo.scale.set(scale, scale, scale)
       this.scene.add(this.logo)
       this.controllers.push(this.logo)
@@ -213,7 +212,7 @@ export default class App extends EventEmitter {
     Ticker.setClock(this.compositePass1)
     setTimeout(() => {
       this.compositePass1.start()
-    }, 1000)
+    })
     console.timeEnd('capture')
 
     if (Config.DEV_MODE) {

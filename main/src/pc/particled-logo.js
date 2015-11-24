@@ -6,9 +6,8 @@ import {Noise} from 'noisejs'
 const noise = new Noise(Math.random())
 import TWEEN from 'tween.js'
 
-import Config from './config'
-const HALF_WIDTH = Config.RENDER_WIDTH / 2
-const HALF_HEIGHT = Config.RENDER_HEIGHT / 2
+const HALF_WIDTH = 1920 / 2
+const HALF_HEIGHT = 1080 / 2
 
 import StandardFaceData from './standard-face-data'
 
