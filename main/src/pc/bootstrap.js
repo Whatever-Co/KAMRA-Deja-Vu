@@ -9,7 +9,7 @@ if (Modernizr.getusermedia == false
   location.href = 'sp'
 }
 
-loader.on('progress', (event) => {
+loader.on('weighted progress', (event) => {
   let rate = event.progress / event.total
   LoadingBar.update(rate * 0.95) // Estimate final worker task
 })
