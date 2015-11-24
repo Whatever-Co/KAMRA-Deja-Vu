@@ -271,7 +271,7 @@ class PageManager {
     })
     $.i18n.init({
       lng: (() => {
-        if (Config.DEV_MODE) {
+        if (Config.DEV_MODE || location.search.startsWith('?setLng')) {
           return ''
         }
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0, 2) == 'ja' ? 'ja' : 'en'
