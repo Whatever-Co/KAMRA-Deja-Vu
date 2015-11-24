@@ -45,6 +45,7 @@
     "upload1img":"images/upload-1-ja.png",
     "upload1":"下記のような写真をアップロードしてください。",
     "upload3":"この顔で再生します。よろしいですか？",
+    "uploaderror":"顔が認識できませんでした。",
     "webcamtext":"リクエストを許可して下さい",
     "webcam1img":"images/webcam-1-ja.png",
     "webcam2img":"images/webcam-2-ja.png"
