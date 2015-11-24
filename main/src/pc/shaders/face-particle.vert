@@ -1,4 +1,3 @@
-// uniform float size;
 uniform float scale;
 uniform float time;
 uniform mat4 faceMatrix;
@@ -11,10 +10,12 @@ attribute vec3 weight;
 attribute float startZ;
 attribute float delay;
 attribute vec2 faceUv;
+attribute float rotation;
 
 varying vec4 vColor;
 varying vec2 vFaceIndex;
 varying float vBlend;
+varying float vRotation;
 
 #pragma glslify: range = require(glsl-range)
 #pragma glslify: lookup = require(glsl-lut)
@@ -54,15 +55,6 @@ vec2 getUV() {
 }
 
 
-vec2 getFaceIndex(in vec4 textureColor, in sampler2D lookupTable) {
-  vec2 index = lookup(textureColor, lookupTable).xy * 16.0;
-  index.x = floor(index.x);
-  index.y = 15.0 - floor(index.y);
-  index /= 16.0;
-  return index;
-}
-
-
 void main() {
   float t = saturate(range(0., 1. - delay * 0.5, time));
 
@@ -71,11 +63,11 @@ void main() {
   gl_Position = projectionMatrix * mvPosition;
 
   float t2 = clamp(range(1., 1.1 - delay * 0.07, time), 0., 1.);
-  gl_PointSize = mix(40., 0., easeInOutSine(t2)) * (scale / abs(mvPosition.z));
+  gl_PointSize = mix(56., 0., easeInOutSine(t2)) * (scale / abs(mvPosition.z));
 
   vColor = texture2D(faceTexture, getUV());
   vColor.a = min(1., gl_PointSize);
-//  vFaceIndex = getFaceIndex(vColor, faceLUT);
   vFaceIndex = faceUv;
-  vBlend = easeOutSine(saturate(range(0.9, 1.05, t))) * 0.4;
+  vBlend = easeOutSine(saturate(range(0.9, 1.05, t))) * 0.5;
+  vRotation = rotation;
 }
