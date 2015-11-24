@@ -321,7 +321,7 @@ def initConfig():
 			"camera_fov": 12,
 			"uv_in_frame": 2094,
 			"uv_out_frame": 2511,
-			"cross_section_color": toRGB(97, 81, 72)
+			"cross_section_color": toRGB(88, 59, 63)
 		},
 		"falling_children": [],
 		"mosaic_face": {
