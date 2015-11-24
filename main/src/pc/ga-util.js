@@ -1,22 +1,31 @@
 
 const DEV = (process.env.NODE_ENV == 'development')
 
-let tracking = (query, action) => {
+let click = (query, action) => {
   let elements = document.querySelectorAll(query)
   Array.from(elements).forEach((element) => {
     element.addEventListener('click', (e)=> {
+      if(DEV) {
+        console.log('GA send ' + action)
+      }
       if (ga) {
-        if(DEV) {
-          console.log('send ' + action)
-        }
         ga('send', 'event', 'button', 'click', action)
       }
     })
   })
 }
 
-export default function main(config) {
+let clickEvents = (config) => {
   for (let key in config) {
-    tracking(key, config[key])
+    click(key, config[key])
   }
 }
+
+let sendEvent = (name) => {
+  if(DEV) {
+    console.log('GA send event ' + name)
+  }
+  ga('send', 'event', 'event', name)
+}
+
+export default {clickEvents, sendEvent}
