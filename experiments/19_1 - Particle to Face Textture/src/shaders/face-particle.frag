@@ -20,7 +20,7 @@ void main() {
   vec4 c = lookup();
   if (c.a < 0.1) discard;
 
-  c.rgb = mix(c.rgb, vColor, 0.8);
+//  c.rgb = mix(c.rgb, vColor, 0.8);
 
 
   float depth = gl_FragCoord.z / gl_FragCoord.w;
