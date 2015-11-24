@@ -82,15 +82,22 @@ h3
 
 hr
   border 0
-  height 1px
-  background #FFF repeat-x 0 0
-  background-size 100% 1px
+  height 2px
+  background url(images/h-line.png) repeat-x 0 0
+  background-size 100% 2px
   margin 40px 0
   opacity 0.7
+  +_MEDIA_SP()
+    height 1px
+    background-size 100% 1px
   &.mini
     width 15px
+    //height 1px
+    background-size 100% 1px
     text-align left
     margin-left 0
+    opacity 1.0
+
 
 +_MEDIA_PC()
   body
@@ -232,26 +239,29 @@ html.mobile
   #profile_kamra
     position relative
     background url(images/profile-kamra.jpg) no-repeat
-    background-size contain
     width 130px
     height 130px
+    background-size 130px 130px
     +_MEDIA_PC()
       width 260px
       height 260px
-
+      background-size 260px 260px
   .info
+    position absolute
     margin 0 0 0 40px
     letter-spacing 0.2em
     +_MEDIA_SP()
       margin 0 0 0 20px
       img
-        width 50%
+        width 98px
   p
     margin-bottom -6px
     +_MEDIA_PC()
       margin-bottom -12px
   .social
-    margin 20px 0 0 0
+    margin-top 20px
+    +_MEDIA_SP()
+      margin-top 10px
 
 
 .invisi
