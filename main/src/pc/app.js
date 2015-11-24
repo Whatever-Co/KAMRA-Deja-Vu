@@ -29,9 +29,6 @@ import FaceController from './face-controller'
 
 import CompositePass1 from './post-effects/composite-pass1'
 import CompositePass2 from './post-effects/composite-pass2'
-import ColorCorrectionPass from './post-effects/color-correction'
-import ChromaticAberrationPass from './post-effects/chromatic-aberration'
-import VideoOverlayPass from './post-effects/video-overlay'
 
 
 
@@ -214,10 +211,9 @@ export default class App extends EventEmitter {
     this.camera.enabled = true
 
     Ticker.setClock(this.compositePass1)
-    // this.compositePass1.start()
     setTimeout(() => {
       this.compositePass1.start()
-    })
+    }, 1000)
     console.timeEnd('capture')
 
     if (Config.DEV_MODE) {
