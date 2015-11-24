@@ -11,7 +11,7 @@ let click = (query, action) => {
         if(DEV) {
           console.log('send ' + action)
         }
-        ga('send', 'event', 'button', 'click', action)
+        ga('send', 'event', 'click', action)
       }
     })
   }
