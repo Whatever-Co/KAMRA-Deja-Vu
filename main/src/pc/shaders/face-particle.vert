@@ -10,6 +10,7 @@ attribute vec3 triangleIndices;
 attribute vec3 weight;
 attribute float startZ;
 attribute float delay;
+attribute vec2 faceUv;
 
 varying vec4 vColor;
 varying vec2 vFaceIndex;
@@ -74,6 +75,7 @@ void main() {
 
   vColor = texture2D(faceTexture, getUV());
   vColor.a = min(1., gl_PointSize);
-  vFaceIndex = getFaceIndex(vColor, faceLUT);
+//  vFaceIndex = getFaceIndex(vColor, faceLUT);
+  vFaceIndex = faceUv;
   vBlend = easeOutSine(saturate(range(0.9, 1.05, t))) * 0.4;
 }
