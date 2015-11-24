@@ -188,7 +188,6 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('position', new THREE.BufferAttribute(position, 3))
     this.geometry.addAttribute('triangleIndices', this.triangleIndices)
     this.geometry.addAttribute('weight', this.weight)
-    //this.geometry.addAttribute('faceUv', this.weight)
 
     this._gui = new dat.GUI()
     this._guiTime = this._gui.add(this.material.uniforms.time, 'value', 0, 1).setValue(0).name('Time')
@@ -210,6 +209,13 @@ export default class FaceParticle extends THREE.Points {
     if (!this.material.uniforms.faceTexture.value) {
       this.material.uniforms.faceTexture.value = this.face.material.map
     }
+
+    let tex = this.material.uniforms.faceTexture.value
+    let pixels = tex.image.getContext('2d').getImageData(0, 0, 1024, 1024).data
+    let minColor, maxColor
+    let minLen = Number.MAX_VALUE
+    let maxLen = Number.MIN_VALUE
+
     let data = this.dataTexture.image.data
     data.set(this.face.geometry.positionAttribute.array)
     let uv = this.face.geometry.uvAttribute
@@ -217,7 +223,25 @@ export default class FaceParticle extends THREE.Points {
       let j = data.length * 0.5 + i * 3
       data[j] = uv.array[i * 2]
       data[j + 1] = uv.array[i * 2 + 1]
+
+      let c = this.texture2D(pixels, [uv.array[i * 2], uv.array[i * 2 + 1]])
+      let d = vec3.squaredLength(c)
+      if (d < minLen) {
+        minLen = d
+        minColor = c
+      }
+      if (d > maxLen) {
+        maxLen = d
+        maxColor = c
+      }
     }
+
+    console.log(
+      `%cMIN${minColor} %cMAX${maxColor}`,
+      `background:rgb(${minColor[0]},${minColor[1]},${minColor[2]})`,
+      `background:rgb(${maxColor[0]},${maxColor[1]},${maxColor[2]})`
+    )
+
     this.dataTexture.needsUpdate = true
   }
 
@@ -262,7 +286,7 @@ export default class FaceParticle extends THREE.Points {
       }
 
       //let resultIndex = facecolor.findNearestColor(orig_c)
-      let resultIndex = facecolor.chooseNearColor(orig_c, 200)
+      let resultIndex = facecolor.chooseNearColor(orig_c, 500)
 
       faceUv[i*2]   = (resultIndex  % 16) * r16
       faceUv[i*2+1] = (15 - Math.floor(resultIndex  * r16)) * r16
