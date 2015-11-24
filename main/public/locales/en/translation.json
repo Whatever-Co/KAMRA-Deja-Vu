@@ -61,5 +61,9 @@
     "env2":"A WebGL-enable browser",
     "env3":"-Google Chrome   -Mozilla Firefox",
     "env4":"*Recommending the latest version. "
+  },
+  "webcam": {
+    "step1": "Place your face inside the cycle,<br>and look straight ahead.",
+    "step2": "Still your face."
   }
 }

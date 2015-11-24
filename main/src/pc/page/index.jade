@@ -19,6 +19,10 @@ html.no-js
   body
     #canvas-clip
       canvas#main
+      .step1(data-i18n='webcam.step1') !{webcam.step1}
+      .step2
+        canvas.progress(width=200, height=200)
+        p(data-i18n='webcam.step2') !{webcam.step2}
     #page
       #loading
         div.circle

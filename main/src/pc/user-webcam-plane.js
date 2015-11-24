@@ -1,9 +1,11 @@
 /* global clm pModel */
 
-// import $ from 'jquery'
+import $ from 'jquery'
 import {vec2} from 'gl-matrix'
 import TWEEN from 'tween.js'
 
+import Config from './config'
+import Ticker from './ticker'
 import UserPlaneBase from './user-plane-base'
 import WebcamManager from './webcam-manager'
 
@@ -17,7 +19,17 @@ export default class UserWebcamPlane extends UserPlaneBase {
     super(...args)
 
     this.onLoadedMetadata = this.onLoadedMetadata.bind(this)
+    this.onResize = this.onResize.bind(this)
+    this.updateProgress = this.updateProgress.bind(this)
 
+    this.webcamStep1 = $('#canvas-clip .step1').css({display: 'flex'}).hide()
+    this.webcamStep2 = $('#canvas-clip .step2').css({display: 'flex'}).hide()
+    this.scoreContext = document.querySelector('#canvas-clip .progress').getContext('2d')
+    this.scoreContext.translate(100, 100)
+    this.currentProgress = 0
+    this.destProgress = 0
+
+    this.faceDetected = false
     this.numTrackingIteration = 2
     this.scoreHistory = []
   }
@@ -47,6 +59,11 @@ export default class UserWebcamPlane extends UserPlaneBase {
       this.enableTracking = true
       this.enableScoreChecking = true
     })
+
+    Ticker.on('update', this.updateProgress)
+    window.addEventListener('resize', this.onResize)
+    this.onResize()
+    this.webcamStep1.fadeIn(1000)
   }
 
 
@@ -102,32 +119,90 @@ export default class UserWebcamPlane extends UserPlaneBase {
 
 
   checkCaptureScore() {
+    let faceDetected = false
     if (this.featurePoint3D) {
       let {size, center} = this.getBoundsFor(this.featurePoint3D, FACE_INDICES)
       let len = vec2.len(size)
       let {center: pCenter} = this.getBoundsFor(this.featurePoint3D, PARTS_INDICES)
       let isSizeOK = 350 < len && len < 600
       let isPositionOK = Math.abs(center[0]) < 150 && Math.abs(center[1]) < 150
-      let isAngleOK = Math.abs(center[0] - pCenter[0]) < 30
-      let isStable = this.tracker.getConvergence() < 100
+      let isAngleOK = Math.abs(center[0] - pCenter[0]) < 100
+      let isStable = this.tracker.getConvergence() < 150
+      faceDetected = isSizeOK && isPositionOK && isAngleOK
       // $('#_frame-counter').text(`size: ${size[0].toPrecision(3)}, ${size[1].toPrecision(3)} / len: ${len.toPrecision(3)} / center: ${center[0].toPrecision(3)}, ${center[1].toPrecision(3)} / pCenter: ${pCenter[0].toPrecision(3)}, ${pCenter[1].toPrecision(3)} / Score: ${this.tracker.getScore().toPrecision(4)} / Convergence: ${this.tracker.getConvergence().toPrecision(5)} / ${isSizeOK}, ${isPositionOK}, ${isAngleOK}, ${isStable}`)
-      this.dispatchEvent({type: isSizeOK && isPositionOK && isAngleOK ? 'detected' : 'lost'})
-      this.scoreHistory.push(isSizeOK && isPositionOK && isAngleOK && isStable)
+      this.dispatchEvent({type: faceDetected ? 'detected' : 'lost'})
+      this.scoreHistory.push(faceDetected && isStable)
     } else {
       this.scoreHistory.push(false)
     }
     // console.log(this.scoreHistory)
+    if (this.faceDetected != faceDetected) {
+      this.faceDetected = faceDetected
+      if (this.faceDetected) {
+        this.webcamStep1.fadeOut(500)
+        this.webcamStep2.delay(300).fadeIn(500)
+      } else {
+        this.webcamStep1.delay(300).fadeIn(500)
+        this.webcamStep2.fadeOut(500)
+      }
+    }
 
     const WAIT_FOR_FRAMES = 50
+
     if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
       this.scoreHistory.shift()
     }
-    if (this.scoreHistory.length == WAIT_FOR_FRAMES && this.scoreHistory.every((s) => s)) {
-      this.enableTextureUpdating = false
-      this.enableTracking = false
-      this.enableScoreChecking = false
-      this.dispatchEvent({type: 'complete'})
+
+    this.destProgress = 0
+    for (let i = this.scoreHistory.length - 1; i >= 0; i--) {
+      if (!this.scoreHistory[i]) {
+        break
+      }
+      this.destProgress++
     }
+
+    if (this.destProgress == WAIT_FOR_FRAMES) {
+      // this.enableTextureUpdating = false
+      // this.enableTracking = false
+      this.enableScoreChecking = false
+    }
+
+    this.destProgress /= WAIT_FOR_FRAMES
+  }
+
+
+  updateProgress() {
+    this.currentProgress += (this.destProgress - this.currentProgress) * 0.3
+    let ctx = this.scoreContext
+    ctx.clearRect(-100, -100, 200, 200)
+    ctx.beginPath()
+    ctx.arc(0, 0, 75, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * this.currentProgress, false)
+    ctx.strokeStyle = 'white'
+    ctx.stroke()
+
+    if (this.currentProgress > 0.99) {
+      ctx.beginPath()
+      ctx.arc(0, 0, 75, 0, Math.PI * 2, false)
+      ctx.strokeStyle = 'white'
+      ctx.stroke()
+
+      Ticker.removeListener('update', this.updateProgress)
+      window.removeEventListener('resize', this.onResize)
+      this.webcamStep2.fadeOut(1000, () => {
+        this.enableTextureUpdating = false
+        this.enableTracking = false
+        this.dispatchEvent({type: 'complete'})
+      })
+    }
+  }
+
+
+  onResize() {
+    let w = Math.max(Config.MIN_WINDOW_WIDTH, window.innerWidth)
+    let h = window.innerHeight
+    let props = {x: (w - 400) / 2, y: (h - 200) / 2}
+    this.webcamStep1.css(props)
+    this.webcamStep2.css(props)
   }
 
 }

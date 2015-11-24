@@ -140,6 +140,24 @@ button.close
   height 100%
   overflow hidden
   transition filter 1.0s
+  .step1, .step2
+    position absolute
+    left 0
+    top 0
+    width 400px
+    height 200px
+    // display flex
+    display none
+    align-items center
+    justify-content center
+    text-align center
+    line-height 2em
+    // border 1px solid red
+  .step2
+    canvas.progress
+      position absolute
+      left 100px
+      top 0
   
 canvas#main
   transform-origin left top

@@ -274,7 +274,7 @@ export default class App extends EventEmitter {
     // console.time('frame')
     if (Config.DEV_MODE) {
       // this.stats.begin()
-      this._frameCounter.text(currentFrame)
+      // this._frameCounter.text(currentFrame)
     }
 
     this.controllers.forEach((controller) => {
@@ -287,9 +287,9 @@ export default class App extends EventEmitter {
 
     this.composer.render()
 
-    if (!this.compositePass2.noiseEnabled && currentFrame % 2 == 0) {
-      this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
-    }
+    // if (!this.compositePass2.noiseEnabled && currentFrame % 2 == 0) {
+    //   this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+    // }
 
     // if (Config.DEV_MODE) {
     //   this.stats.end()
@@ -299,11 +299,12 @@ export default class App extends EventEmitter {
 
 
   onResize() {
-    let w = Math.max(1100, window.innerWidth)
-    let s = Math.max(w / Config.RENDER_WIDTH, window.innerHeight / Config.RENDER_HEIGHT)
+    let w = Math.max(Config.MIN_WINDOW_WIDTH, window.innerWidth)
+    let h = window.innerHeight
+    let s = Math.max(w / Config.RENDER_WIDTH, h / Config.RENDER_HEIGHT)
     $(this.renderer.domElement).css({
       transformOrigin: 'left top',
-      translate: [(w - Config.RENDER_WIDTH * s) / 2, (window.innerHeight - Config.RENDER_HEIGHT * s) / 2],
+      translate: [(w - Config.RENDER_WIDTH * s) / 2, (h - Config.RENDER_HEIGHT * s) / 2],
       scale: [s, s],
     })
   }
