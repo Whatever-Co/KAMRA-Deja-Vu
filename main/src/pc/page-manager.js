@@ -262,7 +262,7 @@ class PageManager {
       e.preventDefault()
       this.fsm.goHowto()
       let target = $('#howto .mask')
-      let pos = $('#disclaimer').offset().top - 150
+      let pos = $('#disclaimer').offset().top - 200
       target.scrollTop(pos + target.scrollTop()) // adjustment scroll position
     })
     $('button.close').click(() => {
