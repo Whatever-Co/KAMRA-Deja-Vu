@@ -1,3 +1,5 @@
+/* global ga */
+
 import $ from 'jquery'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
@@ -347,7 +349,7 @@ class PageManager {
       // Top nav
       'a.nav_home':'Navi_Home',
       'a.nav_about':'Navi_About',
-      'a.nav_about':'Navi_Howto',
+      'a.nav_howto':'Navi_Howto',
       'a.button_twitter':'Share_TW',
       'a.button_facebook':'Share_FB',
       // Upload
@@ -368,7 +370,7 @@ class PageManager {
     })
 
     // send credit link
-    $('.credit a.link_credit').click((e)=> {
+    $('.credit a.link_credit').click((e) => {
       let info = e.target.parentElement
       let name = info.querySelector('.name')
       ga('send', 'event', 'button', 'click', `Credit_${name.innerText}`)
