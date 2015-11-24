@@ -1,6 +1,7 @@
 import $ from 'jquery'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
+import gaUtil from './ga-util'
 
 const DEV = (process.env.NODE_ENV == 'development')
 
@@ -17,6 +18,21 @@ class App {
     $('.footer button').click(() => {
       $('html,body').animate({scrollTop:0}, 500, 'swing')
       return false
+    })
+
+
+    gaUtil({
+      '#youtube button':'SP_Play_Movie',
+      '.link_itunes':'SP_Album_iTunes',
+      '.link_amazon':'SP_Album_Amazon',
+      '.link_cdbaby':'SP_Album_CDBaby',
+      '.link_soundcloud':'SP_KAMRA_SoundCloud',
+      '.link_kamratwitter':'SP_KAMRA_TW',
+      '.link_invisidir':'SP_Link_invisi-dir',
+      '.link_invisi':'SP_Link_invisi',
+      '.button_twitter':'SP_Share_TW',
+      '.button_facebook':'SP_Share_FB',
+      '.button_line':'SP_Share_Line'
     })
   }
 
@@ -79,6 +95,7 @@ class App {
         }
       })
   }
+
 }
 
 let app = new App()
