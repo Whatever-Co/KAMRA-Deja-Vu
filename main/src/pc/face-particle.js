@@ -171,6 +171,7 @@ export default class FaceParticle extends THREE.Points {
     let weight = new Float32Array(amount * 3)
     let startZ = new Float32Array(amount)
     let delay = new Float32Array(amount)
+    let rotation = new Float32Array(amount)
 
     let randomFaceSelector = new RandomFaceSelector(this.face.geometry)
     let vertexIndices = this.face.geometry.index.array
@@ -197,6 +198,7 @@ export default class FaceParticle extends THREE.Points {
       // startZ[i] = THREE.Math.randFloat(2000, -Config.DATA.mosaic_face.random_z_max)
       startZ[i] = THREE.Math.mapLinear(i, 0, amount, 2000, -Config.DATA.mosaic_face.random_z_max)
       delay[i] = 1 - (vertexDelay[i0] * a + vertexDelay[i1] * b + vertexDelay[i2] * c)
+      rotation[i] = (Math.random() - 0.5) * Math.PI
     }
     console.timeEnd('mosaic init')
 
@@ -208,6 +210,7 @@ export default class FaceParticle extends THREE.Points {
     this.geometry.addAttribute('weight', this.weight)
     this.geometry.addAttribute('startZ', new THREE.BufferAttribute(startZ, 1))
     this.geometry.addAttribute('delay', new THREE.BufferAttribute(delay, 1))
+    this.geometry.addAttribute('rotation', new THREE.BufferAttribute(rotation, 1))
   }
 
 
