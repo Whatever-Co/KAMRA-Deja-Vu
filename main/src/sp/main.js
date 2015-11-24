@@ -33,7 +33,7 @@ class App {
     })
     $.i18n.init({
       lng:(()=>{
-        if(DEV) {
+        if(DEV || location.search.startsWith('?setLng')) {
           return ''
         }
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
