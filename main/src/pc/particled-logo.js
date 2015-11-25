@@ -424,6 +424,10 @@ export default class ParticledLogo extends THREE.Line {
 
 
   update(currentFrame, time) {
+    if (this.prevFrame == currentFrame) {
+      return
+    }
+
     this._updateNodes(currentFrame, time)
     this._updateNodes(currentFrame, time)
     this._updateNodes(currentFrame, time)
@@ -431,6 +435,8 @@ export default class ParticledLogo extends THREE.Line {
     if (currentFrame % 2 == 0) {
       this.material.uniforms.time.value = Math.random()
     }
+
+    this.prevFrame = currentFrame
   }
 
 }

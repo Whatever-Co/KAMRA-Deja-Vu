@@ -282,7 +282,10 @@ export default class UserImagePlane extends THREE.Mesh {
       this.material.uniforms.rate.value = props.webcam_fade[f]
     }
 
-    this.material.uniforms.frame.value++
+    if (this.prevFrame != currentFrame) {
+      this.material.uniforms.frame.value++
+      this.prevFrame = currentFrame
+    }
   }
 
 

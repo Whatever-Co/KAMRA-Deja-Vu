@@ -23,21 +23,21 @@ class Ticker extends EventEmitter {
 
   update(t) {
     this.requestId = requestAnimationFrame(this.update)
-    let currentFrame = Math.floor((this.clock ? this.clock.position : -(t || 0)) / 1000 * 24)
-    if (currentFrame != this.currentFrame) {
-      let prev = this.currentFrame
-      this.currentFrame = currentFrame
-      if (prev > 0 && currentFrame - prev > 1) {
-        console.warn(`${currentFrame - prev - 1} frames skip detected at ${currentFrame}`)
-      }
 
-      for (let f = prev + 1; f <= currentFrame; f++) {
-        if (this.frameEvents[f]) {
-          this.frameEvents[f].forEach((callback) => callback())
-        }
-      }
-      this.emit('update', currentFrame, t)
+    let prev = this.currentFrame
+    let currentFrame = Math.floor((this.clock ? this.clock.position : -(t || 0)) / 1000 * 24)
+    if (prev > 0 && currentFrame - prev > 1) {
+      console.warn(`${currentFrame - prev - 1} frames skip detected at ${currentFrame}`)
     }
+
+    this.currentFrame = currentFrame
+
+    for (let f = prev + 1; f <= this.currentFrame; f++) {
+      if (this.frameEvents[f]) {
+        this.frameEvents[f].forEach((callback) => callback())
+      }
+    }
+    this.emit('update', this.currentFrame, t)
   }
 
 
