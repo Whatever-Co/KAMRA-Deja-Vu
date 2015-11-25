@@ -345,7 +345,7 @@ class PageManager {
       debug: Config.DEV_MODE
     }, (e) => {
       $('html').addClass($.i18n.lng())
-      $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,#upload-error,.top_button').localize()
+      $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,#upload-error,.top_button,#canvas-clip').localize()
       $('img.i18n').localize()
       let imgs = $('img.i18n')
       imgs.each(function() {
