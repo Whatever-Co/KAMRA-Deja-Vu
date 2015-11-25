@@ -277,8 +277,8 @@ class PageManager {
       let pos = $('#disclaimer').offset().top - 200
       target.scrollTop(pos + target.scrollTop()) // adjustment scroll position
     })
-    $('button.close').click(() => {
-      location.href = '#'
+    $('button.close').click((e) => {
+      e.preventDefault()
       this.fsm.goTop()
     })
 
