@@ -32,10 +32,10 @@
       "title":"Play by Uploading a Photo",
       "s1":"Click “Photo” on the top page.",
       "s2":"Get Ready to Upload a Photo.",
-      "s2_0":"Please upload an appreciate photo.",
+      "s2_0":"Please upload your face photo.",
       "s2_1":"Without a hat and glasses.",
       "s2_2":"Straight ahead.",
-      "s2_3":"Settle your hair and make sure you light your face.",
+      "s2_3":"Nothing covers but minimum reflective light on your face.",
       "s3":"Drag and drop the photo, or click to select an uploaing photo. ",
       "s4_1":"After the face is recognized, click",
       "s4_2":"“OK” and start “deja vu”."
@@ -43,7 +43,7 @@
   },
   "tutorial":{
     "upload1img":"images/upload-1-en.png",
-    "upload1":"Please upload your photo.",
+    "upload1":"Please upload your face photo.",
     "upload3":"Are you ready to play with this face?",
     "uploaderror":"Not able to recognize a face.",
     "webcamtext":"Accept the  request",
