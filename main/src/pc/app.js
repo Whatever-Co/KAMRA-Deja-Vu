@@ -258,7 +258,7 @@ export default class App extends EventEmitter {
         dataType: 'json'
       }).done((data, status) => {
         console.timeEnd('send to server')
-        console.log('success', data, status)
+        // console.log('success', data, status)
         if (status == 'success' && data && data.status == 201) {
           this.emit('complete', data.data.detail_url)
         } else {
