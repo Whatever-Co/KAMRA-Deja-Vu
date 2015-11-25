@@ -292,9 +292,9 @@ export default class App extends EventEmitter {
 
     this.composer.render()
 
-    // if (!this.compositePass2.noiseEnabled && currentFrame % 2 == 0) {
-    //   this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
-    // }
+    if (!this.compositePass2.noiseEnabled && currentFrame % 2 == 0) {
+      this.noiseLayer.css({backgroundPosition: `${~~(Math.random() * 512)}px ${~~(Math.random() * 512)}px`})
+    }
 
     // if (Config.DEV_MODE) {
     //   this.stats.end()
