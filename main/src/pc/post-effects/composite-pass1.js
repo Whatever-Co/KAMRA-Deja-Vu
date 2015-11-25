@@ -25,6 +25,10 @@ export default class CompositePass extends THREE.ShaderPass {
 
     new THREE.EventDispatcher().apply(this)
 
+    let black = document.createElement('canvas')
+    black.width = black.height = 1
+    this.uniforms.tOverlay.value = new THREE.CanvasTexture(black)
+
     this.video = document.createElement('video')
     this.video.src = 'textures/bg_movie_prizm.mp4?.jpg'
     this.video.addEventListener('canplay', this.loadedmetadata.bind(this))
