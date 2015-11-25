@@ -77,9 +77,13 @@
       position relative
       width 140px
       height 140px
-      opacity 0.5
+      opacity 1.0
+      .photo
+        opacity 0.5
+        transition opacity 0.5s
       &:hover
-        opacity 1.0
+        .photo
+          opacity 1.0
       img
         position absolute
         width 140px
