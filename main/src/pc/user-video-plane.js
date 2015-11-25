@@ -44,6 +44,8 @@ export default class UserVideoPlane extends UserPlaneBase {
     this.normralizeFeaturePoints(false)
 
     this.enableTextureUpdating = true
+    this.alpha = 0
+    this.fadeIn()
   }
 
 
