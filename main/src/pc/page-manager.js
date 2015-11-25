@@ -226,7 +226,8 @@ class PageManager {
                 break
             }
           }
-          this.setupShareButtons('#share .button-twitter', '#share .button-facebook', $.t('social.share_text'), shareURL || location.href)
+          let text = loader.getResult('shared-data') ? $.t('social.share_text2') : $.t('social.share_text')
+          this.setupShareButtons('#share .button-twitter', '#share .button-facebook', text, shareURL || location.href)
           $('#share .button-replay').click((e) => {
             e.preventDefault()
             location.href = shareURL || location.href
