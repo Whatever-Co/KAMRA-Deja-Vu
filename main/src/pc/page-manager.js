@@ -450,7 +450,7 @@ class PageManager {
 
   preprocessKeyframes() {
     this.keyframes = loader.getResult('keyframes')
-    console.log(this.keyframes)
+    // console.log(this.keyframes)
 
     console.time('morph data processing')
     let worker = new PreprocessWorker()
