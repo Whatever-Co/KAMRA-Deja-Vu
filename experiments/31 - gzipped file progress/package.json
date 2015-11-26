@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    "babel-core": "5",
+    "babel-loader": "5",
+    "browser-sync": "^2.9.12",
+    "browser-sync-webpack-plugin": "^1.0.0",
+    "connect-gzip-static": "^1.0.0",
+    "exports-loader": "^0.6.2",
+    "jquery": "^2.1.4",
+    "json-loader": "^0.5.3",
+    "raw-loader": "^0.5.1",
+    "webpack": "^1.12.3"
+  },
+  "scripts": {
+    "dev": "webpack -d --devtool inline-source-map --progress --colors --watch"
+  }
+}
