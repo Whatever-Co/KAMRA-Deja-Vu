@@ -1,9 +1,19 @@
 import $ from 'jquery'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
+import Modernizr from 'exports?Modernizr!modernizr-custom'
 import gaUtil from './ga-util'
 
 const DEV = (process.env.NODE_ENV == 'development')
+
+
+if (Modernizr.getusermedia
+  && Modernizr.webgl
+  && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
+  // No supported devices
+  location.href = '/'
+}
+
 
 class App {
   constructor() {
