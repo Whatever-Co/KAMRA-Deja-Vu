@@ -9,7 +9,7 @@ let click = (query, action) => {
     elements[i].addEventListener('click', (e)=> {
       if (ga) {
         if(DEV) {
-          console.log('send ' + action)
+          console.log('GA send click: ' + action)
         }
         ga('send', 'event', 'click', action)
       }
@@ -25,9 +25,16 @@ let clickEvents = (config) => {
 
 let sendEvent = (name) => {
   if(DEV) {
-    console.log('GA send event ' + name)
+    console.log('GA send event: ' + name)
   }
   ga('send', 'event', 'event', name)
 }
 
-export default {clickEvents, sendEvent}
+let pageView = (name) => {
+  if(DEV) {
+    console.log('GA send pageview: ' + name)
+  }
+  ga('send', 'pageview', name)
+}
+
+export default {clickEvents, sendEvent, pageView}

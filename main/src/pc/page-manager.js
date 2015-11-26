@@ -64,6 +64,9 @@ class PageManager {
         {name: 'goTop', from: ['webcam1', 'upload2', 'uploaderror', 'about', 'howto', 'share'], to: 'top'},
       ],
       callbacks: {
+        onenterstate:(event, from, to) => {
+          GaUtil.pageView(to)
+        },
         onleaveloadAssets: () => {
           $({progress:0.95}).animate({progress:1.0},{
             duration:500,
