@@ -47,8 +47,12 @@ manifest.forEach((item) => {
 })
 
 loader.on('fileprogress', (e) => {
-  // console.log('fileprogress', e.item.src, e.progress)
-  e.item.progress = e.progress
+  if (e.progress > 1) { // only for keyframes.json
+    e.item.progress = e.progress / 111912786 // e.progress indicates loaded bytes (decompressed size)
+    // console.log('fileprogress', e.item.src, e.progress, e.item.progress)
+  } else {
+    e.item.progress = e.progress
+  }
 })
 
 loader.on('fileload', (e) => {
