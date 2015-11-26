@@ -12,7 +12,7 @@ class FaceLibrary {
 
   init() {
     this.library = {}
-    this.library['lula'] = this.initFace('lula')
+    // this.library['lula'] = this.initFace('lula')
     this.faceIds = []
     for (let i = 0; i < 100; i++) {
       let id = `face${i}`
@@ -27,18 +27,19 @@ class FaceLibrary {
 
 
   initFace(id) {
+    console.log(id, loader.getResult(`${id}-data`))
     let featurePoints = loader.getResult(`${id}-data`)
-    if (!Array.isArray(featurePoints)) {
+    if (!featurePoints || !Array.isArray(featurePoints.points)) {
       return null
     }
 
-    featurePoints.forEach((p) => {
-      p[0] *= 512
-      p[1] = (1 - p[1]) * 512
-    })
+    // featurePoints.forEach((p) => {
+    //   p[0] *= 512
+    //   p[1] = (1 - p[1]) * 512
+    // })
     let texture = new THREE.CanvasTexture(loader.getResult(`${id}-image`))
     return {
-      geometry: new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200),
+      geometry: new DeformableFaceGeometry(featurePoints.points, 320, 180, 700),
       material: new FaceFrontMaterial(texture),
       texture
     }

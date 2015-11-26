@@ -3,9 +3,21 @@ import _ from 'lodash'
 
 import Config from './config'
 
-
 const ids = _.shuffle([
-  'slice_face_00', 'slice_face_01', 'slice_face_02', 'slice_face_03', 'slice_face_04', 'slice_face_05', 'slice_face_06', 'slice_face_07', 'slice_face_08', 'slice_face_09', 'slice_face_10', 'slice_face_11', 'slice_face_12', 'slice_face_13', 'slice_face_14', 'slice_face_15', 'slice_face_16', 'slice_face_17', 'slice_face_18', 'slice_face_19', 'slice_face_20', 'slice_face_21', 'slice_face_22', 'slice_face_23', 'slice_face_24', 'slice_face_25', 'slice_face_26', 'slice_face_27', 'slice_face_28', 'slice_face_29', 'slice_face_30', 'slice_face_31', 'slice_face_32', 'slice_face_33', 'slice_face_34', 'slice_face_35', 'slice_face_36', 'slice_face_37', 'slice_face_38', 'slice_face_39', 'slice_face_40', 'slice_face_41', 'slice_face_42', 'slice_face_43', 'slice_face_44', 'slice_face_45', 'slice_face_46', 'slice_face_47', 'slice_face_48', 'slice_face_49', 'slice_face_50', 'slice_face_51', 'slice_face_52', 'slice_face_53', 'slice_face_54', 'slice_face_55', 'slice_face_56',
+  // 'rosathw1', // yuichi
+  'b5o1gggy',
+  'e63f0agh',
+  'hmcsmuq7',
+  'ps4mjjan',
+  'swu9y4cf',
+  'krw9m2p5',
+  'g42ohue8',
+  'ahy185mx',
+  '85yu33pv',
+  's8reld7c',
+  'y5682ark',
+  '1tovhszw',
+  '1mln12xq',
 ])
 
 
@@ -25,7 +37,19 @@ let manifest = [
   {id: `lula-image`, src: `textures/faces/lula.jpg`, weight: 0.05},
 ]
 
-for (let i = 0; i < 20; i++) {
+manifest.push(
+  {id: `shared-data`, src: `textures/members/rosathw1.json`, weight: 0},
+  {id: `shared-image`, src: `textures/members/rosathw1.jpg`, weight: 0.05}
+)
+
+for (let i = 0; i < ids.length; i++) {
+  manifest.push(
+    {id: `face${i}-data`, src: `textures/members/${ids[i]}.json`, weight: 0},
+    {id: `face${i}-image`, src: `textures/members/${ids[i]}.jpg`, weight: 0.05}
+  )
+}
+
+/*for (let i = 0; i < 20; i++) {
   manifest.push(
     {id: `face${i}-data`, src: `textures/faces/${ids[i]}.json`, weight: 0},
     {id: `face${i}-image`, src: `textures/faces/${ids[i]}.jpg`, weight: 0.05}
@@ -39,7 +63,8 @@ if (match) {
     {id: 'shared-data', src: `/${id}/data.json`, weight: 0},
     {id: 'shared-image', src: `/${id}/cap.jpg`, weight: 0.2}
   )
-}
+}*/
+
 manifest.push({src: 'app.js', weight: 0.6})
 
 manifest.forEach((item) => {
@@ -47,13 +72,11 @@ manifest.forEach((item) => {
 })
 
 loader.on('fileprogress', (e) => {
-  // console.log('fileprogress', e.item.src, e.progress)
   e.item.progress = e.progress
 })
 
 loader.on('fileload', (e) => {
   e.item.progress = 1
-  // console.log('fileload', e.item.src)
 })
 
 let interval = setInterval(() => {
@@ -63,7 +86,6 @@ let interval = setInterval(() => {
     loaded += item.progress * item.weight
     total += item.weight
   })
-  // console.log(loaded, total, loaded / total)
   let event = new createjs.Event('weighted progress')
   event.progress = loaded
   event.total = total

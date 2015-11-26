@@ -55,8 +55,8 @@ export default class FaceController extends THREE.Object3D {
     }
 
     // children
-    this.smalls = FaceLibrary.getRandomMeshes(this.data.user_children.property.length - 1)
-    this.smalls.splice(RIRI ? 0 : ~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
+    this.smalls = FaceLibrary.getRandomMeshes(this.data.user_children.property.length)
+    // this.smalls.splice(RIRI ? 0 : ~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
     for (let i = 0; i < this.smalls.length; i++) {
       this.smalls[i].visible = false
       this.add(this.smalls[i])
@@ -127,8 +127,8 @@ export default class FaceController extends THREE.Object3D {
       this.main.visible = true
       this.remove(this.slitScan)
 
-      this.fallingChildren = FaceLibrary.getRandomMeshes(this.data.falling_children.property.length - 1)
-      this.fallingChildren.splice(~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
+      this.fallingChildren = FaceLibrary.getRandomMeshes(this.data.falling_children.property.length)
+      // this.fallingChildren.splice(~~(Math.random() * this.smalls.length), 0, FaceLibrary.getMesh('lula'))
       this.fallingChildren.forEach((face) => {
         face.scale.set(SCALE, SCALE, SCALE)
         this.add(face)
