@@ -28,6 +28,20 @@ loader.on('complete', () => new PageManager())
 class PageManager {
 
   constructor() {
+    this.initStates()
+    this.initPages()
+    this.initUploads()
+    this.initLocales()
+    this.initAnalytics()
+    this.initAboutMenu()
+
+    Ticker.start()
+
+    this.preprocessKeyframes()
+  }
+
+
+  initStates() {
     this.fsm = StateMachine.create({
       initial: 'loadAssets',
       events: [
@@ -246,6 +260,13 @@ class PageManager {
       //   // if (Config.DEV_MODE) debugger
       // }
     })
+  }
+
+
+  initPages() {
+    let data = require('./page/data.json')
+    let pages = ['top', 'webcam', 'upload', 'about', 'howto', 'share']
+    pages.forEach((name) => $('#page').append(require(`./page/includes/${name}.jade`)(data)))
 
     $('.with-webcam').click(() => this.fsm.selectWebcam())
     $('.with-photo').click(() => this.fsm.selectUpload())
@@ -289,16 +310,6 @@ class PageManager {
       e.preventDefault()
       this.fsm.start('video')
     })
-
-    this.initUploads()
-    this.initLocales()
-    this.initAnalytics()
-    this.initAboutMenu()
-
-    Ticker.start()
-
-    // this.fsm.loadComplete()
-    this.preprocessKeyframes()
   }
 
 
