@@ -1,14 +1,15 @@
+/* global process YT */
+
 import $ from 'jquery'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
-import Modernizr from 'exports?Modernizr!modernizr-custom'
+import Detector from 'Detector'
 import gaUtil from './ga-util'
 
 const DEV = (process.env.NODE_ENV == 'development')
 
 
-if (Modernizr.getusermedia
-  && Modernizr.webgl
+if (Detector.canvas && Detector.webgl && Detector.workers && Detector.fileapi
   && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
   // No supported devices
   location.href = '/'
@@ -20,7 +21,7 @@ class App {
     this.initLocalization()
 
     // is mobile?
-    if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       $('html').addClass('mobile')
     }
 
@@ -58,15 +59,15 @@ class App {
       parseDefaultValueFromContent: true
     })
     $.i18n.init({
-      lng:(()=>{
-        if(DEV || location.search.startsWith('?setLng')) {
+      lng:(() => {
+        if (DEV || location.search.startsWith('?setLng')) {
           return ''
         }
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0,2) == 'ja' ? 'ja' : 'en'
       })(),
       resGetPath: '../locales/__lng__/__ns__.json',
       debug: DEV
-    }, ()=>{
+    }, () => { 
       $('#page').localize()
       // build img src
       let imgs = $('img.i18n')
@@ -101,7 +102,7 @@ class App {
       {
         width: '100%',
         height: '100%',
-        videoId: videoId,
+        videoId,
         playerVars: {
           autohide: 1,
           autoplay: 0,

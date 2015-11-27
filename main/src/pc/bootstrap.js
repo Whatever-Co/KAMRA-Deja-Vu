@@ -1,9 +1,8 @@
-import Modernizr from 'exports?Modernizr!modernizr-custom'
+import Detector from 'Detector'
 import loader from './asset-loader'
 import LoadingBar from './loading-bar'
 
-if (Modernizr.getusermedia == false
-  || Modernizr.webgl == false
+if (!Detector.canvas || !Detector.webgl || !Detector.workers || !Detector.fileapi
   || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
   // No supported devices
   location.href = 'sp'

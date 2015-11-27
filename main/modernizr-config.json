@@ -1,12 +1,10 @@
 {
   "minify": false,
   "options": [
-    "prefixed",
-    "setClasses"
+    "prefixed"
   ],
   "feature-detects": [
-    "test/webgl",
-    "test/webgl/extensions",
-    "test/webrtc/getusermedia"
+    "test/webrtc/getusermedia",
+    "test/workers/webworkers"
   ]
 }

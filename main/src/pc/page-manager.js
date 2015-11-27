@@ -3,7 +3,7 @@
 import $ from 'jquery'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
-
+import Modernizr from 'exports?Modernizr!modernizr-custom'
 import StateMachine from 'javascript-state-machine'
 
 import Config from './config'
@@ -271,7 +271,11 @@ class PageManager {
     let pages = ['top', 'webcam', 'upload', 'about', 'howto', 'share']
     pages.forEach((name) => $('#page').append(require(`./page/includes/${name}.jade`)(data)))
 
-    $('.with-webcam').click(() => this.fsm.selectWebcam())
+    if (Modernizr.getusermedia) {
+      $('.with-webcam').click(() => this.fsm.selectWebcam())
+    } else {
+      $('.with-webcam').addClass('inactive')
+    }
     $('.with-photo').click(() => this.fsm.selectUpload())
     $('.without-webcam').click(() => this.fsm.start('video'))
 
