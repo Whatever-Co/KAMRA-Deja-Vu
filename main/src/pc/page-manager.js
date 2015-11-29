@@ -483,16 +483,19 @@ class PageManager {
       this.keyframes.user_alt.property[0],
       this.keyframes.user_alt.property[1],
       this.keyframes.slice_alt.property,
-      {face_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.face_vertices)}
+      {
+        face_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.face_vertices),
+        eyemouth_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.eyemouth_vertices)
+      }
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
     .concat(this.keyframes.falling_children_mesh.property.map((props) => props))
 
     let transferList = []
     let objectVertices = targetObject.map((obj) => {
-      return obj.face_vertices.map((v) => {
+      return obj.face_vertices.map((v, i) => {
         if (v) {
-          let a = new Float32Array(v)
+          let a = new Float32Array(v.concat(obj.eyemouth_vertices[i]))
           transferList.push(a.buffer)
           return a
         }

@@ -145,17 +145,17 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       let position = this.positionAttribute.array
       this.neutralPosition = []
       let zMin = Number.MAX_VALUE
-      for (let i = 0; i < position.length; i += 3) {
+      for (let i = 0; i < this.standardFace.data.face.position.length; i += 3) {
         let z = position[i + 2]
         this.neutralPosition.push([position[i], position[i + 1], z])
         if (z < zMin) {
           zMin = z
         }
       }
-      this.neutralPosition.push([1, 1, zMin])
-      this.neutralPosition.push([1, -1, zMin])
-      this.neutralPosition.push([-1, -1, zMin])
-      this.neutralPosition.push([-1, 1, zMin])
+      this.neutralPosition.push([2, 2, zMin])
+      this.neutralPosition.push([2, -2, zMin])
+      this.neutralPosition.push([-2, -2, zMin])
+      this.neutralPosition.push([-2, 2, zMin])
     }
   }
 
@@ -171,12 +171,12 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       return vec3.sub([], p, fp)
     })
 
+    let weight = this.standardFace.data.face.weight
     let position = this.positionAttribute.array
-    let n = position.length / 3
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < weight.length; i++) {
       let p = vec3.create()
       let b = 0
-      this.standardFace.data.face.weight[i].forEach((w) => {
+      weight[i].forEach((w) => {
         vec3.add(p, p, vec3.scale(vec3.create(), displacement[w[0]], w[1]))
         b += w[1]
       })
@@ -187,6 +187,13 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       position[i * 3 + 1] = p[1]
       position[i * 3 + 2] = p[2]
     }
+    this.standardFace.faceEyeIndex.forEach((index) => {
+      let i0 = index[0] * 3
+      let i1 = index[1] * 3
+      position[i1 + 0] = position[i0 + 0]
+      position[i1 + 1] = position[i0 + 1]
+      position[i1 + 2] = position[i0 + 2]
+    })
     this.positionAttribute.needsUpdate = true
   }
 

@@ -19,6 +19,8 @@ export default class StandardFaceData {
     this.position = original.positionAttribute.clone()
     this.uv = original.uvAttribute.clone()
 
+    this.faceEyeIndex = original.faceEyeIndex
+
     this.bounds = _.clone(original.bounds)
     this.size = _.clone(original.size)
   }
@@ -26,12 +28,35 @@ export default class StandardFaceData {
 
   init() {
     let data = require('./data/face2.json')
-    // console.log(data)
 
-    let index = data.face.index.concat(data.rightEye.index, data.leftEye.index)
+    let eyemouth = require('./data/eyemouth.json')
+    for (let i = 0; i < eyemouth.vertices.length; i += 3) {
+      eyemouth.vertices[i + 2] += 40 / 150
+    }
+    let offset = data.face.position.length / 3
+    eyemouth.index = []
+    for (let i = 0; i < eyemouth.faces.length; i += 7) {
+      let i0 = eyemouth.faces[i + 1]
+      if (eyemouth.vertices[i0 * 3 + 1] > 0) { // eye only
+        eyemouth.index.push(
+          i0 + offset,
+          eyemouth.faces[i + 2] + offset,
+          eyemouth.faces[i + 3] + offset
+        )
+      }
+    }
+    let faceEyeIndex = eyemouth.index.map((i) => {
+      let i0 = i - offset
+      let v = eyemouth.vertices.slice(i0 * 3, i0 * 3 + 3)
+      let ii = this.findNearestIndex(data, v)
+      return [ii, i]
+    })
+
+    let index = data.face.index.concat(eyemouth.index)
     let indexAttribute = new THREE.Uint16Attribute(index, 1)
-    let mouthIncludedIndexAttribute = new THREE.Uint16Attribute(index.concat(data.mouth.index), 1)
-    let positionAttribute = new THREE.Float32Attribute(data.face.position, 3)
+    index = data.face.index.concat(data.rightEye.index, data.leftEye.index, data.mouth.index)
+    let mouthIncludedIndexAttribute = new THREE.Uint16Attribute(index, 1)
+    let positionAttribute = new THREE.Float32Attribute(data.face.position.concat(eyemouth.vertices), 3)
 
     let min = [Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE]
     let max = [Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE]
@@ -45,13 +70,27 @@ export default class StandardFaceData {
     let bounds = {min, max, size: vec3.sub([], max, min), center: vec3.lerp([], min, max, 0.5)}
     let size = vec2.len(bounds.size)
 
-    original = {data, indexAttribute, mouthIncludedIndexAttribute, positionAttribute, uvAttribute: this.initUV(data), bounds, size}
+    original = {data, indexAttribute, mouthIncludedIndexAttribute, positionAttribute, uvAttribute: this.initUV(data), bounds, size, faceEyeIndex}
 
     data.back.edgeIndex = _.uniq(data.back.index).map((index) => {
       let v = this.getVertex(index)
       v.push(Math.atan2(v[1], v[0]), index)
       return v
     }).sort((a, b) => a[3] - b[3]).map((v) => v[4])
+  }
+
+
+  findNearestIndex(data, vertex) {
+    let distance = Number.MAX_VALUE
+    let index = 0
+    for (let i = 0; i < data.face.position.length; i += 3) {
+      let d = vec3.distance(vertex, data.face.position.slice(i, i + 3))
+      if (d < distance) {
+        index = i / 3
+        distance = d
+      }
+    }
+    return index
   }
 
 
