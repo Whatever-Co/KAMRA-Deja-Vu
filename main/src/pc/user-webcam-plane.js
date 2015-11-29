@@ -92,9 +92,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
     }
 
     if (this.enableTracking) {
-      for (let i = 0; i < this.numTrackingIteration; i++) {
-        this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
-      }
+      this.rawFeaturePoints = this.tracker.track(this.trackerCanvas)
       this.normralizeFeaturePoints()
       if (this.enableScoreChecking) {
         this.checkCaptureScore()
@@ -135,7 +133,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
     let numPixels = data.width * data.height
     let n = (numPixels / 30) | 0
     min = Number.MAX_VALUE
-    max = Number.MIN_VALUE
+    max = 100
     for (let i = 0; i < numPixels; i += n) {
       let ii = i * 4
       let gray = (data.data[ii] + data.data[ii + 1] + data.data[ii + 2]) / 3
@@ -180,7 +178,7 @@ export default class UserWebcamPlane extends UserPlaneBase {
       }
     }
 
-    const WAIT_FOR_FRAMES = 50
+    const WAIT_FOR_FRAMES = 150 // 2.5s in 60fps
 
     if (this.scoreHistory.length > WAIT_FOR_FRAMES) {
       this.scoreHistory.shift()
