@@ -145,7 +145,7 @@ export default class DeformableFaceGeometry extends THREE.BufferGeometry {
       let position = this.positionAttribute.array
       this.neutralPosition = []
       let zMin = Number.MAX_VALUE
-      for (let i = 0; i < position.length; i += 3) {
+      for (let i = 0; i < this.standardFace.data.face.position.length; i += 3) {
         let z = position[i + 2]
         this.neutralPosition.push([position[i], position[i + 1], z])
         if (z < zMin) {

@@ -97,7 +97,7 @@ class App {
     geometry.init(points, 512, 512, 400, 1200)
     geometry.computeVertexNormals()
     // let material = new THREE.MeshNormalMaterial({wireframe: true})
-    let material = new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(this.loader.getResult('image'))})
+    let material = new THREE.MeshBasicMaterial({map: new THREE.CanvasTexture(this.loader.getResult('image')), side: THREE.DoubleSide})
     // material.wireframe = true
     this.face = new THREE.Mesh(geometry, material)
     this.face.scale.multiplyScalar(400)
@@ -107,7 +107,7 @@ class App {
 
     let gui = new dat.GUI()
     this.currentFrameGui = gui.add(this, 'currentFrame', this.keyframes.user.in_frame, this.keyframes.user.out_frame, 1)
-    this.currentFrameGui.setValue(400)
+    this.currentFrameGui.setValue(1564)
     gui.add(material, 'wireframe')
 
     this.keyPressing = {}
