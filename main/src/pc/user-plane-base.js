@@ -89,7 +89,7 @@ class FaceSpaceMaterial extends THREE.ShaderMaterial {
     this.video.width = this.video.height = 256
     this.video.loop = true
     this.video.autoplay = true
-    this.video.src = 'textures/curl_bg.mp4'
+    this.video.src = 'textures/curl_bg.mp4?.jpg'
     this.video.addEventListener('loadedmetadata', () => {
       this.texture = new THREE.Texture(this.video)
       this.uniforms.spaceMap.value = this.texture
