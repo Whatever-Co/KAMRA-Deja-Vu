@@ -32,7 +32,7 @@ class App {
     this.face.scale.set(200, 200, 200)
     this.scene.add(this.face)
 
-    this.convert()
+    // this.convert()
 
     window.addEventListener('resize', this.onResize.bind(this))
 
@@ -63,8 +63,8 @@ class App {
 
 }
 
-window.onerror = (e) => {
-  debugger
-}
+// window.onerror = (e) => {
+//   debugger
+// }
 
 new App()

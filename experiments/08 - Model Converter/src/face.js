@@ -27,10 +27,22 @@ class Node {
 }
 
 
+const fixFaceData = (data) => {
+  let n = data.faces.length / data.metadata.faces
+  let faces = []
+  for (let i = 0; i < data.faces.length; i += n) {
+    faces.push(...data.faces.slice(i, i + 4))
+  }
+  data.faces = faces
+  return data
+}
+
+
+
 export default class extends THREE.Mesh {
 
   constructor(tracker) {
-    let geometry = new THREE.JSONLoader().parse(require('./data/face.json')).geometry
+    let geometry = new THREE.JSONLoader().parse(fixFaceData(require('./data/face 2.json'))).geometry
     let material = new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, wireframe: true, transparent: true, opacity: 0.3})
     /*let material = new THREE.ShaderMaterial({
       vertexShader: `
@@ -225,14 +237,9 @@ export default class extends THREE.Mesh {
 
   initEyeMouth() {
     let data = require('./data/eyemouth.json')
-    let n = data.faces.length / data.metadata.faces
-    let faces = []
-    for (let i = 0; i < data.faces.length; i += n) {
-      faces.push(...data.faces.slice(i, i + 4))
-    }
-    data.faces = faces
-
-    let geometry = new THREE.JSONLoader().parse(data).geometry
+    console.log(data)
+    let geometry = new THREE.JSONLoader().parse(fixFaceData(data)).geometry
+    // console.log(geometry)
 
     let indices = geometry.vertices.map((v) => {
       let index = this.findNearestIndex(this.geometry.vertices, v)
