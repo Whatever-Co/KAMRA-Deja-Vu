@@ -1,0 +1,3 @@
+[submodule "experiments/31 - gzipped file progress/PreloadJS"]
+	path = experiments/31 - gzipped file progress/PreloadJS
+	url = https://github.com/CreateJS/PreloadJS.git
