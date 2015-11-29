@@ -342,6 +342,7 @@ class PageManager {
     })
   }
 
+
   initLocales() {
     // localise
     i18nextJquery(i18n, $, {
@@ -362,7 +363,7 @@ class PageManager {
         return (navigator.browserLanguage || navigator.language || navigator.userLanguage).substr(0, 2) == 'ja' ? 'ja' : 'en'
       })(),
       debug: Config.DEV_MODE
-    }, (e) => {
+    }, () => {
       $('html').addClass($.i18n.lng())
       $('#about,#howto,#webcam-step1,#upload-step1,#upload-step3,#upload-error,.top_button,#canvas-clip').localize()
       $('img.i18n').localize()
@@ -394,6 +395,7 @@ class PageManager {
       })
     })
   }
+
 
   initAnalytics() {
     GaUtil.sendEvent('Load_Complete')
@@ -438,6 +440,7 @@ class PageManager {
     })
   }
 
+
   initAboutMenu() {
     let aboutNavs = $('#about .navi a')
     let scrollArea = $('#about .mask')
@@ -452,20 +455,21 @@ class PageManager {
       scrollArea.animate({scrollTop:pos + scrollArea.scrollTop()}, 500, 'swing')
     })
 
-    scrollArea.on('scroll', ()=>{
+    scrollArea.on('scroll', () => {
       let selected = -1
-      links.each((i, link)=>{
+      links.each((i, link) => {
         let pos = $(link).offset().top + 300
         if (selected < 0 && pos > 0) {
           selected = i
         }
       })
-      if(selected >= 0) {
+      if (selected >= 0) {
         aboutNavs.removeClass('selected')
         $(aboutNavs[selected]).addClass('selected')
       }
     })
   }
+
 
   preprocessKeyframes() {
     this.keyframes = loader.getResult('keyframes')
