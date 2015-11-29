@@ -454,6 +454,7 @@ export default class FaceController extends THREE.Object3D {
       this.data.falling_children.property.forEach((props, i) => {
         let face = this.fallingChildren[i]
         face.position.fromArray(props.position, f * 3)
+        face.scale.fromArray(props.scale, f * 3).multiplyScalar(SCALE)
         face.quaternion.fromArray(props.quaternion, f * 4)
         if (this.data.falling_children_mesh.in_frame <= currentFrame && currentFrame <= this.data.falling_children_mesh.out_frame) {
           let f = currentFrame - this.data.falling_children_mesh.in_frame
