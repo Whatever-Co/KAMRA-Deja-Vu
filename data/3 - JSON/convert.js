@@ -5,16 +5,26 @@ var msgpack = require('msgpack')
 
 var path = []
 var vertices = []
-function traverse(obj, margin) {
+function traverse(obj) {
+  if (obj.hasOwnProperty('face_vertices')) {
+    obj.vertices = obj.face_vertices.map(function(v, i) {
+      return Array.isArray(v) ? v.concat(obj.eyemouth_vertices[i]) : null
+    })
+    delete obj.face_vertices
+    delete obj.eyemouth_vertices
+  }
   for (var key in obj) {
     path.push(key)
     var value = obj[key]
     if (Array.isArray(value) && typeof(value[0]) == 'number') {
       obj[key] = normalizeToUInt16(value)
+      obj[key].offset = vertices.length
+      obj[key].length = obj[key].values.length
       vertices.push.apply(vertices, obj[key].values)
-      console.log(path.join('.'), obj[key].min, obj[key].max, obj[key].values.length)
-    } else if (typeof(value) == 'object') {
-      traverse(value, margin + '    ')
+      delete obj[key].values
+      console.log(path.join('.'), obj[key])
+    } else if (value && typeof(value) == 'object') {
+      traverse(value)
     }
     path.pop()
   }
@@ -47,7 +57,7 @@ var data = JSON.parse(zlib.gunzipSync(fs.readFileSync('keyframes.json.gz')))
 console.timeEnd('load')
 
 console.time('convert')
-traverse(data, '')
+traverse(data)
 console.timeEnd('convert')
 console.log({total: vertices.length})
 
@@ -60,8 +70,10 @@ for (var i = 0; i < vertices.length; i++) {
 fs.writeFileSync('out/keyframes.bin.gz', zlib.gzipSync(buffer, {level: zlib.Z_BEST_COMPRESSION}))
 console.timeEnd('write bin')
 
-console.time('write msgpack')
-var packed = msgpack.pack(data)
-// fs.writeFileSync('out/keyframes.pack', packed)
-fs.writeFileSync('out/keyframes.pack.gz', zlib.gzipSync(packed, {level: zlib.Z_BEST_COMPRESSION}))
-console.timeEnd('write msgpack')
+fs.writeFileSync('out/keyframeinfo.json', JSON.stringify(data))
+
+// console.time('write msgpack')
+// var packed = msgpack.pack(data)
+// // fs.writeFileSync('out/keyframes.pack', packed)
+// fs.writeFileSync('out/keyframes.pack.gz', zlib.gzipSync(packed, {level: zlib.Z_BEST_COMPRESSION}))
+// console.timeEnd('write msgpack')
