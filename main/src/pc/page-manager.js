@@ -1,6 +1,7 @@
 /* global ga */
 
 import $ from 'jquery'
+import _ from 'lodash'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
 import Modernizr from 'exports?Modernizr!modernizr-custom'
@@ -472,7 +473,7 @@ class PageManager {
 
 
   preprocessKeyframes() {
-    this.keyframes = loader.getResult('keyframes')
+    this.keyframes = this.decodeKeyframes()
     // console.log(this.keyframes)
 
     console.time('morph data processing')
@@ -484,8 +485,9 @@ class PageManager {
       this.keyframes.user_alt.property[1],
       this.keyframes.slice_alt.property,
       {
-        face_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.face_vertices),
-        eyemouth_vertices: Config.DATA.user_particles_mesh.map((prop) => prop.eyemouth_vertices)
+        vertices: Config.DATA.user_particles_mesh.map((prop) => {
+          return new Float32Array(prop.face_vertices.concat(prop.eyemouth_vertices))
+        })
       }
     ]
     .concat(this.keyframes.user_children.property.map((props) => props))
@@ -493,11 +495,10 @@ class PageManager {
 
     let transferList = []
     let objectVertices = targetObject.map((obj) => {
-      return obj.face_vertices.map((v, i) => {
+      return obj.vertices.map((v) => {
         if (v) {
-          let a = new Float32Array(v.concat(obj.eyemouth_vertices[i]))
-          transferList.push(a.buffer)
-          return a
+          transferList.push(v.buffer)
+          return v
         }
         return null
       })
@@ -512,6 +513,36 @@ class PageManager {
       console.timeEnd('morph data processing')
       this.fsm.loadComplete()
     }
+  }
+
+
+  decodeKeyframes() {
+    console.time('decode')
+    let buffer = loader.getResult('keyframes')
+    let info = loader.getResult('keyframeinfo')
+    let toBeProcessed = [info]
+    while (toBeProcessed.length) {
+      let obj = toBeProcessed.pop()
+      _.forEach(obj, (v, k) => {
+        if (v && typeof(v['min']) == 'number') {
+          obj[k] = this.prepareDataFor(v, buffer)
+        } else {
+          toBeProcessed.push(v)
+        }
+      })
+    }
+    console.timeEnd('decode')
+    return info
+  }
+
+
+  prepareDataFor(prop, buffer) {
+    let encoded = new Uint16Array(buffer, prop.offset * 2, prop.length)
+    let values = new Float32Array(prop.length)
+    for (let i = 0; i < prop.length; i++) {
+      values[i] = encoded[i] / 0xffff * (prop.max - prop.min) + prop.min
+    }
+    return values
   }
 
 
