@@ -93,12 +93,12 @@ class PageManager {
               loader.getResult('shared-data').points
             )
           }
-          $('#top').delay(500).fadeIn(1000)
+          $('#top,#siteoftheday').delay(500).fadeIn(1000)
           BgmManager.play('data/intro')
         },
         onleavetop: (event, from, to) => {
           if (to == 'playing') {
-            $('#top').stop().fadeOut(1000, () => {
+            $('#top,#siteoftheday').stop().fadeOut(1000, () => {
               this.fsm.transition()
             })
             return StateMachine.ASYNC
@@ -108,7 +108,7 @@ class PageManager {
 
         // webcam
         onbeforeselectWebcam: () => {
-          $('#top').stop().fadeOut(1000)
+          $('#top,#siteoftheday').stop().fadeOut(1000)
           return StateMachine.ASYNC
         },
         onenterwebcam1: () => {
@@ -140,7 +140,7 @@ class PageManager {
 
         // upload
         onbeforeselectUpload: () => {
-          $('#top').stop().fadeOut(1000)
+          $('#top,#siteoftheday').stop().fadeOut(1000)
         },
         onenterupload1: () => {
           $('#canvas-clip').addClass('blur')
@@ -199,7 +199,7 @@ class PageManager {
           $('#about').fadeOut(1000)
           $('#top,#canvas-clip').removeClass('blur')
           if (to == 'playing') {
-            $('#top').stop().fadeOut(1000, () => {
+            $('#top,#siteoftheday').stop().fadeOut(1000, () => {
               this.fsm.transition()
             })
             return StateMachine.ASYNC
@@ -214,7 +214,7 @@ class PageManager {
           $('#howto').fadeOut(1000)
           $('#top,#canvas-clip').removeClass('blur')
           if (to == 'playing') {
-            $('#top').stop().fadeOut(1000, () => {
+            $('#top,#siteoftheday').stop().fadeOut(1000, () => {
               this.fsm.transition()
             })
             return StateMachine.ASYNC
