@@ -1,4 +1,9 @@
-http://kamra.invisi-dir.com/ のソースコード、初期の実験的コードやプロトタイプのコードも全部はいったリポジトリです。全てのソースコードは MIT ライセンスにしたがって提供します。（ソースコード以外の写真・画像・音声・ムービーなどは含まれません。リポジトリにははいってるけど。）
+KAMRA - "Deja vu"
+=======
+
+
+
+http://kamra.invisi-dir.com のソースコード、初期の実験的コードやプロトタイプのコードも全部はいったリポジトリです。全てのソースコードは MIT ライセンスにしたがって提供します。（ソースコード以外の写真・画像・音声・ムービーなどは含まれません。リポジトリにははいってるけど。）
 
 This repository contain all source code of http://kamra.invisi-dir.com/, including early experimental code and prototypes. All source code is licensed under the terms of the MIT License. (Other assets like images, photos, musics and movies are not included.)
 
