@@ -102,15 +102,25 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
 
   init(featurePoint2D, imageWidth, imageHeight, planeHeight, cameraZ) {
     this.cage.init(featurePoint2D, imageWidth, imageHeight, planeHeight, cameraZ)
+    this._appliedMorph = null
     this._deriveAll()
   }
 
   deform(featurePoints) {
     this.cage.deform(featurePoints)
+    this._appliedMorph = null
     this._derivePositions()
   }
 
   applyMorph(weights) {
+    // the keyframe player clamps to the last frame and re-applies the
+    // same weights array every tick (the outro runs this on an invisible
+    // main face while live tracking eats the frame budget) — skip
+    // repeats so the derive cost is only paid when the morph changes
+    if (this._appliedMorph === weights) {
+      return
+    }
+    this._appliedMorph = weights
     this.cage.applyMorph(weights)
     // face-controller pokes cage uvAttribute directly around morph
     // sections (smalls get main's UVs at capture and restored later),
@@ -120,6 +130,7 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
 
   fillMouth() {
     this.cage.fillMouth()
+    this._appliedMorph = null
     if (this.operator) {
       this._rebuildOperator(this.cage.standardFace.mouthIncludedIndex.array)
       this._allocateDerived()
@@ -130,6 +141,7 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
   copy(geometry) {
     // accepts another facade or a bare DeformableFaceGeometry
     this.cage.copy(geometry.cage || geometry)
+    this._appliedMorph = null
     this._deriveAll()
     return this
   }

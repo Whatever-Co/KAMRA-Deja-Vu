@@ -21,7 +21,13 @@ mesh is what gets rendered.
   `face1.geometry.index` against cage-sized position attributes. The
   mosaic/particle section is intentionally chunky anyway.
 - FaceLibrary faces (`smalls`, falling children) ARE subdivided (added
-  after the hero faces shipped). Two lessons encoded in the facade:
+  after the hero faces shipped) — at LEVEL 1, built lazily on first
+  `getMesh()`. Building 100 level-2 meshes up front added enough heap
+  that periodic GC pauses visibly disturbed clmtrackr tracking during
+  the webcam outro (the composited face position jumped while frame
+  rate stayed smooth). `applyMorph` also memoizes by weights reference:
+  the keyframe player clamps to the last frame and re-applies the same
+  array every tick. Two lessons encoded in the facade:
   face-library passes a legacy 5th constructor arg (always ignored by
   DeformableFaceGeometry), so the wrap marker must be shape-checked;
   and face-controller pokes cage `uvAttribute` directly around morph

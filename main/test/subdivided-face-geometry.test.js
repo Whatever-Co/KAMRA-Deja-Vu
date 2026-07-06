@@ -54,6 +54,26 @@ let g3 = SubdividedFaceGeometry.wrap(new StubCage(), 1)
 g3.copy(cage)
 assert.equal(g3.cage.copiedFrom, cage)
 
+// applyMorph memoizes by weights reference: re-applying the same array
+// (outro clamps to the last keyframe) must be a no-op, and any deform
+// must invalidate the memo
+{
+  let c = new StubCage()
+  c.applyMorphCount = 0
+  c.applyMorph = function () { this.applyMorphCount++ }
+  let gm = SubdividedFaceGeometry.wrap(c, 1)
+  let weights = [0, 0, 0, 1, 0, 0, 0]
+  gm.applyMorph(weights)
+  gm.applyMorph(weights)
+  gm.applyMorph(weights)
+  assert.equal(c.applyMorphCount, 1) // repeats skipped
+  gm.deform([])
+  gm.applyMorph(weights)
+  assert.equal(c.applyMorphCount, 2) // deform invalidates the memo
+  gm.applyMorph([1, 2, 3]) // different array applies
+  assert.equal(c.applyMorphCount, 3)
+}
+
 // a numeric 5th positional arg (face-library legacy call) must NOT be
 // mistaken for the wrap marker — it would leave cage undefined
 {

@@ -2,8 +2,14 @@
 
 import _ from 'lodash'
 
+import DeformableFaceGeometry from './deformable-face-geometry'
 import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
+
+// library faces render at level 1: they are numerous and never fill the
+// screen, and 100 level-2 derived meshes cost enough heap that GC pauses
+// visibly disturb clmtrackr tracking in the webcam outro
+const LIBRARY_SUBDIVISION_LEVELS = 1
 
 
 const loader = window.__djv_loader
@@ -38,7 +44,11 @@ class FaceLibrary {
     })
     let texture = new THREE.CanvasTexture(loader.getResult(`${id}-image`))
     return {
-      geometry: new SubdividedFaceGeometry(featurePoints, 512, 512, 400, 1200),
+      // geometry is built lazily in getMesh: only ~1/3 of the library is
+      // ever shown, and building 100 subdivided meshes up front costs
+      // enough heap to disturb tracking with GC pauses
+      featurePoints,
+      geometry: null,
       material: new FaceFrontMaterial(texture),
       texture
     }
@@ -50,9 +60,18 @@ class FaceLibrary {
       console.warn('no such face id', id)
       return
     }
+    let entry = this.library[id]
+    if (!entry.geometry) {
+      // matches the historical DeformableFaceGeometry(fp, 512, 512, 400, 1200)
+      // call: the 5th arg was always dropped by the 4-arg constructor
+      entry.geometry = SubdividedFaceGeometry.wrap(
+        new DeformableFaceGeometry(entry.featurePoints, 512, 512, 400),
+        LIBRARY_SUBDIVISION_LEVELS
+      )
+    }
     return new THREE.Mesh(
-      shared ? this.library[id].geometry : this.library[id].geometry.clone(),
-      this.library[id].material
+      shared ? entry.geometry : entry.geometry.clone(),
+      entry.material
     )
   }
 
