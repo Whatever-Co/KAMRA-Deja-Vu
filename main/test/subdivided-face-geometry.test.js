@@ -21,6 +21,7 @@ class StubCage {
   applyMorph() {}
   init() {}
   fillMouth() {}
+  copy(src) { this.copiedFrom = src; this.positionAttribute.array[3] = 7 }
 }
 
 let cage = new StubCage()
@@ -42,5 +43,15 @@ assert(g.attributes.position.needsUpdate)
 // clone shares levels and produces working facade
 let g2 = SubdividedFaceGeometry.wrap(new StubCage(), 2)
 assert.equal(g2.levels, 2)
+
+// copy() unwraps a facade source, delegates to the cage, and re-derives
+g2.attributes.position.needsUpdate = false
+g2.copy(g)
+assert.equal(g2.cage.copiedFrom, cage) // unwrapped to the source's cage
+assert(g2.attributes.position.needsUpdate) // re-derived after copy
+// copy() also accepts a bare cage
+let g3 = SubdividedFaceGeometry.wrap(new StubCage(), 1)
+g3.copy(cage)
+assert.equal(g3.cage.copiedFrom, cage)
 
 console.log('subdivided-face-geometry: all tests passed')

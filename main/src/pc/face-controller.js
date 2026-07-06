@@ -69,13 +69,15 @@ export default class FaceController extends THREE.Object3D {
     this.rotateGroup = new THREE.Object3D()
     this.add(this.rotateGroup)
 
-    this.face1 = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    // face1/face2 stay cage-resolution: FaceParticle and FaceBlender read
+    // geometry.index and mix it with cage-sized attributes / weight tables
+    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face1.geometry.fillMouth()
     this.face1.visible = false
     this.face1.matrixAutoUpdate = false
     this.add(this.face1)
 
-    this.face2 = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
+    this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
     this.face2.geometry.fillMouth()
     this.face2.visible = false
     this.face2.matrixAutoUpdate = false

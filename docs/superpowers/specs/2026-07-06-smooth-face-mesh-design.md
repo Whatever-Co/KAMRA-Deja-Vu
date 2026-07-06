@@ -5,7 +5,7 @@ Status: Approved by Saqoosha (approach A)
 
 ## Goal
 
-Hero faces (FaceController `main`, `face1`, `face2`, `alt` x2) render at
+Hero faces (FaceController `main` and `alt` x2) render at
 higher mesh resolution so silhouettes and projected-photo texture look
 smooth, without touching any 2015 baked data (face2.json weights,
 keyframes.bin morphs) or shaders.
@@ -15,6 +15,11 @@ mesh is what gets rendered.
 
 ## Non-goals
 
+- `face1` / `face2` stay cage-resolution (learned during verification):
+  FaceParticle reads `geometry.index` and mixes it with cage-sized
+  weight tables and the 32x32 data texture, and FaceBlender binds
+  `face1.geometry.index` against cage-sized position attributes. The
+  mosaic/particle section is intentionally chunky anyway.
 - Small faces (`smalls`, falling children, face-library, user-plane-base
   working face) are out of scope. If they pick up smoothing for free via
   shared operators (`main.geometry.clone()` particles), that is fine.
@@ -69,10 +74,13 @@ extends THREE.BufferGeometry`.
 ## Integration
 
 `face-controller.js`: replace `new DeformableFaceGeometry()` with
-`new SubdividedFaceGeometry()` at the 5 hero construction sites
-(`main`, `face1`, `face2`, `alt` x2). No call-site changes anywhere
-else; `app.js` and keyframe playback code keep calling the same
-methods.
+`new SubdividedFaceGeometry()` at the hero construction sites
+(`main`, `alt` x2). No call-site changes anywhere else; `app.js` and
+keyframe playback code keep calling the same methods. `copy()` MUST be
+delegated by the facade — `captureWebcam()` does
+`alt.geometry.copy(main.geometry)` and without delegation the cage
+never receives `neutralPosition`, crashing `applyMorph` during the
+user_alt section.
 
 ## Error handling
 

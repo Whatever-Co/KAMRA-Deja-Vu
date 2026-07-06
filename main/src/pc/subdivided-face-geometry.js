@@ -121,6 +121,13 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
     }
   }
 
+  copy(geometry) {
+    // accepts another facade or a bare DeformableFaceGeometry
+    this.cage.copy(geometry.cage || geometry)
+    this._deriveAll()
+    return this
+  }
+
   clone() {
     return SubdividedFaceGeometry.wrap(this.cage.clone(), this.levels)
   }
