@@ -134,6 +134,26 @@ assert(g.attributes.position.needsUpdate)
   assert.deepEqual(Array.from(gp.indexAttr.array), [0, 2, 3])
 }
 
+// levels 0 = subdivision intentionally off (mobile): pass-through without
+// an operator build, cage attributes rendered directly, wrap(cage, 0) must
+// not fall back to defaultLevels (the old `levels ||` would have)
+{
+  let c = new StubCage()
+  let g0 = SubdividedFaceGeometry.wrap(c, 0)
+  assert.equal(g0.levels, 0)
+  assert.equal(g0.passThrough, true)
+  assert.equal(g0.operator, null)
+  assert.equal(g0.attributes.position, c.positionAttribute)
+  assert.deepEqual(Array.from(g0.indexAttr.array), [0, 1, 2, 0, 2, 3])
+  g0.deform([]) // no derive, must not crash
+  assert.equal(c.deformed, 1)
+  g0.fillMouth() // topology switch must still work
+  assert.deepEqual(Array.from(g0.indexAttr.array), [0, 2, 3])
+  let g0c = g0.clone()
+  assert.equal(g0c.levels, 0) // clone preserves levels 0
+  assert.equal(g0c.passThrough, true)
+}
+
 // a numeric 5th positional arg (the historical face-library call) must NOT
 // be mistaken for the wrap marker. Proof: the real-cage branch dies under
 // babel-node at StandardFaceData's webpack `raw!` require — if the wrap

@@ -47,13 +47,19 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
     // treat _internal as the wrap marker when it carries a cage
     if (_internal && _internal.cage) {
       this.cage = _internal.cage
-      this.levels = _internal.levels || SubdividedFaceGeometry.defaultLevels
+      this.levels = _internal.levels != null ? _internal.levels : SubdividedFaceGeometry.defaultLevels
     } else {
       this.cage = new DeformableFaceGeometry(featurePoint2D, image, planeHeight, cameraZ)
       this.levels = SubdividedFaceGeometry.defaultLevels
     }
     this._appliedMorph = null
     this.passThrough = false
+    if (this.levels === 0) {
+      // levels 0 = subdivision intentionally off (mobile) — render the cage
+      // through the same facade so call sites don't branch
+      this._passThrough()
+      return
+    }
     try {
       this._rebuildOperator(this.cage.standardFace.index.array)
       this._allocateDerived()

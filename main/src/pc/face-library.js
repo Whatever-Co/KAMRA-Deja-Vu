@@ -2,16 +2,17 @@
 
 import _ from 'lodash'
 
+import Config from './config'
 import DeformableFaceGeometry from './deformable-face-geometry'
 import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 
-// library faces render at level 1: they are numerous and never fill the
-// screen, and eagerly building every library face at level 2 cost enough
-// heap that GC pauses visibly disturbed clmtrackr tracking in the webcam
-// outro (asset-loader loads 20 faces + lula; smalls + falling children
-// sample up to ~19 of them)
-const LIBRARY_SUBDIVISION_LEVELS = 1
+// library faces render at level 1 (0 on mobile, following FACE_SUBDIVISION):
+// they are numerous and never fill the screen, and eagerly building every
+// library face at level 2 cost enough heap that GC pauses visibly disturbed
+// clmtrackr tracking in the webcam outro (asset-loader loads 20 faces +
+// lula; smalls + falling children sample up to ~19 of them)
+const LIBRARY_SUBDIVISION_LEVELS = Math.min(1, Config.FACE_SUBDIVISION)
 
 
 const loader = window.__djv_loader

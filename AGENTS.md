@@ -52,9 +52,23 @@ THREE はグローバル前提のコードなので、テストは `test/three-s
 
 380 頂点のケージ（face 342 + eyemouth 38）はそのまま、Loop subdivision を疎な線形写像として前計算し、描画用の派生メッシュだけ高解像度化してある（level 2 で 5,276 頂点）。設計と踏んだ地雷の全記録は `docs/superpowers/specs/2026-07-06-smooth-face-mesh-design.md`。要点：
 
-- `main`/`alts` = level 2、FaceLibrary（子顔 20 + lula）= level 1 + 遅延生成。**全ライブラリ顔を level 2 で先に作るとヒープ膨張 → GC 停止が clmtrackr を周期的に飛ばして webcam outro の顔位置がジャンプする**（フレームレートは落ちないので気づきにくい）。ケージ UV を直接書き換える消費者は `refreshUVs()` を呼ぶ契約
+- `main`/`alts` = level 2（モバイル含む全環境。旧 `LOW_SPEC` 分岐は 2026-07 に廃止）、FaceLibrary（子顔 20 + lula）= level 1 + 遅延生成。**全ライブラリ顔を level 2 で先に作るとヒープ膨張 → GC 停止が clmtrackr を周期的に飛ばして webcam outro の顔位置がジャンプする**（フレームレートは落ちないので気づきにくい）。ケージ UV を直接書き換える消費者は `refreshUVs()` を呼ぶ契約
 - `face1`/`face2`（mosaic）と user-plane の顔はケージのまま。FaceParticle / FaceBlender が `geometry.index` をケージトポロジー前提で消費するため
 - facade（`subdivided-face-geometry.js`）の `positionAttribute`/`uvAttribute` はケージの属性を返す。既存消費者（mouth 共有、smalls の UV コピー、particled-logo 等）はこれ前提
+- `levels: 0` は意図的 pass-through（ケージをそのまま描画、operator 構築なし）。低スペック端末への逃げ道として facade に残してある — `Config.FACE_SUBDIVISION` を 0 にするだけで全 call site がケージ解像度に落ちる
+
+## スマホ対応（2026-07 追加）
+
+2015 年の UA 追い返し（→ `sp/` の YouTube ページ）を廃止し、モバイルでも本編が動く。`Config.IS_MOBILE`（UA + iPadOS の touch-points 判定）が唯一の分岐点。実装の要点と踏んだ地雷：
+
+- **音源とクロックは `textures/bg_movie_prizm.mp4`（52MB、video+audio）**。composite-pass1 が再生し `Ticker.setClock` で全ショーの同期クロックになる。これが再生できない = 顔が出たまま止まる
+- **autoplay 制限**: 無音テクスチャ動画 4 本（curl_bg / slitscan / riri-in,out / webcam stream）は `muted` + `playsinline` で無条件再生可。音入りの prizm は `media-unlock.js` に登録し、開始ボタンのジェスチャ内で `startGesture()`（page-manager）が unlock。**unlock の pause は同期で行う** — play() promise を待って pause すると、遅い回線で promise 解決がショー開始後になり、遅延 pause がクロックを止める（実機で踏んだ）
+- **BGM**（intro.mp3/ogg、audio 要素）: play() rejection を catch して最初の click/touchend でリトライ（bgm-manager.js）
+- **getUserMedia**: `Modernizr.getusermedia` は旧 prefix API 検出で iOS Safari では常に false（Chrome には残骸があるため desktop では偶然動く）。webcam-manager.js は `navigator.mediaDevices.getUserMedia`（promise、`facingMode: 'user'`）に書き換え済み。**HTTPS 必須**
+- **iOS Safari は HTTP Range（206）非対応サーバーから mp4 を再生しない**。Chrome は 200 全量返しでも再生するので、デスクトップやエミュレーションでは絶対に気づけない。ローカル配信サーバーには Range 対応必須
+- **iPhone の Safari には要素 Fullscreen API が無い**（iOS 26 実機で確認）。Android は `requestFullscreen` が動く。iPhone のフルスクリーンは「ホーム画面に追加」経由のみ — `manifest.webmanifest`（display: fullscreen）+ `apple-mobile-web-app-capable` meta + `apple-touch-icon.png`（ogimage.jpg から生成）を設置済み
+- **横画面専用**: `html.mobile` クラス（bootstrap.js が付与）+ 縦持ちで純 CSS の回転案内オーバーレイ（`#rotate-device`、index.styl の `@media (orientation: portrait)`）。`MIN_WINDOW_WIDTH` はモバイルで 0（1100px クランプを外して cover-scale を正しく）
+- **実機テスト手順**: `tailscale serve --bg 4001` で正規 HTTPS（https://studio.tail9c582e.ts.net/）→ iPhone からアクセス。ローカル配信は scratchpad の `kamra-server.mjs`（Range / gzip / POST 遮断 / リクエストログ対応）。終わったら `tailscale serve --https=443 off`
 
 ## 本番インフラ調査（2026-07-06 時点）
 

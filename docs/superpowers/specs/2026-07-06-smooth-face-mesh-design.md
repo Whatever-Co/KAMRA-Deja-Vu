@@ -76,7 +76,10 @@ extends THREE.BufferGeometry`.
   odd vertices are edge midpoints. Boundary vertices never take weight
   from interior vertices, so outlines smooth without shrinking inward.
 - Level 2 operator = compose(level1(level1 topology)). Level from
-  `Config`: `LOW_SPEC ? 1 : 2`.
+  `Config.FACE_SUBDIVISION` (2 everywhere since mobile support proved
+  phones handle it; the old `LOW_SPEC ? 1 : 2` split is gone). Level 0
+  is supported as an intentional pass-through (cage rendered through the
+  facade, no operator build) — the escape hatch for weak devices.
 - Operators are cached in a module-level map keyed by
   (index set, levels) and shared across instances — clones cost no
   extra precomputation.

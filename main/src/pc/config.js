@@ -1,14 +1,16 @@
 /* global process */
 
-const LOW_SPEC = screen.width < 1600
+// iPadOS 13+ reports a Mac userAgent; the touch-points check catches it
+const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  || (navigator.platform == 'MacIntel' && navigator.maxTouchPoints > 1)
 
 export default {
   DEV_MODE: process.env.NODE_ENV == 'development',
-  LOW_SPEC,
-  RENDER_WIDTH: LOW_SPEC ? 1280 : 1920,
-  RENDER_HEIGHT: LOW_SPEC ? 720 : 1080,
-  MIN_WINDOW_WIDTH: 1100,
+  IS_MOBILE,
+  RENDER_WIDTH: 1920,
+  RENDER_HEIGHT: 1080,
+  MIN_WINDOW_WIDTH: IS_MOBILE ? 0 : 1100,
   MIN_WINDOW_HEIGHT: 620,
-  FACE_SUBDIVISION: LOW_SPEC ? 1 : 2,
+  FACE_SUBDIVISION: 2,
   DATA: require('./data/config.json')
 }

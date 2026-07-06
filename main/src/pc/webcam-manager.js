@@ -1,22 +1,21 @@
 import {EventEmitter} from 'events'
-import Modernizr from 'exports?Modernizr!modernizr-custom'
 
 
 class WebcamManager extends EventEmitter {
 
   start(onSuccess, onError) {
-    Modernizr.prefixed('getUserMedia', navigator)({
+    // 2015 called the legacy callback getUserMedia with Chrome-only
+    // mandatory/optional constraints; iOS Safari only ever shipped
+    // navigator.mediaDevices, so use the modern API everywhere
+    navigator.mediaDevices.getUserMedia({
       video: {
-        mandatory: {minWidth: 640},
-        optional: [
-          {minWidth: 1280},
-          {minWidth: 1920}
-        ]
+        width: {ideal: 1920, min: 640},
+        facingMode: 'user'
       }
-    }, (stream) => {
+    }).then((stream) => {
       this.stream = stream
       onSuccess()
-    }, (error) => {
+    }).catch((error) => {
       console.warn(error)
       onError()
     })

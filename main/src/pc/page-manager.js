@@ -4,7 +4,6 @@ import $ from 'jquery'
 import _ from 'lodash'
 import i18n from 'i18next-client'
 import i18nextJquery from 'i18next-jquery'
-import Modernizr from 'exports?Modernizr!modernizr-custom'
 import StateMachine from 'javascript-state-machine'
 
 import Config from './config'
@@ -15,12 +14,41 @@ import WebcamManager from './webcam-manager'
 import FaceDetector from './face-detector'
 import ShareUtil from './share-util'
 import BgmManager from './bgm-manager'
+import MediaUnlock from './media-unlock'
 import GaUtil from './ga-util'
 
 
 // browser-sync (proxy mode) injects its own client snippet; the old
 // manual tag pointed at a version-pinned 2.10.0 URL that 404s under
 // the pinned 2.18.13.
+
+// everything that must happen inside the start-button gesture call stack:
+// media unlock (autoplay policy) and, on mobile, fullscreen (iOS 16.4+
+// supports element fullscreen on iPhone; older/denied requests just no-op)
+const startGesture = () => {
+  // fullscreen FIRST: requestFullscreen consumes the transient user
+  // activation, the media unlock play() calls only need sticky
+  // activation — the reverse order can leave fullscreen rejected.
+  // iPhone Safari (verified through iOS 26) has no element fullscreen
+  // API at all — there the request is skipped and true fullscreen only
+  // comes from the home-screen web app (manifest display: fullscreen)
+  if (Config.IS_MOBILE && !document.fullscreenElement && !document.webkitFullscreenElement) {
+    let el = document.documentElement
+    let request = el.requestFullscreen || el.webkitRequestFullscreen
+    if (request) {
+      let p = request.call(el)
+      if (p && p.then) {
+        p.then(() => {
+          // Android can pin the orientation once fullscreen; iOS rejects
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {})
+          }
+        }).catch(() => {})
+      }
+    }
+  }
+  MediaUnlock.unlock()
+}
 
 const loader = window.__djv_loader
 loader.on('complete', () => new PageManager())
@@ -272,21 +300,23 @@ class PageManager {
     let pages = ['top', 'webcam', 'upload', 'about', 'howto', 'share']
     pages.forEach((name) => $('#page').append(require(`./page/includes/${name}.jade`)(data)))
 
-    if (Modernizr.getusermedia) {
-      $('.with-webcam').click(() => this.fsm.selectWebcam())
+    // Modernizr.getusermedia only detects the legacy prefixed API, which
+    // iOS Safari never had — feature-detect the modern one instead
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      $('.with-webcam').click(() => { startGesture(); this.fsm.selectWebcam() })
     } else {
       $('.with-webcam').addClass('inactive')
     }
-    $('.with-photo').click(() => this.fsm.selectUpload())
-    $('.without-webcam').click(() => this.fsm.start('video'))
+    $('.with-photo').click(() => { startGesture(); this.fsm.selectUpload() })
+    $('.without-webcam').click(() => { startGesture(); this.fsm.start('video') })
 
-    $('#top .play-shared button').click(() => this.fsm.start('shared', loader.getResult('shared-data').remapType))
+    $('#top .play-shared button').click(() => { startGesture(); this.fsm.start('shared', loader.getResult('shared-data').remapType) })
 
-    $('#webcam-step2 button.skip').click(() => this.fsm.start('webcam'))
+    $('#webcam-step2 button.skip').click(() => { startGesture(); this.fsm.start('webcam') })
 
     $('#upload-step1 button.skip').click(() => this.fsm.skip())
     $('#upload-step2 button.home').click(() => this.fsm.goTop())
-    $('#upload-step3 button.ok').click(() => this.fsm.start('uploaded'))
+    $('#upload-step3 button.ok').click(() => { startGesture(); this.fsm.start('uploaded') })
     $('#upload-step3 button.retry').click(() => this.fsm.retry())
     $('#upload-error button.button-replay').click(() => this.fsm.retry())
     $('#upload-error button.button-top').click(() => this.fsm.goTop())

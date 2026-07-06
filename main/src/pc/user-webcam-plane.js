@@ -48,6 +48,11 @@ export default class UserWebcamPlane extends UserPlaneBase {
 
     this.video = document.createElement('video')
     // URL.createObjectURL(MediaStream) was removed from Chrome; use srcObject
+    // muted + playsinline: mobile gates unmuted play() and fullscreens
+    // inline video otherwise (the stream has no audio, this is just texture)
+    this.video.muted = true
+    this.video.setAttribute('playsinline', '')
+    this.video.setAttribute('webkit-playsinline', '')
     this.video.srcObject = WebcamManager.stream
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()

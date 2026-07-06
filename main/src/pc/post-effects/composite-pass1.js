@@ -3,6 +3,7 @@
 import TWEEN from 'tween.js'
 
 import Config from '../config'
+import MediaUnlock from '../media-unlock'
 
 
 export default class CompositePass extends THREE.ShaderPass {
@@ -30,11 +31,16 @@ export default class CompositePass extends THREE.ShaderPass {
     this.uniforms.tOverlay.value = new THREE.CanvasTexture(black)
 
     this.video = document.createElement('video')
+    // this video carries the MV music AND is the master clock
+    // (Ticker.setClock) — it must stay unmuted, so mobile needs a
+    // user-gesture unlock before the FSM can play() it
+    this.video.setAttribute('playsinline', '')
+    this.video.setAttribute('webkit-playsinline', '')
     this.video.src = 'textures/bg_movie_prizm.mp4?.jpg'
     this.video.addEventListener('canplay', this.loadedmetadata.bind(this))
     this.video.addEventListener('ended', this.ended.bind(this))
     this.video.load()
-    // this.video.muted = true
+    MediaUnlock.register(this.video)
 
     this.enabled = true
   }

@@ -35,7 +35,20 @@ class BgmManager {
     this.player.addEventListener('timeupdate', this._timeupdate.bind(this), false)
     this.player.currentTime = 0
     this.volume = this.masterVolume
-    this.player.play()
+    let p = this.player.play()
+    if (p && p.catch) {
+      // autoplay policy blocks audio before the first user gesture
+      // (mobile always, desktop without MEI) — retry on that gesture
+      p.catch(() => {
+        let retry = () => {
+          document.removeEventListener('click', retry)
+          document.removeEventListener('touchend', retry)
+          this.player.play()
+        }
+        document.addEventListener('click', retry)
+        document.addEventListener('touchend', retry)
+      })
+    }
   }
 
   _timeupdate(e) {

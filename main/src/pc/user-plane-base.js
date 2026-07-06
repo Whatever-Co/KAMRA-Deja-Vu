@@ -89,6 +89,11 @@ class FaceSpaceMaterial extends THREE.ShaderMaterial {
     this.video.width = this.video.height = 256
     this.video.loop = true
     this.video.autoplay = true
+    // silent texture: muted + playsinline keeps mobile from gating autoplay
+    // or hijacking playback into fullscreen
+    this.video.muted = true
+    this.video.setAttribute('playsinline', '')
+    this.video.setAttribute('webkit-playsinline', '')
     this.video.src = 'textures/curl_bg.mp4?.jpg'
     this.video.addEventListener('loadedmetadata', () => {
       this.texture = new THREE.Texture(this.video)

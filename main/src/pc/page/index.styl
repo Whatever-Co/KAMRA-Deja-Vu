@@ -284,3 +284,28 @@ canvas#main
   top 0
   z-index 200
   background-color #111
+
+
+// mobile (landscape-only)
+
+html.mobile
+  #canvas-clip, #page, #top
+    min-width 0
+
+#rotate-device
+  display none
+  position fixed
+  left 0
+  top 0
+  width 100%
+  height 100%
+  z-index 10002
+  background-color #031a29
+  align-items center
+  justify-content center
+  text-align center
+  line-height 2.4em
+
+@media (orientation: portrait)
+  html.mobile #rotate-device
+    display flex

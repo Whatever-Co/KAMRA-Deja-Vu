@@ -1,11 +1,16 @@
 import Detector from 'Detector'
+import Config from './config'
 import loader from './asset-loader'
 import LoadingBar from './loading-bar'
 
-if (!Detector.canvas || !Detector.webgl || !Detector.workers || !Detector.fileapi
-  || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-  // No supported devices
+if (!Detector.canvas || !Detector.webgl || !Detector.workers || !Detector.fileapi) {
+  // No supported devices (mobile runs the full app as of 2026)
   location.href = 'sp'
+}
+
+if (Config.IS_MOBILE) {
+  // styles gate the landscape-only rotate overlay on this class
+  document.documentElement.className += ' mobile'
 }
 
 loader.on('weighted progress', (event) => {
