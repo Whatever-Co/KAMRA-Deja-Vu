@@ -9,5 +9,6 @@ export default {
   RENDER_HEIGHT: LOW_SPEC ? 720 : 1080,
   MIN_WINDOW_WIDTH: 1100,
   MIN_WINDOW_HEIGHT: 620,
+  FACE_SUBDIVISION: LOW_SPEC ? 1 : 2,
   DATA: require('./data/config.json')
 }

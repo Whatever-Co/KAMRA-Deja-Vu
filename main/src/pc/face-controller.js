@@ -6,6 +6,7 @@ import Config from './config'
 import Ticker from './ticker'
 import FaceLibrary from './face-library'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 import SlitScanPlane from './slit-scan-plane'
 import CreepyFaceTexture from './creepy-face-texture'
@@ -13,6 +14,8 @@ import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
 const SCALE = 150
+
+SubdividedFaceGeometry.defaultLevels = Config.FACE_SUBDIVISION
 
 const loader = window.__djv_loader
 
@@ -34,7 +37,7 @@ export default class FaceController extends THREE.Object3D {
     console.time('face controller init')
 
     // faces
-    this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
+    this.main = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
     this.main.matrixAutoUpdate = false
     this.add(this.main)
     {
@@ -48,7 +51,7 @@ export default class FaceController extends THREE.Object3D {
 
     this.alts = []
     for (let i = 0; i < this.data.user_alt.property.length; i++) {
-      let alt = new THREE.Mesh(new DeformableFaceGeometry())
+      let alt = new THREE.Mesh(new SubdividedFaceGeometry())
       alt.visible = false
       this.add(alt)
       this.alts.push(alt)
@@ -66,13 +69,13 @@ export default class FaceController extends THREE.Object3D {
     this.rotateGroup = new THREE.Object3D()
     this.add(this.rotateGroup)
 
-    this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
+    this.face1 = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face1.geometry.fillMouth()
     this.face1.visible = false
     this.face1.matrixAutoUpdate = false
     this.add(this.face1)
 
-    this.face2 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
+    this.face2 = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({transparent: true}))
     this.face2.geometry.fillMouth()
     this.face2.visible = false
     this.face2.matrixAutoUpdate = false
