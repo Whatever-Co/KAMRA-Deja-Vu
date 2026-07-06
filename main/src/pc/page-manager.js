@@ -18,8 +18,9 @@ import BgmManager from './bgm-manager'
 import GaUtil from './ga-util'
 
 
-// browser-sync >= 2.18 injects its own client snippet; the old
-// version-pinned manual injection just 404s now.
+// browser-sync (proxy mode) injects its own client snippet; the old
+// manual tag pointed at a version-pinned 2.10.0 URL that 404s under
+// the pinned 2.18.13.
 
 const loader = window.__djv_loader
 loader.on('complete', () => new PageManager())

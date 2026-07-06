@@ -11,17 +11,19 @@ class StubCage {
       new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)
     this.standardFace = {
       index: {array: [0, 1, 2, 0, 2, 3]},
-      mouthIncludedIndex: {array: [0, 1, 2, 0, 2, 3]},
+      mouthIncludedIndex: {array: [0, 2, 3]},
       uv: new global.THREE.BufferAttribute(new Float32Array(8), 2),
     }
     this.normalizedFeaturePoints = 'NFP'
     this.deformed = 0
+    this.inited = 0
   }
   deform() { this.deformed++; this.positionAttribute.array[0] = 9 }
   applyMorph() {}
-  init() {}
+  init() { this.inited++ }
   fillMouth() {}
   copy(src) { this.copiedFrom = src; this.positionAttribute.array[3] = 7 }
+  clone() { let c = new StubCage(); c.isCloneOf = this; return c }
 }
 
 let cage = new StubCage()
@@ -30,6 +32,7 @@ let g = SubdividedFaceGeometry.wrap(cage, 1)
 // derived sizes: V'=4+5=9 vertices, F'=8 triangles
 assert.equal(g.attributes.position.array.length, 9 * 3)
 assert.equal(g.indexAttr.array.length, 8 * 3)
+assert.equal(g.passThrough, false)
 // facade exposes CAGE attributes
 assert.equal(g.positionAttribute, cage.positionAttribute)
 assert.equal(g.normalizedFeaturePoints, 'NFP')
@@ -40,19 +43,18 @@ assert.equal(cage.deformed, 1)
 // = 0.75*9 + 0.125*1 + 0.125*0 = 6.875
 assert.equal(g.attributes.position.array[0], 6.875)
 assert(g.attributes.position.needsUpdate)
-// clone shares levels and produces working facade
-let g2 = SubdividedFaceGeometry.wrap(new StubCage(), 2)
-assert.equal(g2.levels, 2)
 
-// copy() unwraps a facade source, delegates to the cage, and re-derives
-g2.attributes.position.needsUpdate = false
-g2.copy(g)
-assert.equal(g2.cage.copiedFrom, cage) // unwrapped to the source's cage
-assert(g2.attributes.position.needsUpdate) // re-derived after copy
-// copy() also accepts a bare cage
-let g3 = SubdividedFaceGeometry.wrap(new StubCage(), 1)
-g3.copy(cage)
-assert.equal(g3.cage.copiedFrom, cage)
+// init() delegates and re-derives
+g.attributes.position.needsUpdate = false
+g.init([], 320, 180, 400, 2435)
+assert.equal(cage.inited, 1)
+assert(g.attributes.position.needsUpdate)
+
+// wrap() with levels omitted falls back to defaultLevels (not undefined)
+{
+  let gd = SubdividedFaceGeometry.wrap(new StubCage())
+  assert.equal(gd.levels, SubdividedFaceGeometry.defaultLevels)
+}
 
 // applyMorph memoizes by weights reference: re-applying the same array
 // (outro clamps to the last keyframe) must be a no-op, and any deform
@@ -74,20 +76,78 @@ assert.equal(g3.cage.copiedFrom, cage)
   assert.equal(c.applyMorphCount, 3)
 }
 
-// a numeric 5th positional arg (face-library legacy call) must NOT be
-// mistaken for the wrap marker — it would leave cage undefined
+// refreshUVs(): consumers poke cage uvAttribute directly (face-controller
+// smalls swap/restore) — derived UVs must follow without an applyMorph
 {
-  let threw = false
+  let c = new StubCage()
+  let gu = SubdividedFaceGeometry.wrap(c, 1)
+  c.uvAttribute.array[0] = 0.4 // poke, as face-controller does
+  gu.attributes.uv.needsUpdate = false
+  gu.refreshUVs()
+  // boundary vertex 0: 0.75*0.4 + 0.125*uv1.x(1) + 0.125*uv3.x(0) = 0.425
+  assert(Math.abs(gu.attributes.uv.array[0] - 0.425) < 1e-6)
+  assert(gu.attributes.uv.needsUpdate)
+  // and a memo-hit applyMorph afterwards must not clobber or crash
+  let w = [0]
+  gu.applyMorph(w)
+  gu.applyMorph(w)
+  assert(Math.abs(gu.attributes.uv.array[0] - 0.425) < 1e-6)
+}
+
+// clone(): cage is cloned (not shared), levels preserved, buffers independent
+{
+  let c = new StubCage()
+  let g1 = SubdividedFaceGeometry.wrap(c, 1)
+  let g2 = g1.clone()
+  assert.equal(g2.cage.isCloneOf, c)
+  assert.notEqual(g2.cage, c)
+  assert.equal(g2.levels, 1)
+  assert.notEqual(g2.attributes.position.array, g1.attributes.position.array)
+}
+
+// copy() unwraps a facade source, delegates to the cage, and re-derives
+{
+  let ga = SubdividedFaceGeometry.wrap(new StubCage(), 1)
+  ga.attributes.position.needsUpdate = false
+  ga.copy(g)
+  assert.equal(ga.cage.copiedFrom, cage) // unwrapped to the source's cage
+  assert(ga.attributes.position.needsUpdate) // re-derived after copy
+  // copy() also accepts a bare cage
+  let gb = SubdividedFaceGeometry.wrap(new StubCage(), 1)
+  gb.copy(cage)
+  assert.equal(gb.cage.copiedFrom, cage)
+}
+
+// pass-through fallback: a broken topology (out-of-range vertex) must not
+// throw; the facade degrades to cage attributes and stays functional
+{
+  let c = new StubCage()
+  c.standardFace.index.array = [0, 1, 99] // vertex 99 does not exist
+  let gp = SubdividedFaceGeometry.wrap(c, 1)
+  assert.equal(gp.passThrough, true)
+  assert.equal(gp.operator, null)
+  assert.equal(gp.attributes.position, c.positionAttribute) // cage passed through
+  gp.deform([]) // derive is a no-op, must not crash
+  assert.equal(c.deformed, 1)
+  // fillMouth must switch the facade index even in pass-through mode
+  gp.fillMouth()
+  assert.deepEqual(Array.from(gp.indexAttr.array), [0, 2, 3])
+}
+
+// a numeric 5th positional arg (the historical face-library call) must NOT
+// be mistaken for the wrap marker. Proof: the real-cage branch dies under
+// babel-node at StandardFaceData's webpack `raw!` require — if the wrap
+// branch had been taken instead, construction would "succeed" with an
+// undefined cage and no such error
+{
+  let outcome
   try {
-    let g4 = new SubdividedFaceGeometry(null, 512, 400, 1200, 9999)
-    assert(g4.cage, 'cage must be constructed when 5th arg is not a wrap marker')
+    outcome = new SubdividedFaceGeometry(null, 512, 400, 1200, 9999)
   } catch (e) {
-    // constructing a real DeformableFaceGeometry under the stub THREE may
-    // fail for unrelated reasons, but it must NOT fail on undefined cage
-    threw = true
-    assert(!/undefined.*cage|cage.*undefined/i.test(e.message), e.message)
+    outcome = e.message
   }
-  assert(threw || true)
+  assert(typeof outcome === 'string' && outcome.indexOf('raw!') !== -1,
+    'expected real-cage construction attempt, got: ' + outcome)
 }
 
 console.log('subdivided-face-geometry: all tests passed')

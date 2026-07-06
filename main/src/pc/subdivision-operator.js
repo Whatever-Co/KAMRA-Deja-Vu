@@ -44,6 +44,13 @@ function subdivideOnce(index, vertexCount) {
 
   // even (original) vertex rows
   let rows = []
+  let fixedVertexCount = 0
+  let nonManifoldEdgeCount = 0
+  edges.forEach((edge) => {
+    if (edge.count > 2) {
+      nonManifoldEdgeCount++
+    }
+  })
   for (let v = 0; v < vertexCount; v++) {
     if (!referenced[v]) {
       rows.push([[v, 1]])
@@ -60,7 +67,8 @@ function subdivideOnce(index, vertexCount) {
       if (bn.length == 2) {
         rows.push([[v, 0.75], [bn[0], 0.125], [bn[1], 0.125]])
       } else {
-        rows.push([[v, 1]]) // corner / non-manifold: keep fixed
+        rows.push([[v, 1]]) // corner / non-manifold pinch: keep fixed
+        fixedVertexCount++
       }
     } else {
       let neighbors = Array.from(vertexEdges[v])
@@ -85,6 +93,14 @@ function subdivideOnce(index, vertexCount) {
     edgeVertexIndex.set(key, rows.length)
     rows.push(row)
   })
+
+  // build-time only (never per-frame): make degenerate topology visible
+  // instead of shipping a mysteriously dimpled mesh
+  if (fixedVertexCount > 0 || nonManifoldEdgeCount > 0) {
+    console.warn('subdivision-operator: kept ' + fixedVertexCount +
+      ' corner/non-manifold vertices fixed, ' + nonManifoldEdgeCount +
+      ' non-manifold edges treated as interior')
+  }
 
   // new topology: each triangle -> 4
   let newIndex = []
@@ -117,8 +133,19 @@ function composeRows(outerRows, innerRows) {
 }
 
 export function buildLoopOperator(index, vertexCount, levels) {
+  if (!(levels >= 1)) {
+    throw new Error('buildLoopOperator: levels must be >= 1, got ' + levels)
+  }
+  if (vertexCount >= 65536) {
+    // edgeKey packs two vertex indices into a*65536+b; beyond this the
+    // keys collide and the topology corrupts silently
+    throw new Error('buildLoopOperator: vertexCount ' + vertexCount + ' exceeds the 65536 edgeKey limit')
+  }
   let current = subdivideOnce(index, vertexCount)
   for (let l = 1; l < levels; l++) {
+    if (current.rows.length >= 65536) {
+      throw new Error('buildLoopOperator: intermediate mesh exceeds the 65536 edgeKey limit at level ' + (l + 1))
+    }
     let next = subdivideOnce(current.index, current.rows.length)
     current = {index: next.index, rows: composeRows(next.rows, current.rows)}
   }

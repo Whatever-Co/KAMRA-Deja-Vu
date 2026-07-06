@@ -32,7 +32,10 @@ container exec kamra-dev sh -c 'npm run dev'
 - **`jquery` は 2.1.4 に固定**。`^2.1.4` だと 2.2.4 が入り、Sizzle が厳格化していて `#credit a[href=#femm]`（引用符なし属性セレクタ）が Syntax error を投げ、ローディング後に PageManager が起動できず画面が進まなくなる。
 - **`textures/faces/lula.{json,jpg}` も repo 未収録だった**。本番からダウンロードして配置済み。なお dev-server.js の proxy regex `\/[a-z0-9]{8}\/` はアンカーなしのため `/textures/`（8 文字）にも偶然マッチし、ローカルに無いファイルが本番に proxy されて「動いているように見える」が、express-http-proxy@0.6 は gzip レスポンスの content-length を壊すので browser-sync 経由だとリクエストがハングする。ローカルにファイルを置くのが正解。
 - **node_modules のパッケージを入れ替えたら webpack watch の再起動が必要**（in-memory cache が古いモジュールを保持する）。src の touch では反映されない。
-- **顔認識テスト**: clmtrackr は顔の周囲に余白が必要。`textures/faces/slice_face_*.jpg`（顔がフレームいっぱい）をそのまま渡すと "Not able to recognize a face" になる。1280x720 のキャンバスに顔を高さ 400px 程度で中央配置すると通る。
+- **webcam モードが黒画面**（`Uncaught TypeError: Failed to execute 'createObjectURL' on 'URL'`）: 2015 年の `video.src = URL.createObjectURL(stream)` は Chrome から削除済み。`video.srcObject = stream` に修正済み（`user-plane-base` 系は `user-webcam-plane.js` 参照）。カメラ許可や getUserMedia 自体は 2026 年の Chrome でも動く。
+- **dev 環境の `/api/save` は本番に書き込む**。dev-server が本番へ proxy しているので、再生完走 → share/Retry すると **kamra.invisi-dir.com に本物の share ページが作られる**（実際に作られた例: /8m99dezi/）。Retry ボタンは本番の share URL に遷移するので localhost に戻ること。
+- **顔認識テスト**: clmtrackr は顔の周囲に余白が必要。`textures/faces/slice_face_*.jpg`（顔がフレームいっぱい）をそのまま渡すと "Not able to recognize a face" になる。1280x720 のキャンバスに顔を高さ 400px 程度で中央配置すると通る。自動テストでは canvas で余白付き画像を作り `new File` → `DataTransfer` → `input.image-file` に代入して `change` イベント dispatch で photo フローを無人駆動できる（MCP の upload_file は workspace 外パスを拒否する）。
+- **Chrome のデフォルトカメラは OBS Virtual Camera** になっていることがある（webcam テストで OBS ロゴが映る）。アドレスバーのカメラアイコンから実カメラに切替 → リロード。
 
 ## ユニットテスト
 
@@ -47,11 +50,25 @@ THREE はグローバル前提のコードなので、テストは `test/three-s
 
 ## 顔メッシュの subdivision（2026-07 追加）
 
-342 頂点のケージはそのまま、Loop subdivision を疎な線形写像として前計算し、描画用の派生メッシュだけ高解像度化してある。設計と踏んだ地雷の全記録は `docs/superpowers/specs/2026-07-06-smooth-face-mesh-design.md`。要点：
+380 頂点のケージ（face 342 + eyemouth 38）はそのまま、Loop subdivision を疎な線形写像として前計算し、描画用の派生メッシュだけ高解像度化してある（level 2 で 5,276 頂点）。設計と踏んだ地雷の全記録は `docs/superpowers/specs/2026-07-06-smooth-face-mesh-design.md`。要点：
 
-- `main`/`alts` = level 2、FaceLibrary（子顔）= level 1 + 遅延生成。**level 2 を 100 個先に作るとヒープ膨張 → GC 停止が clmtrackr を周期的に飛ばして webcam outro の顔位置がジャンプする**（フレームレートは落ちないので気づきにくい）
+- `main`/`alts` = level 2、FaceLibrary（子顔 20 + lula）= level 1 + 遅延生成。**全ライブラリ顔を level 2 で先に作るとヒープ膨張 → GC 停止が clmtrackr を周期的に飛ばして webcam outro の顔位置がジャンプする**（フレームレートは落ちないので気づきにくい）。ケージ UV を直接書き換える消費者は `refreshUVs()` を呼ぶ契約
 - `face1`/`face2`（mosaic）と user-plane の顔はケージのまま。FaceParticle / FaceBlender が `geometry.index` をケージトポロジー前提で消費するため
 - facade（`subdivided-face-geometry.js`）の `positionAttribute`/`uvAttribute` はケージの属性を返す。既存消費者（mouth 共有、smalls の UV コピー、particled-logo 等）はこれ前提
+
+## 本番インフラ調査（2026-07-06 時点）
+
+本番 https://kamra.invisi-dir.com は**まだ稼働中**。構成の判明分：
+
+- Cloudflare が前段（cf-cache HIT、`server: cloudflare`）。オリジンは **nginx**（etag `565c067c-16cdef0` = nginx 形式 mtime-size、ファイルは 2015-11-30 から未更新）
+- オリジンの所在は**未特定**。Saqoosha の AWS アカウント（534787916934、profile `saqoosha`）には無い — ap-northeast-1 / us-east-1 / us-west-2 の EC2 と S3 を確認済み。Whatever の Cloudflare アカウントにも kamra 関連 Worker なし。`invisi-dir.com` の CF zone がどのアカウントにあるかも未確認（dot by dot 時代のアカウントの可能性）
+- GitHub: https://github.com/Whatever-Co/KAMRA-Deja-Vu（public）
+- 本番更新の選択肢: (a) オリジンサーバーへの SSH 等のアクセス経路を見つける、(b) CF zone にアクセスして DNS からオリジン特定 or 向き先変更、(c) CF Workers 等に丸ごと移行して DNS 切替（一番きれい）
+
+## 残タスク
+
+- `revive-2026` ブランチ（蘇生 + webcam 修正 + Loop subdivision、全テスト・実機検証済み）が **local のみ、未 push**。push / PR / master merge は未指示
+- 本番デプロイはオリジンアクセス待ちでブロック中（上記の選択肢からユーザーが決める）
 
 ## コミット時の注意
 

@@ -178,6 +178,7 @@ export default class FaceController extends THREE.Object3D {
     this.smalls.forEach((face) => {
       face.geometry.originalUV = face.geometry.uvAttribute.clone()
       face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
+      face.geometry.refreshUVs()
       face.originalMaterial = face.material
       face.material = this.main.material
     })
@@ -319,6 +320,7 @@ export default class FaceController extends THREE.Object3D {
     let child = this.smalls[i]
     child.geometry.uvAttribute.copy(child.geometry.originalUV)
     child.geometry.uvAttribute.needsUpdate = true
+    child.geometry.refreshUVs()
     child.material = child.originalMaterial
     delete child.geometry.originalUV
     delete child.originalMaterial

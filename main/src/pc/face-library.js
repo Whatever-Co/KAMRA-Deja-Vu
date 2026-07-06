@@ -7,8 +7,10 @@ import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 
 // library faces render at level 1: they are numerous and never fill the
-// screen, and 100 level-2 derived meshes cost enough heap that GC pauses
-// visibly disturb clmtrackr tracking in the webcam outro
+// screen, and eagerly building every library face at level 2 cost enough
+// heap that GC pauses visibly disturbed clmtrackr tracking in the webcam
+// outro (asset-loader loads 20 faces + lula; smalls + falling children
+// sample up to ~19 of them)
 const LIBRARY_SUBDIVISION_LEVELS = 1
 
 
@@ -61,6 +63,11 @@ class FaceLibrary {
       return
     }
     let entry = this.library[id]
+    if (!entry) {
+      // initFace can store null when the face assets failed to load
+      console.warn('face library entry is empty', id)
+      return
+    }
     if (!entry.geometry) {
       // matches the historical DeformableFaceGeometry(fp, 512, 512, 400, 1200)
       // call: the 5th arg was always dropped by the 4-arg constructor

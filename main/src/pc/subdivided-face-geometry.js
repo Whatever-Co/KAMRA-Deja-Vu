@@ -3,11 +3,23 @@
 import DeformableFaceGeometry from './deformable-face-geometry'
 import {buildLoopOperator, applyOperator} from './subdivision-operator'
 
-// operators are shared across instances: cache by topology + levels
+// operators are shared across instances. Every cage clones StandardFaceData's
+// one topology, so index CONTENT repeats across instances while the array
+// objects differ — a cheap content checksum in the key keeps sharing intact
+// and makes a collision between genuinely different topologies impossible
+// in practice (length AND vertexCount AND checksum would all have to match).
 let operatorCache = new Map()
 
+function indexChecksum(indexArray) {
+  let sum = 0
+  for (let i = 0; i < indexArray.length; i++) {
+    sum = (sum * 31 + indexArray[i]) | 0
+  }
+  return sum
+}
+
 function getOperator(indexArray, vertexCount, levels) {
-  let key = indexArray.length + '/' + vertexCount + '/' + levels
+  let key = indexArray.length + '/' + vertexCount + '/' + levels + '/' + indexChecksum(indexArray)
   let op = operatorCache.get(key)
   if (!op) {
     op = buildLoopOperator(Array.from(indexArray), vertexCount, levels)
@@ -23,29 +35,36 @@ function getOperator(indexArray, vertexCount, levels) {
 // cage mutation.
 export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
 
-  // wrap() takes an existing cage: used by clone() and unit tests
+  // wrap() takes an existing cage: used by clone(), face-library, and unit tests
   static wrap(cage, levels) {
     return new SubdividedFaceGeometry(null, null, null, null, {cage: cage, levels: levels})
   }
 
   constructor(featurePoint2D, image, planeHeight, cameraZ, _internal) {
     super()
-    // callers may pass extra positional args (face-library passes a 5th
-    // arg that DeformableFaceGeometry always ignored) — only treat
-    // _internal as the wrap marker when it carries a cage
+    // callers may pass extra positional args (the historical face-library
+    // call passed a 5th arg that DeformableFaceGeometry ignored) — only
+    // treat _internal as the wrap marker when it carries a cage
     if (_internal && _internal.cage) {
       this.cage = _internal.cage
-      this.levels = _internal.levels
+      this.levels = _internal.levels || SubdividedFaceGeometry.defaultLevels
     } else {
       this.cage = new DeformableFaceGeometry(featurePoint2D, image, planeHeight, cameraZ)
       this.levels = SubdividedFaceGeometry.defaultLevels
     }
+    this._appliedMorph = null
+    this.passThrough = false
     try {
       this._rebuildOperator(this.cage.standardFace.index.array)
       this._allocateDerived()
       this._deriveAll()
     } catch (e) {
-      console.warn('SubdividedFaceGeometry: operator build failed, pass-through', e)
+      // degrade to cage resolution rather than losing the face mid-show,
+      // but loudly and distinguishably (see this.passThrough)
+      console.error('SubdividedFaceGeometry: operator build failed, falling back to cage resolution.',
+        'verts=' + (this.cage.positionAttribute.array.length / 3),
+        'index=' + this.cage.standardFace.index.array.length,
+        'levels=' + this.levels, e)
       this._passThrough()
     }
   }
@@ -63,9 +82,10 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
     this.addAttribute('uv2', new THREE.BufferAttribute(new Float32Array(n * 2), 2))
   }
 
-  _passThrough() {
+  _passThrough(indexArray) {
     this.operator = null
-    this.setIndex(new THREE.BufferAttribute(new Uint16Array(this.cage.standardFace.index.array), 1))
+    this.passThrough = true
+    this.setIndex(new THREE.BufferAttribute(new Uint16Array(indexArray || this.cage.standardFace.index.array), 1))
     this.addAttribute('position', this.cage.positionAttribute)
     this.addAttribute('uv', this.cage.uvAttribute)
     if (this.cage.standardFace.uv) {
@@ -116,16 +136,17 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
     // the keyframe player clamps to the last frame and re-applies the
     // same weights array every tick (the outro runs this on an invisible
     // main face while live tracking eats the frame budget) — skip
-    // repeats so the derive cost is only paid when the morph changes
+    // repeats so the derive cost is only paid when the morph changes.
+    // NOTE: assumes callers never mutate a weights array in place
+    // (keyframe data uses a distinct array per frame).
     if (this._appliedMorph === weights) {
       return
     }
     this._appliedMorph = weights
     this.cage.applyMorph(weights)
-    // face-controller pokes cage uvAttribute directly around morph
-    // sections (smalls get main's UVs at capture and restored later),
-    // so refresh UVs here too — the extra cost is negligible
-    this._deriveAll()
+    // UV changes never come through applyMorph — consumers that poke
+    // cage uvAttribute directly call refreshUVs() explicitly
+    this._derivePositions()
   }
 
   fillMouth() {
@@ -135,7 +156,17 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
       this._rebuildOperator(this.cage.standardFace.mouthIncludedIndex.array)
       this._allocateDerived()
       this._deriveAll()
+    } else {
+      // pass-through mode must follow the topology switch too
+      this._passThrough(this.cage.standardFace.mouthIncludedIndex.array)
     }
+  }
+
+  // for consumers that write cage.uvAttribute directly (face-controller's
+  // smalls UV swap at capture and restore) — makes the "derived UVs follow
+  // the cage" contract explicit instead of relying on the next applyMorph
+  refreshUVs() {
+    this._deriveUVs()
   }
 
   copy(geometry) {
