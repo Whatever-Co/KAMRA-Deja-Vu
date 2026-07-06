@@ -12,6 +12,8 @@ let developmentMode = process.env.NODE_ENV == 'development'
 gulp.task('webpack', () => {
   let config = {
     watch: developmentMode,
+    // fs events don't propagate through the container bind mount; poll instead
+    watchOptions: {aggregateTimeout: 300, poll: 1000},
     entry: {
       bootstrap: './src/pc/bootstrap.js',
       app: './src/pc/page-manager.js',
@@ -107,9 +109,11 @@ gulp.task('stylus', () => {
 
 
 gulp.task('watch', () => {
-  gulp.watch('./src/**/*.jade', ['jade'])
-  gulp.watch('./src/**/*.styl', ['stylus'])
-  gulp.watch('./public/**/*.js', browserSync.reload)
+  // fs events don't propagate through the container bind mount; poll instead
+  const pollOpts = {mode: 'poll', interval: 700}
+  gulp.watch('./src/**/*.jade', pollOpts, ['jade'])
+  gulp.watch('./src/**/*.styl', pollOpts, ['stylus'])
+  gulp.watch('./public/**/*.js', pollOpts, browserSync.reload)
 })
 
 

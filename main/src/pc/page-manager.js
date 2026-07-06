@@ -18,9 +18,8 @@ import BgmManager from './bgm-manager'
 import GaUtil from './ga-util'
 
 
-if (Config.DEV_MODE) {
-  $('head').append(`<script async src='/browser-sync/browser-sync-client.2.10.0.js'><\/script>`)
-}
+// browser-sync >= 2.18 injects its own client snippet; the old
+// version-pinned manual injection just 404s now.
 
 const loader = window.__djv_loader
 loader.on('complete', () => new PageManager())

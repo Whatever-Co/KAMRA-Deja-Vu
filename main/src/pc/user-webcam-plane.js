@@ -47,7 +47,8 @@ export default class UserWebcamPlane extends UserPlaneBase {
     this.trackerContext.scale(-1, 1)
 
     this.video = document.createElement('video')
-    this.video.src = window.URL.createObjectURL(WebcamManager.stream)
+    // URL.createObjectURL(MediaStream) was removed from Chrome; use srcObject
+    this.video.srcObject = WebcamManager.stream
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.play()
     this.enableTextureUpdating = true
