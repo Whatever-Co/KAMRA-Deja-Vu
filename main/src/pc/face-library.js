@@ -2,7 +2,7 @@
 
 import _ from 'lodash'
 
-import DeformableFaceGeometry from './deformable-face-geometry'
+import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 
 
@@ -38,7 +38,7 @@ class FaceLibrary {
     })
     let texture = new THREE.CanvasTexture(loader.getResult(`${id}-image`))
     return {
-      geometry: new DeformableFaceGeometry(featurePoints, 512, 512, 400, 1200),
+      geometry: new SubdividedFaceGeometry(featurePoints, 512, 512, 400, 1200),
       material: new FaceFrontMaterial(texture),
       texture
     }

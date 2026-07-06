@@ -30,7 +30,10 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
 
   constructor(featurePoint2D, image, planeHeight, cameraZ, _internal) {
     super()
-    if (_internal) {
+    // callers may pass extra positional args (face-library passes a 5th
+    // arg that DeformableFaceGeometry always ignored) — only treat
+    // _internal as the wrap marker when it carries a cage
+    if (_internal && _internal.cage) {
       this.cage = _internal.cage
       this.levels = _internal.levels
     } else {
@@ -109,7 +112,10 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
 
   applyMorph(weights) {
     this.cage.applyMorph(weights)
-    this._derivePositions()
+    // face-controller pokes cage uvAttribute directly around morph
+    // sections (smalls get main's UVs at capture and restored later),
+    // so refresh UVs here too — the extra cost is negligible
+    this._deriveAll()
   }
 
   fillMouth() {

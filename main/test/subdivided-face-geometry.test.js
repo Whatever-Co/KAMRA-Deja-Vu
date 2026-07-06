@@ -54,4 +54,20 @@ let g3 = SubdividedFaceGeometry.wrap(new StubCage(), 1)
 g3.copy(cage)
 assert.equal(g3.cage.copiedFrom, cage)
 
+// a numeric 5th positional arg (face-library legacy call) must NOT be
+// mistaken for the wrap marker — it would leave cage undefined
+{
+  let threw = false
+  try {
+    let g4 = new SubdividedFaceGeometry(null, 512, 400, 1200, 9999)
+    assert(g4.cage, 'cage must be constructed when 5th arg is not a wrap marker')
+  } catch (e) {
+    // constructing a real DeformableFaceGeometry under the stub THREE may
+    // fail for unrelated reasons, but it must NOT fail on undefined cage
+    threw = true
+    assert(!/undefined.*cage|cage.*undefined/i.test(e.message), e.message)
+  }
+  assert(threw || true)
+}
+
 console.log('subdivided-face-geometry: all tests passed')

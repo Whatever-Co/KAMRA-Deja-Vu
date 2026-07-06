@@ -20,8 +20,14 @@ mesh is what gets rendered.
   weight tables and the 32x32 data texture, and FaceBlender binds
   `face1.geometry.index` against cage-sized position attributes. The
   mosaic/particle section is intentionally chunky anyway.
-- Small faces (`smalls`, falling children, face-library, user-plane-base
-  working face) are out of scope. If they pick up smoothing for free via
+- FaceLibrary faces (`smalls`, falling children) ARE subdivided (added
+  after the hero faces shipped). Two lessons encoded in the facade:
+  face-library passes a legacy 5th constructor arg (always ignored by
+  DeformableFaceGeometry), so the wrap marker must be shape-checked;
+  and face-controller pokes cage `uvAttribute` directly around morph
+  sections, so `applyMorph` re-derives UVs too.
+- user-plane-base's working face stays cage-resolution: it overrides
+  the geometry index (face+eyes+mouth) for the capture edge effect. If they pick up smoothing for free via
   shared operators (`main.geometry.clone()` particles), that is fine.
 - No offline regeneration of face2.json / keyframes.bin.
 - No shader or material changes.
