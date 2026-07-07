@@ -9,9 +9,8 @@ import gaUtil from './ga-util'
 const DEV = (process.env.NODE_ENV == 'development')
 
 
-if (Detector.canvas && Detector.webgl && Detector.workers && Detector.fileapi
-  && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) == false) {
-  // No supported devices
+if (Detector.canvas && Detector.webgl && Detector.workers && Detector.fileapi) {
+  // capable devices (mobile included as of 2026) go to the full app
   location.href = '/'
 }
 

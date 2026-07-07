@@ -1,0 +1,16 @@
+{
+  "name": "KAMRA - Deja vu",
+  "short_name": "KAMRA",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#031a29",
+  "theme_color": "#031a29",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

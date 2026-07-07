@@ -6,6 +6,7 @@ import Config from './config'
 import Ticker from './ticker'
 import FaceLibrary from './face-library'
 import DeformableFaceGeometry from './deformable-face-geometry'
+import SubdividedFaceGeometry from './subdivided-face-geometry'
 import FaceFrontMaterial from './face-front-material'
 import SlitScanPlane from './slit-scan-plane'
 import CreepyFaceTexture from './creepy-face-texture'
@@ -13,6 +14,8 @@ import FaceParticle from './face-particle'
 import FaceBlender from './face-blender'
 
 const SCALE = 150
+
+SubdividedFaceGeometry.defaultLevels = Config.FACE_SUBDIVISION
 
 const loader = window.__djv_loader
 
@@ -34,7 +37,7 @@ export default class FaceController extends THREE.Object3D {
     console.time('face controller init')
 
     // faces
-    this.main = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
+    this.main = new THREE.Mesh(new SubdividedFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.0}))
     this.main.matrixAutoUpdate = false
     this.add(this.main)
     {
@@ -48,7 +51,7 @@ export default class FaceController extends THREE.Object3D {
 
     this.alts = []
     for (let i = 0; i < this.data.user_alt.property.length; i++) {
-      let alt = new THREE.Mesh(new DeformableFaceGeometry())
+      let alt = new THREE.Mesh(new SubdividedFaceGeometry())
       alt.visible = false
       this.add(alt)
       this.alts.push(alt)
@@ -66,6 +69,8 @@ export default class FaceController extends THREE.Object3D {
     this.rotateGroup = new THREE.Object3D()
     this.add(this.rotateGroup)
 
+    // face1/face2 stay cage-resolution: FaceParticle and FaceBlender read
+    // geometry.index and mix it with cage-sized attributes / weight tables
     this.face1 = new THREE.Mesh(new DeformableFaceGeometry(), new THREE.MeshBasicMaterial({wireframe: true, transparent: true, opacity: 0.3}))
     this.face1.geometry.fillMouth()
     this.face1.visible = false
@@ -173,6 +178,7 @@ export default class FaceController extends THREE.Object3D {
     this.smalls.forEach((face) => {
       face.geometry.originalUV = face.geometry.uvAttribute.clone()
       face.geometry.uvAttribute.copy(this.main.geometry.uvAttribute)
+      face.geometry.refreshUVs()
       face.originalMaterial = face.material
       face.material = this.main.material
     })
@@ -314,6 +320,7 @@ export default class FaceController extends THREE.Object3D {
     let child = this.smalls[i]
     child.geometry.uvAttribute.copy(child.geometry.originalUV)
     child.geometry.uvAttribute.needsUpdate = true
+    child.geometry.refreshUVs()
     child.material = child.originalMaterial
     delete child.geometry.originalUV
     delete child.originalMaterial

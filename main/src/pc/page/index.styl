@@ -284,3 +284,42 @@ canvas#main
   top 0
   z-index 200
   background-color #111
+
+
+// mobile (landscape-only)
+//
+// HTML overlays keep their 1920x1080 design-stage layout, and #page (which
+// hosts every screen: #loading, #top, #webcam-*, #upload-*, #about, #howto,
+// #share) is contain-scaled by bootstrap.js so the whole UI fits the viewport
+// instead of getting clipped. The video canvas keeps its own cover-scale.
+
+html.mobile
+  #canvas-clip, #top
+    min-width 0
+  #page
+    // Mobile design stage: 1280x720 rather than the 1920x1080 desktop layout,
+    // so the contain-scale in bootstrap.js lands around 0.5x on a phone
+    // (readable labels) instead of ~0.36x (too small).
+    min-width 0
+    width 1280px
+    height 720px
+    transform-origin 0 0
+    // translate + scale applied by bootstrap.js applyMobileStageScale
+
+#rotate-device
+  display none
+  position fixed
+  left 0
+  top 0
+  width 100%
+  height 100%
+  z-index 10002
+  background-color #031a29
+  align-items center
+  justify-content center
+  text-align center
+  line-height 2.4em
+
+@media (orientation: portrait)
+  html.mobile #rotate-device
+    display flex

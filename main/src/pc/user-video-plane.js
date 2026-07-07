@@ -34,6 +34,11 @@ export default class UserVideoPlane extends UserPlaneBase {
 
   start() {
     this.video = document.createElement('video')
+    // riri-in/out carry no audio track: muted + playsinline keeps mobile
+    // from gating play() or hijacking playback into fullscreen
+    this.video.muted = true
+    this.video.setAttribute('playsinline', '')
+    this.video.setAttribute('webkit-playsinline', '')
     this.video.src = 'data/_/riri-in-1280.mp4?.jpg'
     this.video.addEventListener('loadedmetadata', this.onLoadedMetadata)
     this.video.addEventListener('timeupdate', this.onTimeUpdate)

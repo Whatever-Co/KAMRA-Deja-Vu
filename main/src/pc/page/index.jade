@@ -8,7 +8,10 @@ html.no-js
     meta(http-equiv='x-ua-compatible', content='ie=edge')
     title #{title}
     meta(name='description', content='#{description}')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover')
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    meta(name='apple-mobile-web-app-status-bar-style', content='black-translucent')
+    link(rel='manifest', href='manifest.webmanifest')
     link(rel='apple-touch-icon', href='apple-touch-icon.png')
     link(rel='stylesheet', href='normalize.css')
     link(href='https://fonts.googleapis.com/css?family=EB+Garamond' rel='stylesheet' type='text/css')
@@ -30,6 +33,12 @@ html.no-js
           img(src='images/loading.png')
 
     .noise.overlay
+
+    #rotate-device
+      p
+        | Please rotate your device
+        br
+        | 端末を横向きにしてください
 
     script(src='libs/preloadjs-0.6.1.min.js')
     script(src='bootstrap.js')
