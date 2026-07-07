@@ -39,14 +39,20 @@ class BgmManager {
     if (p && p.catch) {
       // autoplay policy blocks audio before the first user gesture
       // (mobile always, desktop without MEI) — retry on that gesture
-      p.catch(() => {
+      p.catch((err) => {
+        console.warn('BgmManager: autoplay blocked, retrying on next gesture', err && err.name)
+        // pin the player we intended to start — _loop() may swap
+        // this.player at a track boundary before the user gestures
+        let attemptedPlayer = this.player
         let retry = () => {
-          document.removeEventListener('click', retry)
-          document.removeEventListener('touchend', retry)
-          this.player.play()
+          let r = attemptedPlayer.play()
+          if (r && r.catch) {
+            r.catch((e) => console.error('BgmManager: retry play failed', e))
+          }
         }
-        document.addEventListener('click', retry)
-        document.addEventListener('touchend', retry)
+        // {once: true} auto-removes the listener after firing once
+        document.addEventListener('click', retry, {once: true})
+        document.addEventListener('touchend', retry, {once: true})
       })
     }
   }

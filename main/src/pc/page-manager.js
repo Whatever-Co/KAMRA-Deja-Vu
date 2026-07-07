@@ -41,9 +41,13 @@ const startGesture = () => {
         p.then(() => {
           // Android can pin the orientation once fullscreen; iOS rejects
           if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {})
+            screen.orientation.lock('landscape').catch((err) => {
+              console.debug('startGesture: orientation.lock rejected', err && err.name)
+            })
           }
-        }).catch(() => {})
+        }).catch((err) => {
+          console.debug('startGesture: requestFullscreen rejected', err && err.name)
+        })
       }
     }
   }
@@ -346,6 +350,7 @@ class PageManager {
     $('#credit a[href=#femm]').click((e) => {
       // Credit FEMM link
       e.preventDefault()
+      startGesture()
       this.fsm.start('video')
     })
   }

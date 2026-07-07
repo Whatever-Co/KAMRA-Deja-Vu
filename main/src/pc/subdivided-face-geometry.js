@@ -62,17 +62,21 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
     }
     try {
       this._rebuildOperator(this.cage.standardFace.index.array)
-      this._allocateDerived()
-      this._deriveAll()
     } catch (e) {
       // degrade to cage resolution rather than losing the face mid-show,
-      // but loudly and distinguishably (see this.passThrough)
+      // but loudly and distinguishably (see this.passThrough).
+      // Narrow to just the operator build — _allocateDerived / _deriveAll
+      // throwing means a real bug elsewhere, not degenerate topology,
+      // and pass-through would hide it silently.
       console.error('SubdividedFaceGeometry: operator build failed, falling back to cage resolution.',
         'verts=' + (this.cage.positionAttribute.array.length / 3),
         'index=' + this.cage.standardFace.index.array.length,
         'levels=' + this.levels, e)
       this._passThrough()
+      return
     }
+    this._allocateDerived()
+    this._deriveAll()
   }
 
   _rebuildOperator(indexArray) {
@@ -172,7 +176,17 @@ export default class SubdividedFaceGeometry extends THREE.BufferGeometry {
   // smalls UV swap at capture and restore) — makes the "derived UVs follow
   // the cage" contract explicit instead of relying on the next applyMorph
   refreshUVs() {
-    this._deriveUVs()
+    if (this.operator) {
+      this._deriveUVs()
+    } else {
+      // pass-through mode: the rendered uv attribute IS the cage's, so a
+      // direct consumer write already hit the buffer — three.js still needs
+      // needsUpdate before it re-uploads the VBO
+      this.cage.uvAttribute.needsUpdate = true
+      if (this.cage.standardFace.uv) {
+        this.cage.standardFace.uv.needsUpdate = true
+      }
+    }
   }
 
   copy(geometry) {

@@ -16,8 +16,11 @@ class WebcamManager extends EventEmitter {
       this.stream = stream
       onSuccess()
     }).catch((error) => {
-      console.warn(error)
-      onError()
+      console.error('WebcamManager.getUserMedia rejected', error && error.name, error && error.message)
+      // pass the error through so the caller can branch on error.name
+      // (NotAllowedError = permission denied, NotFoundError = no camera,
+      // NotReadableError = in use by another app, etc.)
+      onError(error)
     })
   }
 
